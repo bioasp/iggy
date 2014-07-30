@@ -1,0 +1,16 @@
+stat5ab_py   shp2_ph   ras   plcg   pi3k   mtorc1   mek1   jak2   gab1_mem_p   erk12   epor_p   epor   akt   
+1   1   NaN   1   NaN   NaN   NaN   1   1   1   NaN   NaN   1   
+1   0   NaN   0   NaN   NaN   NaN   1   0   1   NaN   NaN   0   
+0   0   NaN   0   NaN   NaN   NaN   1   0   0   NaN   NaN   0   
+1   0   NaN   0   NaN   NaN   NaN   1   0   0   NaN   NaN   0   
+1   1   NaN   1   NaN   NaN   NaN   1   1   1   NaN   NaN   1   
+0   -1   NaN   -1   NaN   NaN   NaN   0   -1   -1   NaN   NaN   -1   
+-1   -1   NaN   -1   NaN   NaN   NaN   -1   -1   -1   NaN   NaN   -1   
+0   -1   NaN   -1   NaN   NaN   NaN   0   -1   -1   NaN   NaN   -1   
+0   0   NaN   0   NaN   NaN   NaN   0   0   0   NaN   NaN   -1   
+-1   0   NaN   0   NaN   NaN   NaN   -1   0   -1   NaN   NaN   0   
+0   0   NaN   0   NaN   NaN   NaN   0   0   -1   NaN   NaN   0   
+0   1   NaN   1   NaN   NaN   NaN   0   1   1   NaN   NaN   1   
+1   0   NaN   0   NaN   NaN   NaN   1   0   0   NaN   NaN   0   
+1   1   NaN   1   NaN   NaN   NaN   1   1   1   NaN   NaN   1   
+0   1   NaN   1   NaN   NaN   NaN   0   1   1   NaN   NaN   1   

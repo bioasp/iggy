@@ -1,0 +1,2 @@
+include src/encodings/*.lp
+include *.txt
