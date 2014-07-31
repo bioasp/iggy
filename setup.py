@@ -33,10 +33,10 @@ class install(_install):
                          
 setup(cmdclass={'install': install},
       name='iggy',
-      version='0.3',
-      url='http://pypi.python.org/pypi/iggy/',
+      version='0.4',
+      url='http://bioasp.github.io/iggy/',
       license='GPLv3+',
-      description='Influence graph analysis, consistency check, repair and prediction ',
+      description='Influence graph analysis, consistency check, repair and prediction. Using 3 valued representation of change.',
       long_description=open('README.md').read(),
       author='Sven Thiele',
       author_email='sthiele78@gmail.com',
