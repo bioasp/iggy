@@ -1,5 +1,5 @@
 Installation
-============
+------------
 
 
 You can install iggy by running::
@@ -10,7 +10,7 @@ The executable scripts can then be found in ~/.local/bin.
 
 
 Usage
-=====
+-----
 
 Typical usage is::
 
@@ -86,7 +86,7 @@ For more options you can ask for help as follows::
 
 
 Samples
-=======
+-------
 
 Sample files available here:: iggy_demo_data.tar.gz_
 
