@@ -1,2 +1,4 @@
 include src/encodings/*.lp
-include *.txt
+include CHANGES.txt
+include LICENSE
+include README.md

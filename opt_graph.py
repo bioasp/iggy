@@ -1,5 +1,5 @@
 #!python
-# Copyright (c) 2012, Sven Thiele <sthiele78@gmail.com>
+# Copyright (c) 2014, Sven Thiele <sthiele78@gmail.com>
 #
 # This file is part of iggy.
 #
