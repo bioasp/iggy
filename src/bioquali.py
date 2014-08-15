@@ -22,7 +22,7 @@ from pyasp.misc import *
 import pyasp.ply.lex as lex
 import pyasp.ply.yacc as yacc
 
-import sif_parser
+import __iggy__.sif_parser as sif_parser
 
 def parse_val(s):
     if s == '+': return '1'

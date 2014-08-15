@@ -127,11 +127,11 @@ if __name__ == '__main__':
     if args.autoinputs :
       print('\nComputing input nodes ...',end='')
       inputs = query.guess_inputs(net)
-      net = net.union(inputs)
+      net = TermSet(net.union(inputs))
       print('done.')
       print("   number of inputs:", len(inputs))
 
-    net_with_data = net.union(mu)
+    net_with_data = TermSet(net.union(mu))
 
     if args.scenfit :
       print('\nComputing scenfit of network and data ...',end='')
