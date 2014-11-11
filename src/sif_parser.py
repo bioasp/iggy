@@ -19,6 +19,7 @@
 
 from pyasp.asp import *
 from pyasp.misc import *
+
 class Lexer:
 	tokens = (
 		'IDENT',
@@ -46,7 +47,7 @@ class Lexer:
 		t.lexer.lineno += t.value.count("\n")
 		
 	def t_error(self, t):
-		print "Illegal character '%s'" % t.value[0]
+		print("Illegal character '",str(t.value[0]),"'", sep='')
 		t.lexer.skip(1)
 
 
@@ -71,7 +72,7 @@ class Parser:
 					| node_expression MINUS node_expression'''
 		if len(t)<3 : 
 			self.accu.add(Term('input', [t[1]]))
-			print 'input', t[1]
+			print('input', t[1])
 		else :
 			#print t[1], t[2], t[3]
 			self.accu.add(Term('edge', ["gen(\""+t[1]+"\")","gen(\""+t[3]+"\")"]))
@@ -89,7 +90,7 @@ class Parser:
 
 			
 	def p_error(self, t):
-		print "Syntax error at '%s'" % t
+		print("Syntax error at '",str(t),"'")
 
 	def parse(self, line):
 		self.parser.parse(line, lexer=self.lexer.lexer)

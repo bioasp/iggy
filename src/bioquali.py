@@ -22,10 +22,7 @@ from pyasp.misc import *
 import pyasp.ply.lex as lex
 import pyasp.ply.yacc as yacc
 
-import graph_parser
-import sif_parser
-import profile_parser
-
+import __iggy__.sif_parser as sif_parser
 
 def parse_val(s):
     if s == '+': return '1'
@@ -36,7 +33,7 @@ def parse_val(s):
     elif s == 'notMinus': return 'notMinus'        
     elif s == 'input': return 'input'
     else: 
-        print s
+        print(s)
         assert(False)
 
 
@@ -50,7 +47,7 @@ def readSIFGraph(filename):
     a TermSet object.
     Written using original Bioquali
     """
-	
+
     accu = TermSet()
     file = open(filename,'r')
     s = file.readline()
@@ -65,30 +62,6 @@ def readSIFGraph(filename):
 
 
 
-def readProfile_new(filename):
-    p = profile_parser.Parser()
-    """
-    input: string, name of a file containing a Bioquali-like graph description
-    output: asp.TermSet, with atoms matching the contents of the input file
-    
-    Parses a Bioquali-like graph description, and returns
-    a TermSet object.
-    Written using original Bioquali
-    """
-	
-    accu = TermSet()
-    file = open(filename,'r')
-    s = file.readline()
-    while s!="":
-        if s!="\n":
-	    try:
-		accu = p.parse(s)
-	    except EOFError:
-		break
-	s = file.readline()
-
-    return accu
-    
 def readProfile(filename):
     GENE_ID = '[-a-zA-Z0-9_:\(\)/]+'
     VAL = '(-|\+|0|nc|input|notPlus|notMinus)'
@@ -104,17 +77,17 @@ def readProfile(filename):
     while line:
         vm = val.match(line)
         if vm:
-	    if parse_val(vm.group('sign'))=='input':
-	      vertex = quote(vm.group('genid'))
-	      accu.add(Term('input',[name, "gen("+vertex+")"]))
-	    else:
-	      vertex = quote(vm.group('genid'))
-	      accu.add(Term('obs_vlabel',[name, "gen("+vertex+")", parse_val(vm.group('sign'))]))
+            if parse_val(vm.group('sign'))=='input':
+              vertex = quote(vm.group('genid'))
+              accu.add(Term('input',[name, "gen("+vertex+")"]))
+            else:
+              vertex = quote(vm.group('genid'))
+              accu.add(Term('obs_vlabel',[name, "gen("+vertex+")", parse_val(vm.group('sign'))]))
         else:
-            print 'Syntax error line:', line_number,'  '+line 
+            print('Syntax error line:', line_number, ':', line)
         line = file.readline()
         line_number+=1
     return accu
 
 
-                
+

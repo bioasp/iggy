@@ -21,39 +21,39 @@ import argparse
 from __iggy__ import query, utils, bioquali
 
 if __name__ == '__main__':
-       
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("networkfile",
-                        help="influence graph in SIF format")
-    parser.add_argument("observationfiles",
-                        help="directory of observations in bioquali format")
+    parser.add_argument('networkfile',
+                        help='influence graph in SIF format')
+    parser.add_argument('observationfiles',
+                        help='directory of observations in bioquali format')
 
     parser.add_argument('--no_zero_constraints',
-			help="turn constraints on zero variations OFF, default is ON",
-			action="store_true")
+                        help='turn constraints on zero variations OFF, default is ON',
+                        action='store_true')
 
     parser.add_argument('--propagate_unambigious_influences',
-			help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is ON",
-			action="store_true")
+                        help='turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is ON',
+                        action='store_true')
 
     parser.add_argument('--no_founded_constraint',
-			help="turn constraints OFF that every variation must be explained by an input, default is ON",
-			action="store_true")
+                        help='turn constraints OFF that every variation must be explained by an input, default is ON',
+                        action='store_true')
 
     parser.add_argument('--autoinputs',
-			help="compute possible inputs of the network (nodes with indegree 0)",
-			action="store_true")
-			
+                        help='compute possible inputs of the network (nodes with indegree 0)',
+                        action='store_true')
+
     parser.add_argument('--show_repairs',type=int, default=-1,
-			help="number of repairs to show, default is OFF, 0=all")
-			
+                        help="number of repairs to show, default is OFF, 0=all")
+
     parser.add_argument('--opt_graph',
-			help="compute opt-graph repairs (allows also adding edges), default is only removing edges",
-			action="store_true")
-			
+                        help="compute opt-graph repairs (allows also adding edges), default is only removing edges",
+                        action="store_true")
+
 
     args = parser.parse_args()
-    
+
     net_string = args.networkfile
     obs_dir = args.observationfiles
 
@@ -61,88 +61,87 @@ if __name__ == '__main__':
     CZ= not (args.no_zero_constraints)
     FC= not (args.no_founded_constraint)
 
-    print ' all observed changes must be explained by an predecessor'
-    if LC : print ' unambigious influences propagate'
-    if CZ : print ' no-change observations must be explained'
-    if FC : print ' all observed changes must be explained by an input'
-    
-    print '\nReading network',net_string, '...',
+    print(' all observed changes must be explained by an predecessor')
+    if LC : print(' unambigious influences propagate')
+    if CZ : print(' no-change observations must be explained')
+    if FC : print(' all observed changes must be explained by an input')
+
+    print('\nReading network',net_string, '...',end='')
     net = bioquali.readSIFGraph(net_string)
-    print 'done.'
+    print('done.')
     activations = set()
     inhibitions = set()
     nodes=set()
     for a in net:
-      #if a.pred() == 'edge' : edge_counter+=1
       if a.pred() == 'obs_elabel' :
-	if a.arg(2) == '1' : activations.add((a.arg(0),a.arg(1)))
+        if a.arg(2) == '1' : activations.add((a.arg(0),a.arg(1)))
         if a.arg(2) == '-1' : inhibitions.add((a.arg(0),a.arg(1)))
       if a.pred() == 'vertex' : nodes.add(a.arg(0))
     unspecified = activations & inhibitions
-    print "   Nodes:",len(nodes)," Activations:",len(activations)," Inhibitions:",len(inhibitions)," Dual:",len(unspecified)
-    
+    print("   Nodes:",len(nodes)," Activations:",len(activations)," Inhibitions:",len(inhibitions)," Dual:",len(unspecified))
+
     flist =  os.listdir(obs_dir)
-    print '\nReading',len(flist),'observations from',obs_dir,'...',
+    print('\nReading',len(flist),'observations from',obs_dir,'...',end='')
     MU = TermSet()
     for f in flist :
       exp= os.path.join(obs_dir,f)
       mu = bioquali.readProfile(exp)
-      MU = MU.union(mu)
-    print 'done.'
-    print '  ',len(flist),'experiments.'
+      MU = TermSet(MU.union(mu))
+    print('done.')
+    print('  ',len(flist),'experiments.')
 
-    print '\nChecking observations ...',
+    print('\nChecking observations ...',end='')
     contradictions = query.get_contradictory_obs(MU)
-    print 'done.'
-    if len(contradictions) == 0 : print '   Observations are consistent.'
+    print('done.')
+    if len(contradictions) == 0 : print('   Observations are consistent.')
     else:
-      print '   Contradictory observations found. Please correct manualy.'
-      for c in contradictions : print '  ',c
+      print('   Contradictory observations found. Please correct manualy.')
+      for c in contradictions : print('  ',c)
       utils.clean_up()
       exit()
 
     if args.autoinputs :
-      print '\nComputing input nodes ...',
+      print('\nComputing input nodes ...',end='')
       inputs = query.guess_inputs(net)
-      net = net.union(inputs)
-      print 'done.'
-      print "   number of inputs:", len(inputs)
-      
-    net_with_data = net.union(MU)
+      net = TermSet(net.union(inputs))
+      print('done.')
+      print('   number of inputs:', len(inputs))
+
+    net_with_data = TermSet(net.union(MU))
 
     if not args.opt_graph :
-      print '\nComputing minimal number of removed edges ...',
+      print('\nComputing minimal number of removed edges ...',end='')
       (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
-      print 'done.'
-      print "   The network and data can reach a scenfit of",scenfit,'with',repairs,'removed edges.'
+      print('done.')
+      print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
 
       if args.show_repairs >= 0 and repairs > 0:
-	print '\nCompute optimal repairs...',
-	repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
-	print 'done.'
-	count=0
-	for r in repairs :
-	  count+=1
-	  print 'Repair',str(count)+':'
-	  utils.print_repairs(r)
-    
+        print('\nCompute optimal repairs...',end='')
+        repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        print('done.')
+        count=0
+        for r in repairs :
+          count+=1
+          print('Repair ',str(count),':',sep='')
+          utils.print_repairs(r)
+
 
     if args.opt_graph :
-      print '\nComputing minimal number of changes add/remove edges ...',
+      print('\nComputing minimal number of changes add/remove edges ...',end='')
       (scenfit,repairs) = query.get_opt_add_remove_edges(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
-      print 'done.'
-      print "   The network and data can reach a scenfit of",scenfit,'with',repairs,'repairs.'
+      print('done.')
+      print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'repairs.')
 
-      
+
       if args.show_repairs >= 0 and repairs > 0:
-	print '\nCompute optimal repairs...',
-	repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
-	print 'done.'
-	count=0
-	for r in repairs :
-	  count+=1
-	  print 'Repair',str(count)+':'
-	  utils.print_repairs(r)
+        print('\nCompute optimal repairs...',end='')
+        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        print('done.')
+        count=0
+        for r in repairs :
+          count+=1
+          print('Repair ',str(count),':',sep='')
+          utils.print_repairs(r)
 
 
     utils.clean_up()

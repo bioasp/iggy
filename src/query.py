@@ -149,7 +149,7 @@ def get_mcos(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstr
     if ConstrainedZero : sem.append(constr_zero_prg)
     if FoundedConstraint : sem.append(founded_prg)
 
-    inst =   instance.to_file()
+    inst = instance.to_file()
     prg = sem + mcos + [inst]
     coptions = '--opt-strategy=5'
     solver = GringoClasp(clasp_options=coptions)

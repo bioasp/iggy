@@ -28,18 +28,18 @@ def print_predictions(predictions) :
     pred_change = set()
     for p in predictions:
       if p.pred() == "new_pred" :
-	if p.arg(2) == "1" :
-	  pred_plus.add(p.arg(1))
-	if p.arg(2) == "-1" :
-	  pred_minus.add(p.arg(1))
-	if p.arg(2) == "0" :
-	  pred_zero.add(p.arg(1))
-	if p.arg(2) == "notPlus" :
-	  pred_not_plus.add(p.arg(1))
-	if p.arg(2) == "notMinus" :
-	  pred_not_minus.add(p.arg(1))
-	if p.arg(2) == "change" :
-	  pred_change.add(p.arg(1))
+        if p.arg(2) == "1" :
+          pred_plus.add(p.arg(1))
+        if p.arg(2) == "-1" :
+          pred_minus.add(p.arg(1))
+        if p.arg(2) == "0" :
+          pred_zero.add(p.arg(1))
+        if p.arg(2) == "notPlus" :
+          pred_not_plus.add(p.arg(1))
+        if p.arg(2) == "notMinus" :
+          pred_not_minus.add(p.arg(1))
+        if p.arg(2) == "change" :
+          pred_change.add(p.arg(1))
 
     pred_not_plus.difference_update(pred_minus)
     pred_not_plus.difference_update(pred_zero)
@@ -47,21 +47,21 @@ def print_predictions(predictions) :
     pred_not_minus.difference_update(pred_zero)
     pred_change.difference_update(pred_minus)
     pred_change.difference_update(pred_plus)
-    for p in pred_plus :      print '  ',p,'= +'
-    for p in pred_minus :     print '  ',p,'= -'
-    for p in pred_zero :      print '  ',p,'= 0'
-    for p in pred_not_plus :  print '  ',p,'= NOT +'
-    for p in pred_not_minus : print '  ',p,'= NOT -'
-    for p in pred_change :    print '  ',p,'= CHANGE'
-    
-    print ' \n   predicted +:',len(pred_plus),
-    print ' predicted -:',len(pred_minus),
-    print ' predicted 0:',len(pred_zero),
-    print ' predicted notPlus:',len(pred_not_plus),
-    print ' predicted notMinus:',len(pred_not_minus),
-    print ' predicted change:',len(pred_change)
+    for p in pred_plus :      print('  ',p,'= +')
+    for p in pred_minus :     print('  ',p,'= -')
+    for p in pred_zero :      print('  ',p,'= 0')
+    for p in pred_not_plus :  print('  ',p,'= NOT +')
+    for p in pred_not_minus : print('  ',p,'= NOT -')
+    for p in pred_change :    print('  ',p,'= CHANGE')
 
-    
+    print(' \n   predicted +:',len(pred_plus),end='')
+    print(' predicted -:',len(pred_minus),end='')
+    print(' predicted 0:',len(pred_zero),end='')
+    print(' predicted notPlus:',len(pred_not_plus),end='')
+    print(' predicted notMinus:',len(pred_not_minus),end='')
+    print(' predicted change:',len(pred_change))
+
+
 def print_coloring(colorings) :
     labels = set()
     repairs = set()
@@ -70,60 +70,60 @@ def print_coloring(colorings) :
     count_zero=0
     for c in colorings:
       if c.pred() == "vlabel" :
-	labels.add(c)
-	if c.arg(2) == '-1' : count_minus+=1
-	if c.arg(2) == '0': count_zero+=1
-	if c.arg(2) == '1': count_plus+=1
+        labels.add(c)
+        if c.arg(2) == '-1' : count_minus+=1
+        if c.arg(2) == '0': count_zero+=1
+        if c.arg(2) == '1': count_plus+=1
       if c.pred() == "err" :
-	repairs.add(c)
+        repairs.add(c)
       if c.pred() == "rep" :
-	repairs.add(c)
+        repairs.add(c)
     for c in labels :
-      print '   ',c.arg(1),'=',c.arg(2)
-    print '\n    colored +:',count_plus,' colored -:',count_minus,' colored 0:',count_zero,'\n'
+      print('   ',c.arg(1),'=',c.arg(2))
+    print('\n    colored +:',count_plus,' colored -:',count_minus,' colored 0:',count_zero,'\n')
     for c in repairs :
-      print '   ',c.arg(0)
-      
-      
+      print('   ',c.arg(0))
+
+
 def print_repairs(repairs) :
     repair = set()
     for r in repairs:
       if r.pred() == "rep" :
-	repair.add(r)
+        repair.add(r)
     for r in repair :
-      print '   ',r.arg(0)
-      
-      
+      print('   ',r.arg(0))
+
+
 def print_mic(mic, net, obs):
-  
+
     nodes = set()
     edges = []
     for node in mic: nodes.add(node.arg(0))
-    
+
     predecessors = set()
     for e in net:
-       if e.pred() == "obs_elabel" :
+      if e.pred() == "obs_elabel" :
           if e.arg(1) in nodes :
             predecessors.add(e.arg(0))
             if e.arg(2) == "1"  : edges.append(str(e.arg(0))+" -> "+str(e.arg(1))+" +")
             if e.arg(2) == "-1" : edges.append(str(e.arg(0))+" -> "+str(e.arg(1))+" -")
     for edge in edges: print('   '+edge)
     for o in obs:
-       if o.pred() == "obs_vlabel" :  
+      if o.pred() == "obs_vlabel" :
           if o.arg(1) in nodes :
-              if o.arg(2) == "1"  :  print '  ', o.arg(1), "= +"
-              if o.arg(2) == "-1" :  print '  ', o.arg(1), "= -"
+              if o.arg(2) == "1"  :  print('  ', o.arg(1), "= +")
+              if o.arg(2) == "-1" :  print('  ', o.arg(1), "= -")
           if o.arg(1) in predecessors :
-              if o.arg(2) == "1"  :  print '  ', o.arg(1), "= +"
-              if o.arg(2) == "-1" :  print '  ', o.arg(1), "= -"
-    
+              if o.arg(2) == "1"  :  print('  ', o.arg(1), "= +")
+              if o.arg(2) == "-1" :  print('  ', o.arg(1), "= -")
+
 
 def clean_up() :
   if os.path.isfile("parser.out"): os.remove("parser.out")
   if os.path.isfile("asp_py_lextab.py"): os.remove("asp_py_lextab.py")
   if os.path.isfile("asp_py_lextab.pyc"): os.remove("asp_py_lextab.pyc")
   if os.path.isfile("asp_py_parsetab.py"): os.remove("asp_py_parsetab.py")
-  if os.path.isfile("asp_py_parsetab.pyc"): os.remove("asp_py_parsetab.pyc") 
+  if os.path.isfile("asp_py_parsetab.pyc"): os.remove("asp_py_parsetab.pyc")
   if os.path.isfile("graph_parser_lextab.py"): os.remove("graph_parser_lextab.py")
   if os.path.isfile("graph_parser_parsetab.py"): os.remove("graph_parser_parsetab.py")
   if os.path.isfile("parsetab.py"): os.remove("parsetab.py")
