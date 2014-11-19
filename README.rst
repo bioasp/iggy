@@ -6,7 +6,9 @@ You can install iggy by running::
 
 	$ pip install --user iggy
 
-The executable scripts can then be found in ~/.local/bin.
+On Linux the executable scripts can then be found in ``~/.local/bin``
+
+and on MacOS the scripts are under ``/Users/YOURUSERNAME/Library/Python/2.7/bin``.
 
 
 Usage
