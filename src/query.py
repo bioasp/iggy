@@ -88,9 +88,9 @@ def get_scenfit(instance, LucaConstraint=False, ConstrainedZero=True, FoundedCon
     os.unlink(inst)
     return opt
     
-def get_scenfit_colorings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_scenfit_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
     '''
-    returns a list of atmost [nm] ``TermSet`` representing scenfit colorings to the system described by the ``TermSet`` object [instance].
+    returns a list of atmost [nm] ``TermSet`` representing scenfit labelings to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
     if LucaConstraint : sem.append(constr_luca_prg)
@@ -159,7 +159,7 @@ def get_mcos(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstr
     os.unlink(inst) 
     return opt
 
-def get_mcos_colorings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_mcos_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
     '''
     returns True if there exists a consistent extension
     to the system described by the ``TermSet`` object [instance].
