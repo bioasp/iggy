@@ -62,27 +62,27 @@ def print_predictions(predictions) :
     print(' predicted change:',len(pred_change))
 
 
-def print_coloring(colorings) :
+def print_labeling(labelings) :
     labels = set()
     repairs = set()
     count_plus=0
     count_minus=0
     count_zero=0
-    for c in colorings:
-      if c.pred() == "vlabel" :
-        labels.add(c)
-        if c.arg(2) == '-1' : count_minus+=1
-        if c.arg(2) == '0': count_zero+=1
-        if c.arg(2) == '1': count_plus+=1
-      if c.pred() == "err" :
-        repairs.add(c)
-      if c.pred() == "rep" :
-        repairs.add(c)
-    for c in labels :
-      print('   ',c.arg(1),'=',c.arg(2))
-    print('\n    colored +:',count_plus,' colored -:',count_minus,' colored 0:',count_zero,'\n')
-    for c in repairs :
-      print('   ',c.arg(0))
+    for l in labelings:
+      if l.pred() == "vlabel" :
+        labels.add(l)
+        if l.arg(2) == '-1' : count_minus+=1
+        if l.arg(2) == '0': count_zero+=1
+        if l.arg(2) == '1': count_plus+=1
+      if l.pred() == "err" :
+        repairs.add(l)
+      if l.pred() == "rep" :
+        repairs.add(l)
+    for l in labels :
+      print('   ',l.arg(1),'=',l.arg(2))
+    print('\n    labeled +:',count_plus,' labeled -:',count_minus,' labeled 0:',count_zero,'\n')
+    for l in repairs :
+      print('   ',l.arg(0))
 
 
 def print_repairs(repairs) :
