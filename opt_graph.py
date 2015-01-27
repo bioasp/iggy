@@ -22,7 +22,10 @@ from __iggy__ import query, utils, bioquali
 
 if __name__ == '__main__':
        
-    parser = argparse.ArgumentParser()
+    desc = ('Opt-graph confronts a biological network given as interaction graphs with a set of experimental observations '
+            'given as signs that represent the concentration changes between two measured states. '
+            'Opt-graph computes the networks fitting the observation data by removing (or adding) a minimal number of edges in the given network')
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("networkfile",
                         help="influence graph in SIF format")
     parser.add_argument("observationfiles",
