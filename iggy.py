@@ -23,7 +23,13 @@ from __iggy__ import query, utils, bioquali
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
+    desc = ('Iggy confronts biological networks given as interaction graphs with experimental observations '
+            'given as signs that represent the concentration changes between two measured states. '
+            'Iggy supports the incorporation of uncertain measurements, discovers inconsistencies in data or network, '
+            'applies minimal repairs, and predicts the behavior of unmeasured species. '
+            'In particular, it distinguishes strong predictions (e.g. increase of a node level) and weak predictions '
+            '(e.g., node level increases or remains unchanged).')
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("networkfile",
                         help="influence graph in SIF format")
     parser.add_argument("observationfile",
