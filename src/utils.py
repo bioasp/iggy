@@ -70,7 +70,7 @@ def print_labeling(labelings) :
     count_zero=0
     for l in labelings:
       if l.pred() == "vlabel" :
-	labels.add(c)
+	labels.add(l)
 	if l.arg(2) == '-1' : count_minus+=1
 	if l.arg(2) == '0': count_zero+=1
 	if l.arg(2) == '1': count_plus+=1
