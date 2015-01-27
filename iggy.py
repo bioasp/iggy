@@ -60,8 +60,8 @@ if __name__ == '__main__':
 			help="compute scenfit of the data, default is mcos",
 			action="store_true")
     
-    parser.add_argument('--show_colorings',type=int, default=-1,
-			help="number of colorings to print, default is OFF, 0=all")
+    parser.add_argument('--show_labelings',type=int, default=-1,
+			help="number of labelings to print, default is OFF, 0=all")
 
     parser.add_argument('--show_predictions',
 			help="show predictions",
@@ -163,15 +163,15 @@ if __name__ == '__main__':
 	      oldmic= mic
 
 
-      if args.show_colorings >= 0 :
-	print '\nCompute scenfit colorings...',
-	colorings = query.get_scenfit_colorings(net_with_data, args.show_colorings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+      if args.show_labelings >= 0 :
+	print '\nCompute scenfit labelings...',
+	labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
 	print 'done.'
 	count=0
-	for c in colorings :
+	for l in labelings :
 	  count+=1
-	  print 'Coloring',str(count)+':'
-	  utils.print_coloring(c)
+	  print 'Labeling',str(count)+':'
+	  utils.print_labeling(l)
 
       if args.show_predictions :
 	print '\nCompute predictions under scenfit ...',
@@ -203,15 +203,15 @@ if __name__ == '__main__':
 	      count+=1
 	      oldmic= mic
 
-      if args.show_colorings >= 0 :
-	print '\nCompute mcos colorings...',
-	colorings = query.get_mcos_colorings(net_with_data, args.show_colorings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+      if args.show_labelings >= 0 :
+	print '\nCompute mcos labelings...',
+	labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
 	print 'done.'
 	count=0
-	for c in colorings :
+	for l in labelings :
 	  count+=1
-	  print 'Coloring',str(count)+':'
-	  utils.print_coloring(c)
+	  print 'Labeling',str(count)+':'
+	  utils.print_labeling(l)
 
       if args.show_predictions :
 	print '\nCompute predictions under mcos ...',
