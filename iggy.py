@@ -127,8 +127,8 @@ if __name__ == '__main__':
 	if a.arg(2) == 'notPlus'  : notplus.add(a.arg(1))
       if a.pred() == 'input'      : inputs.add(a.arg(1))
       
-    unobserved = nodes -(plus|minus|notplus| notminus)
-    not_in_model= (plus|minus|notplus|notminus)-nodes
+    unobserved = nodes -(plus|minus|zero|notplus| notminus)
+    not_in_model= (plus|minus|zero|notplus|notminus)-nodes
     print "   inputs:",len(inputs&nodes)," observed +:",len(plus&nodes), " observed -:",len(minus&nodes)," observed 0:",len(zero&nodes)," observed notPlus:",len(notplus&nodes)," observed notMinus:",len(notminus&nodes)," unobserved:",len(unobserved)," not in model:",len(not_in_model)
 
     if args.autoinputs :
