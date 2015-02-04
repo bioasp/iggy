@@ -106,7 +106,7 @@ def get_scenfit_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=T
     opt = solution[0].score[0]
 
     prg = prg + [show_labels_prg, show_err_prg]
-    coptions = str(nm)+' --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
+    coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
     solver2 = GringoClasp(clasp_options=coptions)
     models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
     
@@ -178,7 +178,7 @@ def get_mcos_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True
     opt = solution[0].score[0]
 
     prg = prg + [show_labels_prg, show_rep_prg]
-    coptions = str(nm)+' --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
+    coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
     solver2 = GringoClasp(clasp_options=coptions)
     models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
 
