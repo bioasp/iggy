@@ -16,14 +16,14 @@ Usage
 
 Typical usage is::
 
-	$ iggy.py network.sif observation.obs --show_colorings 10 --show_predictions
+	$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions
 
 For more options you can ask for help as follows::
 
 	$ iggy.py -h 		
 	usage: iggy.py [-h] [--no_zero_constraints]
                [--propagate_unambigious_influences] [--no_founded_constraint]
-               [--autoinputs] [--scenfit] [--show_colorings SHOW_COLORINGS]
+               [--autoinputs] [--scenfit] [--show_labelings SHOW_LABELINGS]
                [--show_predictions]
                networkfile observationfile
 
@@ -45,8 +45,8 @@ For more options you can ask for help as follows::
 	  --autoinputs          compute possible inputs of the network (nodes with
 				indegree 0)
 	  --scenfit             compute scenfit of the data, default is mcos
-	  --show_colorings SHOW_COLORINGS
-				number of colorings to print, default is OFF, 0=all
+	  --show_labelings SHOW_LABELINGS
+				number of labelings to print, default is OFF, 0=all
 	  --show_predictions    show predictions
 
 
