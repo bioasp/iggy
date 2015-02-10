@@ -57,33 +57,40 @@ def print_predictions(predictions) :
     print(' \n   predicted +:',len(pred_plus),end='')
     print(' predicted -:',len(pred_minus),end='')
     print(' predicted 0:',len(pred_zero),end='')
-    print(' predicted notPlus:',len(pred_not_plus),end='')
-    print(' predicted notMinus:',len(pred_not_minus),end='')
-    print(' predicted change:',len(pred_change))
+    print(' predicted NOT +:',len(pred_not_plus),end='')
+    print(' predicted NOT -:',len(pred_not_minus),end='')
+    print(' predicted CHANGE:',len(pred_change))
 
 
 def print_labeling(labelings) :
-    labels = set()
+    labelings = sorted(labelings, key=lambda p: str(p.arg(0)))
+    label_plus = set()
+    label_minus = set()
+    label_zero = set()
     repairs = set()
-    count_plus=0
-    count_minus=0
-    count_zero=0
     for l in labelings:
       if l.pred() == "vlabel" :
-        labels.add(l)
-        if l.arg(2) == '-1' : count_minus+=1
-        if l.arg(2) == '0': count_zero+=1
-        if l.arg(2) == '1': count_plus+=1
+	if l.arg(2) == "1" :
+	  label_plus.add(l.arg(1))
+	if l.arg(2) == "-1" :
+	  label_minus.add(l.arg(1))
+	if l.arg(2) == "0" :
+	  label_zero.add(l.arg(1))
       if l.pred() == "err" :
-        repairs.add(l)
+	repairs.add(l)
       if l.pred() == "rep" :
-        repairs.add(l)
-    for l in labels :
-      print('   ',l.arg(1),'=',l.arg(2))
-    print('\n    labeled +:',count_plus,' labeled -:',count_minus,' labeled 0:',count_zero,'\n')
-    for l in repairs :
-      print('   ',l.arg(0))
+	repairs.add(l)
 
+    for l in label_plus :      print('  ',l,'= +')
+    for l in label_minus :     print('  ',l,'= -')
+    for l in label_zero :      print('  ',l,'= 0')
+    
+    print(' \n   labeled +:',len(label_plus),end='')
+    print(' labeled -:',len(label_minus),end='')
+    print(' labeled 0:',len(label_zero),end='')
+
+    for r in repairs :
+      print('   ',r.arg(0))
 
 def print_repairs(repairs) :
     repair = set()
