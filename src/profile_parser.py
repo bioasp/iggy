@@ -80,6 +80,7 @@ class Parser:
         precedence = ( )
 
         def __init__(self):
+                self.name="noname"
                 self.aux_node_counter=0
                 self.accu = TermSet()
                 self.args = []
@@ -103,41 +104,42 @@ class Parser:
 
         def p_null_assignment(self, t):
                 '''null_assignment : IDENT EQ NULL'''
-                self.accu.add(Term('obs_vlabel', ["gen(\""+t[1]+"\")","0"]))
+                self.accu.add(Term('obs_vlabel', [self.name,"gen(\""+t[1]+"\")","0"]))
         
         def p_plus_assignment(self, t):
                 '''plus_assignment : IDENT EQ PLUS'''
-                self.accu.add(Term('obs_vlabel', ["gen(\""+t[1]+"\")","1"]))
+                self.accu.add(Term('obs_vlabel', [self.name,"gen(\""+t[1]+"\")","1"]))
 
         def p_minus_assignment(self, t):
                 '''minus_assignment : IDENT EQ MINUS'''
-                self.accu.add(Term('obs_vlabel', ["gen(\""+t[1]+"\")","-1"]))
+                self.accu.add(Term('obs_vlabel', [self.name,"gen(\""+t[1]+"\")","-1"]))
 
         def p_notplus_assignment(self, t):
                 '''notplus_assignment : IDENT EQ NOTPLUS'''
-                self.accu.add(Term('obs_vlabel', ["gen(\""+t[1]+"\")","notPlus"]))
+                self.accu.add(Term('obs_vlabel', [self.name,"gen(\""+t[1]+"\")","notPlus"]))
 
         def p_notminus_assignment(self, t):
                 '''notminus_assignment : IDENT EQ NOTMINUS'''
-                self.accu.add(Term('obs_vlabel', ["gen(\""+t[1]+"\")","notMinus"]))
+                self.accu.add(Term('obs_vlabel', [self.name,"gen(\""+t[1]+"\")","notMinus"]))
 
         def p_input_assignment(self, t):
                 '''input_assignment : IDENT EQ INPUT'''
-                self.accu.add(Term('input', ["gen(\""+t[1]+"\")"]))
+                self.accu.add(Term('input', [self.name,"gen(\""+t[1]+"\")"]))
 
         def p_min_assignment(self, t):
                 '''min_assignment : IDENT EQ MIN'''
-                self.accu.add(Term('ismin', ["gen(\""+t[1]+"\")"]))
+                self.accu.add(Term('ismin', [self.name,"gen(\""+t[1]+"\")"]))
 
         def p_max_assignment(self, t):
                 '''max_assignment : IDENT EQ MAX'''
-                self.accu.add(Term('ismax', ["gen(\""+t[1]+"\")"]))
+                self.accu.add(Term('ismax', [self.name,"gen(\""+t[1]+"\")"]))
                 
 
 
         def p_error(self, t):
                 print("Syntax error at '",str(t),"'")
 
-        def parse(self, line):
-                self.parser.parse(line, lexer=self.lexer.lexer)
-                return self.accu
+        def parse(self, line, name):
+          self.parser.name=name
+          self.parser.parse(line, lexer=self.lexer.lexer)
+          return self.accu

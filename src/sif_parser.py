@@ -57,15 +57,13 @@ class Parser:
 	precedence = ( )
 
 	def __init__(self):
-		# dictionary of names
 		self.aux_node_counter=0
-		#self.names = { }
 		self.accu = TermSet()
 		self.args = []
 		self.lexer = Lexer()
 		import pyasp.ply.yacc as yacc
 		#self.parser = yacc.yacc(module=self, tabmodule='calc_parsetab', debugfile="calc_parser.out")
-		self.parser = yacc.yacc(module=self,optimize=1)
+		self.parser = yacc.yacc(module=self,optimize=1,debug=0, write_tables=0)
 
 	def p_statement_expr(self, t):
 		'''statement : node_expression PLUS node_expression 
