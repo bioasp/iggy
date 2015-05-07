@@ -70,16 +70,16 @@ def print_labeling(labelings) :
     repairs = set()
     for l in labelings:
       if l.pred() == "vlabel" :
-	if l.arg(2) == "1" :
-	  label_plus.add(l.arg(1))
-	if l.arg(2) == "-1" :
-	  label_minus.add(l.arg(1))
-	if l.arg(2) == "0" :
-	  label_zero.add(l.arg(1))
+        if l.arg(2) == "1" :
+          label_plus.add(l.arg(1))
+        if l.arg(2) == "-1" :
+          label_minus.add(l.arg(1))
+        if l.arg(2) == "0" :
+          label_zero.add(l.arg(1))
       if l.pred() == "err" :
-	repairs.add(l)
+        repairs.add(l)
       if l.pred() == "rep" :
-	repairs.add(l)
+        repairs.add(l)
 
     for l in label_plus :      print('  ',l,'= +')
     for l in label_minus :     print('  ',l,'= -')
