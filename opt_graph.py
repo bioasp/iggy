@@ -18,7 +18,7 @@
 # -*- coding: utf-8 -*-
 from pyasp.asp import *
 import argparse
-from __iggy__ import query, utils, bioquali
+from __iggy__ import query, utils, parsers
 
 if __name__ == '__main__':
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if FC : print(' all observed changes must be explained by an input')
 
     print('\nReading network',net_string, '...',end='')
-    net = bioquali.readSIFGraph(net_string)
+    net = parsers.readSIFGraph(net_string)
     print('done.')
     activations = set()
     inhibitions = set()
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     MU = TermSet()
     for f in flist :
       exp= os.path.join(obs_dir,f)
-      mu = bioquali.readProfile(exp)
+      mu = parsers.readProfile(exp)
       MU = TermSet(MU.union(mu))
     print('done.')
     print('  ',len(flist),'experiments.')
