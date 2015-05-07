@@ -19,7 +19,7 @@
 import sys
 import argparse
 from pyasp.asp import *
-from __iggy__ import query, utils, bioquali
+from __iggy__ import query, utils, parsers
 
 if __name__ == '__main__':
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     if FC : print(' all observed changes must be explained by an input')
 
     print('\nReading network',net_string, '...',end='')
-    net = bioquali.readSIFGraph(net_string)
+    net = parsers.readSIFGraph(net_string)
     print('done.')
     #edge_counter=0
     activations = set()
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     print("   Nodes:",len(nodes)," Activations:",len(activations)," Inhibitions:",len(inhibitions)," Dual:",len(unspecified))
 
     print('\nReading observations',obs_string, '...',end='')
-    mu = bioquali.readProfile(obs_string)
+    mu = parsers.readProfile(obs_string)
     print('done.')
 
     print('\nChecking observations',obs_string, '...',end='')
