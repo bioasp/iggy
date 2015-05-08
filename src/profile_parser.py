@@ -140,6 +140,7 @@ class Parser:
                 print("Syntax error at '",str(t),"'")
 
         def parse(self, line, name):
-          self.parser.name=name
+          self.name='\"'+name+'\"'
+          #self.parser.name=name
           self.parser.parse(line, lexer=self.lexer.lexer)
           return self.accu
