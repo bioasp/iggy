@@ -33,7 +33,7 @@ class install(_install):
                          
 setup(cmdclass={'install': install},
       name='iggy',
-      version='1.1',
+      version='1.2',
       url='http://bioasp.github.io/iggy/',
       license='GPLv3+',
       description='A tool for consistency based analysis of influence graphs and observed systems behavior.',
@@ -45,6 +45,6 @@ setup(cmdclass={'install': install},
       package_data = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
       scripts = ['iggy.py', 'opt_graph.py'],
       install_requires=[
-        "pyasp == 1.4.0"
+        "pyasp == 1.4.1"
       ]
 )
