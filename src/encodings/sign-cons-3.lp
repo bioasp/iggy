@@ -39,10 +39,10 @@ infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
  
 % levelbound constraints
 % if the initial level is at the minimum it cannot decrease anymore
-:- ismin(X),vlabel(E,X,-1).
+:- ismin(E,X), vlabel(E,X,-1).
 
 % if the initial level is at the maximum it cannot increase anymore
-:- ismax(X),vlabel(E,X,1).
+:- ismax(E,X), vlabel(E,X,1).
  
 
 % effects of a repair

@@ -41,10 +41,10 @@ elabel(U,V,-1) :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), rep(remedge(
  
 % levelbound constraints
 % if the initial level is at the minimum it cannot decrease anymore
-:- ismin(X),vlabel(E,X,-1).
+:- ismin(E,X), vlabel(E,X,-1).
 
 % if the initial level is at the maximum it cannot increase anymore
-:- ismax(X),vlabel(E,X,1). 
+:- ismax(E,X), vlabel(E,X,1). 
  
  
 % effects of a repair
