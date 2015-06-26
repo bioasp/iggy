@@ -91,4 +91,4 @@ Samples
 -------
 
 Sample files available here: demo_data.tar.gz_
-.. _demo_data.tar.gz: http://www.cs.uni-potsdam.de/~sthiele/bioasp/downloads/samples/iggy_demo_data.tar.gz
+.. _demo_data.tar.gz: https://bioasp.github.io/iggy/downloads/demo_data.tar.gz
