@@ -8,7 +8,7 @@ You can install iggy by running::
 
 On Linux the executable scripts can then be found in ``~/.local/bin``
 
-and on MacOS the scripts are under ``/Users/YOURUSERNAME/Library/Python/2.7/bin``.
+and on MacOS the scripts are under ``/Users/YOURUSERNAME/Library/Python/3.2/bin``.
 
 
 Usage
