@@ -7,4 +7,3 @@
 :- vlabel(E,Y,0), infl(E,Y,-1), not infl(E,Y,0), not infl(E,Y,1), not input(E,Y).
 :- vlabel(E,Y,1), infl(E,Y,-1), not infl(E,Y,0), not infl(E,Y,1), not input(E,Y).
 
-

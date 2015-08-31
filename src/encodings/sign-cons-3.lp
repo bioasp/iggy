@@ -29,13 +29,6 @@ elabel(U,V,S) :- edge(U,V), obs_elabel(U,V,S), not error_edge(U,V), not rep(reme
 elabel(U,V,1)  :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), not rep(remedge(U,V,1)), rep(remedge(U,V,-1)).
 elabel(U,V,-1) :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
-% measured variations must be explained
-
-infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
-
- :- vlabel(E,V, 1), not infl(E,V,1),  not input(E,V).
- :- vlabel(E,V,-1), not infl(E,V,-1), not input(E,V).
- 
  
 % levelbound constraints
 % if the initial level is at the minimum it cannot decrease anymore
@@ -44,9 +37,4 @@ infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
 % if the initial level is at the maximum it cannot increase anymore
 :- ismax(E,X), vlabel(E,X,1).
  
-
-% effects of a repair
-infl(E,V,S) :- rep(new_influence(E,V,S)).
-founded(E,X) :- vlabel(E,X,S), rep(new_influence(E,X,S)).
-
 #hide.

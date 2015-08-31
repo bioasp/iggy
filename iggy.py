@@ -31,40 +31,51 @@ if __name__ == '__main__':
             '(e.g., node level increases or remains unchanged).')
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument("networkfile",
-                        help="influence graph in SIF format")
+		    help="influence graph in SIF format")
     parser.add_argument("observationfile",
-                        help="observations in bioquali format")
+		    help="observations in bioquali format")
 
+
+    parser.add_argument('--no_steady_state',
+		    help="use steady state assumption, default is ON",
+		    action="store_true")
+
+    
     parser.add_argument('--no_zero_constraints',
-                        help="turn constraints on zero variations OFF, default is ON",
-                        action="store_true")
+		    help="turn constraints on zero variations OFF, default is ON",
+		    action="store_true")
 
     parser.add_argument('--propagate_unambigious_influences',
-                        help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is ON",
-                        action="store_true")
+		    help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is ON",
+		    action="store_true")
 
-    parser.add_argument('--no_founded_constraint',
-                        help="turn constraints OFF that every variation must be explained by an input, default is ON",
-                        action="store_true")
+    parser.add_argument('--no_founded_some_path',
+		    help="turn constraints OFF that every variation must be explained by an input, default is ON",
+		    action="store_true")
+
+    parser.add_argument('--founded_shortest_elem_path',
+		    help="turn constraints ON that every variation must be explained by a shortest elementary path from an input, default is OFF",
+		    action="store_true")
+
 
     parser.add_argument('--mics',
-                        help="compute minimal inconsistent cores",
-                        action="store_true")
+		    help="compute minimal inconsistent cores",
+		    action="store_true")
 
     parser.add_argument('--autoinputs',
-                        help="compute possible inputs of the network (nodes with indegree 0)",
-                        action="store_true")
+		    help="compute possible inputs of the network (nodes with indegree 0)",
+		    action="store_true")
 
     parser.add_argument('--scenfit',
-                        help="compute scenfit of the data, default is mcos",
-                        action="store_true")
+		    help="compute scenfit of the data, default is mcos",
+		    action="store_true")
 
     parser.add_argument('--show_labelings',type=int, default=-1,
-                        help="number of labelings to print, default is OFF, 0=all")
+		    help="number of labelings to print, default is OFF, 0=all")
 
     parser.add_argument('--show_predictions',
-                        help="show predictions",
-                        action="store_true")
+		    help="show predictions",
+		    action="store_true")
 
 
     args = parser.parse_args()
@@ -72,14 +83,18 @@ if __name__ == '__main__':
     net_string = args.networkfile
     obs_string = args.observationfile
 
-    LC =args.propagate_unambigious_influences
-    CZ= not (args.no_zero_constraints)
-    FC= not (args.no_founded_constraint)
+    SS    = not (args.no_steady_state) 
+    LC    = args.propagate_unambigious_influences
+    CZ    = not (args.no_zero_constraints)
+    FC   = not (args.no_founded_some_path)
+    FSEPC = args.founded_shortest_elem_path
 
-    print(' all observed changes must be explained by an predecessor')
-    if LC : print(' unambigious influences propagate')
-    if CZ : print(' no-change observations must be explained')
-    if FC : print(' all observed changes must be explained by an input')
+
+    if SS    : print(' using steady state assumption, all observed changes must be explained by an predecessor')
+    if LC    : print(' unambigious influences propagate')
+    if CZ    : print(' no-change observations must be explained')
+    if FC    : print(' all observed changes must be explained by an input')
+    if FSEPC : print(' all observed changes must be explained by a shortest elementary path from an input') 
 
     print('\nReading network',net_string, '...',end='')
     net = parsers.readSIFGraph(net_string)
@@ -141,7 +156,7 @@ if __name__ == '__main__':
 
     if args.scenfit :
       print('\nComputing scenfit of network and data ...',end='')
-      scenfit = query.get_scenfit(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+      scenfit = query.get_scenfit(net_with_data,SS, LC, CZ, FC, FSEPC)
       print('done.')
       if scenfit == 0 : print("   The network and data are consistent: scenfit = 0.")
       else:
@@ -150,7 +165,7 @@ if __name__ == '__main__':
         if args.mics:
           print('\nComputing minimal inconsistent cores (mic\'s) ...',end='')
           sys.stdout.flush()
-          mics = query.get_minimal_inconsistent_cores(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+          mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, FSEPC)
           print('done.')
           count = 1
           oldmic = 0
@@ -164,7 +179,7 @@ if __name__ == '__main__':
 
       if args.show_labelings >= 0 :
         print('\nCompute scenfit labelings...',end='')
-        labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, FSEPC)
         print('done.')
         count=0
         for l in labelings :
@@ -174,7 +189,7 @@ if __name__ == '__main__':
 
       if args.show_predictions :
         print('\nCompute predictions under scenfit ...',end='')
-        predictions = query.get_predictions_under_scenfit(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        predictions = query.get_predictions_under_scenfit(net_with_data, SS, LC, CZ, FC, FSEPC)
         print('done.')
         utils.print_predictions(predictions)
 
@@ -182,7 +197,7 @@ if __name__ == '__main__':
 
     if not args.scenfit :
       print('\nComputing mcos of network and data ...',end='')
-      mcos = query.get_mcos(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+      mcos = query.get_mcos(net_with_data, SS, LC, CZ, FC, FSEPC)
       print('done.')
       if mcos == 0 : print("   The network and data are consistent: mcos = 0.")
       else:
@@ -191,7 +206,7 @@ if __name__ == '__main__':
         if args.mics:
           print('\nComputing minimal inconsistent cores (mic\'s) ...',end='')
           sys.stdout.flush()
-          mics = query.get_minimal_inconsistent_cores(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+          mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, FSEPC)
           print('done.')
           count = 1
           oldmic = 0
@@ -204,7 +219,7 @@ if __name__ == '__main__':
 
       if args.show_labelings >= 0 :
         print('\nCompute mcos labelings...',end='')
-        labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, FSEPC)
         print('done.')
         count=0
         for l in labelings :
@@ -214,7 +229,7 @@ if __name__ == '__main__':
 
       if args.show_predictions :
         print('\nCompute predictions under mcos ...',end='')
-        predictions = query.get_predictions_under_mcos(net_with_data, LucaConstraint=LC, ConstrainedZero=CZ, FoundedConstraint=FC)
+        predictions = query.get_predictions_under_mcos(net_with_data, SS, LC, CZ, FC, FSEPC)
         print('done.')
         utils.print_predictions(predictions)
 

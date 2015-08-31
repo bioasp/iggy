@@ -30,9 +30,12 @@ contradictory_obs_prg =	root +'/encodings/contradictory_obs.lp'
 guess_inputs_prg =     	root + '/encodings/guess_inputs.lp'
 
 sign_cons_prg   =      	root + '/encodings/sign-cons-3.lp'
+
+steady_state_prg =      root + '/encodings/steady_state.lp'
 constr_luca_prg =      	root + '/encodings/luca_constraints.lp'
 constr_zero_prg =      	root + '/encodings/constrained_zero.lp'
 founded_prg     =      	root + '/encodings/founded_constraints.lp'
+founded_sep_prg =       root + '/encodings/founded_shortest_elem_path.lp'
 
 keep_inputs_prg =      	root + '/encodings/keep_inputs_constraint.lp'
 keep_obs_prg    =      	root + '/encodings/keep_observations_constraint.lp'
@@ -70,13 +73,15 @@ scenfit = [error_measure_prg, min_weighted_error_prg, keep_inputs_prg]
 mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
-def get_scenfit(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_scenfit(instance, SS, LC, CZ, FC, FSEPC):
     '''returns the scenfit of data and model described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + scenfit + [inst]
@@ -88,15 +93,17 @@ def get_scenfit(instance, LucaConstraint=False, ConstrainedZero=True, FoundedCon
     os.unlink(inst)
     return opt
     
-def get_scenfit_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, FSEPC):
     '''
     returns a list of atmost [nm] ``TermSet`` representing scenfit labelings to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
-    
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
+   
     inst = instance.to_file()
     prg = sem + scenfit + [inst]
     coptions = '--opt-strategy=5'
@@ -113,15 +120,15 @@ def get_scenfit_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=T
     os.unlink(inst)
     return models
      
-def get_predictions_under_scenfit(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_predictions_under_scenfit(instance, SS, LC, CZ, FC, FSEPC):
     '''
-    returns True if there exists a consistent extension
-    to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + scenfit + [inst]
@@ -139,15 +146,15 @@ def get_predictions_under_scenfit(instance, LucaConstraint=False, ConstrainedZer
     os.unlink(inst)    
     return models[0]
 
-def get_mcos(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_mcos(instance, SS, LC, CZ, FC, FSEPC):
     '''
-    returns True if there exists a consistent extension
-    to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + mcos + [inst]
@@ -159,15 +166,15 @@ def get_mcos(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstr
     os.unlink(inst) 
     return opt
 
-def get_mcos_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, FSEPC):
     '''
-    returns True if there exists a consistent extension
-    to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst =   instance.to_file()
     prg = sem + mcos + [inst]
@@ -185,15 +192,15 @@ def get_mcos_labelings(instance,nm=1, LucaConstraint=False, ConstrainedZero=True
     os.unlink(inst) 
     return models
 
-def get_predictions_under_mcos(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_predictions_under_mcos(instance, SS, LC, CZ, FC, FSEPC):
     '''
-    returns ``TermSet`` if there exists a consistent extension
-    to the system described by the ``TermSet`` object [instance].
     '''
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + mcos + [inst]
@@ -212,12 +219,14 @@ def get_predictions_under_mcos(instance, LucaConstraint=False, ConstrainedZero=T
     return models[0]
 
 
-def get_opt_remove_edges(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_opt_remove_edges(instance, SS, LC, CZ, FC, FSEPC):
 
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
@@ -231,12 +240,14 @@ def get_opt_remove_edges(instance, LucaConstraint=False, ConstrainedZero=True, F
     return (fit,repairs)
 
 
-def get_opt_repairs_remove_edges(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, FSEPC):
   
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()
     prg = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
@@ -255,12 +266,14 @@ def get_opt_repairs_remove_edges(instance,nm=1, LucaConstraint=False, Constraine
     os.unlink(inst)
     return models
     
-def get_opt_add_remove_edges(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, FSEPC):
 
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()    
     prg = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
@@ -273,12 +286,14 @@ def get_opt_add_remove_edges(instance, LucaConstraint=False, ConstrainedZero=Tru
     os.unlink(inst)
     return (fit,repairs)
 
-def get_opt_repairs_add_remove_edges(instance,nm=1, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,FSEPC):
 
     sem=[sign_cons_prg]
-    if LucaConstraint : sem.append(constr_luca_prg)
-    if ConstrainedZero : sem.append(constr_zero_prg)
-    if FoundedConstraint : sem.append(founded_prg)
+    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(constr_luca_prg)
+    if CZ   : sem.append(constr_zero_prg)
+    if FC   : sem.append(founded_prg)
+    if FSEPC: sem.append(founded_sep_prg)
 
     inst = instance.to_file()    
     prg = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
@@ -297,19 +312,17 @@ def get_opt_repairs_add_remove_edges(instance,nm=1, LucaConstraint=False, Constr
     os.unlink(inst)
     return models
     
-def get_minimal_inconsistent_cores(instance, LucaConstraint=False, ConstrainedZero=True, FoundedConstraint=True):
+def get_minimal_inconsistent_cores(instance, SS, LC, CZ, FC, FESPC):
     '''
-    returns a list containing
-    [nmodels] ``TermSet`` objects representing subset minimal inconsistent cores of the system
-    described by the ``TermSet`` [instance]. The list [exclude] should contain ``TermSet`` objects
-    representing (maybe partial) solutions that are to be avoided. If [nmodels] equals [0]
-    then the list contain all feasible models.
     '''
 
     sem=[mics_prg, heu_prg]
-    if LucaConstraint : sem.append(mics_constr_luca_prg)
-    if ConstrainedZero : sem.append(mics_constr_zero_prg)
-    #if FoundedConstraint : sem.append(mics_founded_prg)
+#    if SS   : sem.append(steady_state_prg)
+    if LC   : sem.append(mics_constr_luca_prg)
+    if CZ   : sem.append(mics_constr_zero_prg)
+#    if FC   : sem.append(mics_founded_prg)
+#    if FSEPC: sem.append(founded_sep_prg)
+
 
     inst = instance.to_file()   
     prg = sem+ [inst]
