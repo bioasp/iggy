@@ -35,11 +35,6 @@ if __name__ == '__main__':
     parser.add_argument("observationfile",
 		    help="observations in bioquali format")
 
-
-    parser.add_argument('--no_steady_state',
-		    help="use steady state assumption, default is ON",
-		    action="store_true")
-
     
     parser.add_argument('--no_zero_constraints',
 		    help="turn constraints on zero variations OFF, default is ON",
@@ -49,14 +44,18 @@ if __name__ == '__main__':
 		    help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is ON",
 		    action="store_true")
 
-    parser.add_argument('--no_founded_some_path',
-		    help="turn constraints OFF that every variation must be explained by an input, default is ON",
+    parser.add_argument('--no_founded_constraints',
+		    help="turn constraints OFF that every variation must be founded in an input, default is ON",
 		    action="store_true")
 
-    parser.add_argument('--founded_shortest_elem_path',
-		    help="turn constraints ON that every variation must be explained by a shortest elementary path from an input, default is OFF",
+    parser.add_argument('--no_steady_state',
+		    help="use steady state assumption, default is ON",
 		    action="store_true")
 
+    parser.add_argument('--some_path',
+		    help="turn constraints OFF that for variation there must exist a elementary path from the input, default is ON.
+		          insteady only some path must exist to justify a variation.",
+		    action="store_true")
 
     parser.add_argument('--mics',
 		    help="compute minimal inconsistent cores",
@@ -83,18 +82,23 @@ if __name__ == '__main__':
     net_string = args.networkfile
     obs_string = args.observationfile
 
-    SS    = not (args.no_steady_state) 
+    SS    = not (args.no_steady_state)
     LC    = args.propagate_unambigious_influences
     CZ    = not (args.no_zero_constraints)
-    FC   = not (args.no_founded_some_path)
-    FSEPC = args.founded_shortest_elem_path
-
+    FC    = not (args.no_founded_some_path)
+    SP    = args.some_path
 
     if SS    : print(' using steady state assumption, all observed changes must be explained by an predecessor')
-    if LC    : print(' unambigious influences propagate')
-    if CZ    : print(' no-change observations must be explained')
-    if FC    : print(' all observed changes must be explained by an input')
-    if FSEPC : print(' all observed changes must be explained by a shortest elementary path from an input') 
+      if LC  : print(' unambigious influences propagate')
+      if CZ  : print(' no-change observations must be explained')
+      if FC  : print(' all observed changes must be explained by an input')
+      if SP  : print(' using somepath')
+    else     : print(' Not using steady state assumption,  observed changes might be transient')
+      if LC  : print(' unambigious influences propagate')
+      if CZ  : print(' no-change observations must be explained')
+      if FC  : print(' all observed changes must be explained by an input')
+      if SP  : print(' using somepath')
+
 
     print('\nReading network',net_string, '...',end='')
     net = parsers.readSIFGraph(net_string)

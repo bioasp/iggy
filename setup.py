@@ -33,7 +33,7 @@ class install(_install):
                          
 setup(cmdclass={'install': install},
       name='iggy',
-      version='1.2',
+      version='1.3',
       url='http://bioasp.github.io/iggy/',
       license='GPLv3+',
       description='A tool for consistency based analysis of influence graphs and observed systems behavior.',
