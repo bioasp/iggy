@@ -69,7 +69,7 @@ if __name__ == '__main__':
   obs_dir = args.observationfiles
 
 
-  LC  = args.propagate_unambigious_influences
+  LC  = args.propagate_unambiguous_influences
   CZ  = not (args.no_zero_constraints)
   FC  = not (args.no_founded_constraints)
   SP  = args.depmat_some_path
