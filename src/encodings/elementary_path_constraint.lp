@@ -74,17 +74,17 @@ neg_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
 	0==@member(Y,P), D<C, countvertices(C).
 
 % Y gets a positive influence
-getspos(E,Y) :- input(E,X, 1), vertex(Y), pos_path(E,X,Y,_,P).
-getspos(E,Y) :- input(E,X,-1), vertex(Y), neg_path(E,X,Y,_,P).
+getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_path(E,X,Y,_,P).
+getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_path(E,X,Y,_,P).
 
 % Y gets a negative influence
-getsneg(E,Y) :- input(E,X, 1), vertex(Y), neg_path(E,X,Y,_,P).
-getsneg(E,Y) :- input(E,X,-1), vertex(Y), pos_path(E,X,Y,_,P).
+getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_path(E,X,Y,_,P).
+getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_path(E,X,Y,_,P).
 
 
 % new inputs through repair
-input(E,"unknownup",1) :- rep(new_influence(E,X,S)).
-pos_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X,1), rep(new_influence(E,X,1)).
+input(E,"unknownup") :- rep(new_influence(E,X,S)).
+pos_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X, 1), rep(new_influence(E,X,1)).
 neg_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X,-1), rep(new_influence(E,X,-1)).
 
 

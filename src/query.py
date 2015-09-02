@@ -19,295 +19,307 @@
 
 """
 This module contains the queries which can be asked to the model and data.
-
 """
+
 import os
 import tempfile
 from pyasp.asp import *
 
 root = __file__.rsplit('/', 1)[0]
-contradictory_obs_prg =	root +'/encodings/contradictory_obs.lp'
-guess_inputs_prg =     	root + '/encodings/guess_inputs.lp'
+contradictory_obs_prg   = root + '/encodings/contradictory_obs.lp'
+guess_inputs_prg        = root + '/encodings/guess_inputs.lp'
 
-sign_cons_prg   =      	root + '/encodings/sign-cons-3.lp'
+sign_cons_prg           = root + '/encodings/sign-cons-3.lp'
 
-steady_state_prg =      root + '/encodings/steady_state.lp'
-constr_luca_prg =      	root + '/encodings/luca_constraints.lp'
-constr_zero_prg =      	root + '/encodings/constrained_zero.lp'
-founded_prg     =      	root + '/encodings/founded_constraints.lp'
-founded_sep_prg =       root + '/encodings/founded_shortest_elem_path.lp'
+steady_state_prg        = root + '/encodings/steady_state.lp'
+constr_luca_prg         = root + '/encodings/luca_constraints.lp'
+constr_zero_prg         = root + '/encodings/constrained_zero.lp'
+founded_prg             = root + '/encodings/founded_constraints.lp'
 
-keep_inputs_prg =      	root + '/encodings/keep_inputs_constraint.lp'
-keep_obs_prg    =      	root + '/encodings/keep_observations_constraint.lp'
+elem_path_prg           = root + '/encodings/elementary_path_constraint.lp'
+some_path_prg           = root + '/encodings/path_constraint.lp'
 
-error_measure_prg      =  root + '/encodings/error_measure.lp'
-min_weighted_error_prg =  root + '/encodings/minimize_weighted_error.lp'
+keep_inputs_prg         = root + '/encodings/keep_inputs_constraint.lp'
+keep_obs_prg            = root + '/encodings/keep_observations_constraint.lp'
+
+error_measure_prg       = root + '/encodings/error_measure.lp'
+min_weighted_error_prg  = root + '/encodings/minimize_weighted_error.lp'
 
 add_influence_prg       = root + '/encodings/add_influence.lp'
 min_added_influence_prg = root + '/encodings/minimize_added_influnces.lp'
 
-add_edges_prg      =      root + '/encodings/add_edges.lp'
-min_added_edges_prg =     root + '/encodings/minimize_added_edges.lp'
+add_edges_prg           = root + '/encodings/add_edges.lp'
+min_added_edges_prg     = root + '/encodings/minimize_added_edges.lp'
 
-remove_edges_prg      =   root + '/encodings/remove_edges.lp'
-max_removed_edges_prg =   root + '/encodings/maximize_removed_edges.lp'
-min_removed_edges_prg =   root + '/encodings/minimize_removed_edges.lp'
+remove_edges_prg        = root + '/encodings/remove_edges.lp'
+max_removed_edges_prg   = root + '/encodings/maximize_removed_edges.lp'
+min_removed_edges_prg   = root + '/encodings/minimize_removed_edges.lp'
 
-min_repairs_prg =         root + '/encodings/minimize_repairs.lp'
-
-
-mics_prg =		  root + '/encodings/mics.lp'
-mics_constr_luca_prg =    root + '/encodings/mics_luca_constraints.lp'
-mics_constr_zero_prg =    root + '/encodings/mics_constrained_zero.lp'
-mics_founded_prg     =    root + '/encodings/mics_founded_constraints.lp'
+min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
 
 
-heu_prg =	          root + '/encodings/heuristic.lp'
+mics_prg                = root + '/encodings/mics.lp'
+mics_constr_luca_prg    = root + '/encodings/mics_luca_constraints.lp'
+mics_constr_zero_prg    = root + '/encodings/mics_constrained_zero.lp'
+mics_founded_prg        = root + '/encodings/mics_founded_constraints.lp'
 
-show_pred_prg =        root + '/encodings/show_predictions.lp'
-show_labels_prg =      root + '/encodings/show_vlabels.lp'
-show_err_prg =         root + '/encodings/show_errors.lp'
-show_rep_prg =         root + '/encodings/show_repairs.lp'
+
+heu_prg                 = root + '/encodings/heuristic.lp'
+
+show_pred_prg           = root + '/encodings/show_predictions.lp'
+show_labels_prg         = root + '/encodings/show_vlabels.lp'
+show_err_prg            = root + '/encodings/show_errors.lp'
+show_rep_prg            = root + '/encodings/show_repairs.lp'
 
 scenfit = [error_measure_prg, min_weighted_error_prg, keep_inputs_prg]
 mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
-def get_scenfit(instance, SS, LC, CZ, FC, FSEPC):
+def get_scenfit(instance, SS, LC, CZ, FC, EP, SP):
     '''returns the scenfit of data and model described by the ``TermSet`` object [instance].
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + scenfit + [inst]
+    inst     = instance.to_file()
+    prg      = sem + scenfit + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
     os.unlink(inst)
     return opt
     
-def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, FSEPC):
+def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
     '''
     returns a list of atmost [nm] ``TermSet`` representing scenfit labelings to the system described by the ``TermSet`` object [instance].
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
    
-    inst = instance.to_file()
-    prg = sem + scenfit + [inst]
+    inst     = instance.to_file()
+    prg      = sem + scenfit + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
 
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
-    prg = prg + [show_labels_prg, show_err_prg]
+    prg      = prg + [show_labels_prg, show_err_prg]
     coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
     
     os.unlink(inst)
     return models
      
-def get_predictions_under_scenfit(instance, SS, LC, CZ, FC, FSEPC):
+def get_predictions_under_scenfit(instance, SS, LC, CZ, FC, EP, SP):
     '''
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + scenfit + [inst]
+    inst     = instance.to_file()
+    prg      = sem + scenfit + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
 
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
-    prg = prg + [show_pred_prg]
+    prg      = prg + [show_pred_prg]
     coptions = '--opt-strategy=5 --opt-mode=optN --enum-mode=cautious --opt-bound='+str(opt)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
 
     os.unlink(inst)    
     return models[0]
 
-def get_mcos(instance, SS, LC, CZ, FC, FSEPC):
+def get_mcos(instance, SS, LC, CZ, FC, EP, SP):
     '''
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + mcos + [inst]
+    inst     = instance.to_file()
+    prg      = sem + mcos + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
     os.unlink(inst) 
     return opt
 
-def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, FSEPC):
+def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
     '''
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst =   instance.to_file()
-    prg = sem + mcos + [inst]
+    inst     =   instance.to_file()
+    prg      = sem + mcos + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
 
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
-    prg = prg + [show_labels_prg, show_rep_prg]
+    prg      = prg + [show_labels_prg, show_rep_prg]
     coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(opt)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
 
     os.unlink(inst) 
     return models
 
-def get_predictions_under_mcos(instance, SS, LC, CZ, FC, FSEPC):
+def get_predictions_under_mcos(instance, SS, LC, CZ, FC, EP, SP):
     '''
     '''
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + mcos + [inst]
+    inst     = instance.to_file()
+    prg      = sem + mcos + [inst]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
 
-    opt = solution[0].score[0]
+    opt      = solution[0].score[0]
 
-    prg = prg + [show_pred_prg]
+    prg      = prg + [show_pred_prg]
     coptions = '--opt-strategy=5 --opt-mode=optN --enum-mode=cautious --opt-bound='+str(opt)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
 
     os.unlink(inst)
     return models[0]
 
 
-def get_opt_remove_edges(instance, SS, LC, CZ, FC, FSEPC):
+def get_opt_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
 
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
+    inst     = instance.to_file()
+    prg      = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    fit = solution[0].score[0]
-    repairs = solution[0].score[1]
+    fit      = solution[0].score[0]
+    repairs  = solution[0].score[1]
 
     os.unlink(inst)
     return (fit,repairs)
 
 
-def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, FSEPC):
+def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
   
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()
-    prg = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
+    inst     = instance.to_file()
+    prg      = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
 
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    fit = solution[0].score[0]
-    repairs = solution[0].score[1]
+    fit      = solution[0].score[0]
+    repairs  = solution[0].score[1]
 
-    prg = prg + [show_rep_prg]
+    prg      = prg + [show_rep_prg]
     coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
 
     os.unlink(inst)
     return models
     
-def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, FSEPC):
+def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
 
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
-    inst = instance.to_file()    
-    prg = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
+    inst     = instance.to_file()    
+    prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    fit = solution[0].score[0]
-    repairs = solution[0].score[1]
+    fit      = solution[0].score[0]
+    repairs  = solution[0].score[1]
 
     os.unlink(inst)
     return (fit,repairs)
 
-def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,FSEPC):
+def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,EP, SP):
 
-    sem=[sign_cons_prg]
-    if SS   : sem.append(steady_state_prg)
-    if LC   : sem.append(constr_luca_prg)
-    if CZ   : sem.append(constr_zero_prg)
-    if FC   : sem.append(founded_prg)
-    if FSEPC: sem.append(founded_sep_prg)
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
 
     inst = instance.to_file()    
-    prg = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
+    prg  = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
 
     coptions = '--opt-strategy=5'
-    solver = GringoClasp(clasp_options=coptions)
+    solver   = GringoClasp(clasp_options=coptions)
     solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    fit = solution[0].score[0]
-    repairs = solution[0].score[1]
+    fit      = solution[0].score[0]
+    repairs  = solution[0].score[1]
 
-    prg = prg + [show_rep_prg]
+    prg      = prg + [show_rep_prg]
     coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
-    solver2 = GringoClasp(clasp_options=coptions)
-    models = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+    solver2  = GringoClasp(clasp_options=coptions)
+    models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
 
     os.unlink(inst)
     return models
@@ -315,28 +327,25 @@ def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,FSEPC):
 def get_minimal_inconsistent_cores(instance, SS, LC, CZ, FC, FESPC):
     '''
     '''
-
-    sem=[mics_prg, heu_prg]
+    sem = [mics_prg, heu_prg]
 #    if SS   : sem.append(steady_state_prg)
     if LC   : sem.append(mics_constr_luca_prg)
     if CZ   : sem.append(mics_constr_zero_prg)
 #    if FC   : sem.append(mics_founded_prg)
-#    if FSEPC: sem.append(founded_sep_prg)
 
-
-    inst = instance.to_file()   
-    prg = sem+ [inst]
-    coptions='0 --dom-mod=6 --heu=Domain --enum-mode=record'
-    solver = GringoClasp(clasp_options=coptions)
-    models = solver.run(prg,collapseTerms=True, collapseAtoms=False)
+    inst     = instance.to_file()   
+    prg      = sem+ [inst]
+    coptions = '0 --dom-mod=6 --heu=Domain --enum-mode=record'
+    solver   = GringoClasp(clasp_options=coptions)
+    models   = solver.run(prg,collapseTerms=True, collapseAtoms=False)
 
     os.unlink(inst)    
     return models
 
 def guess_inputs(instance):
 
-    inst = instance.to_file()   
-    prg = [ guess_inputs_prg, inst ]
+    inst   = instance.to_file()   
+    prg    = [ guess_inputs_prg, inst ]
     solver = GringoClasp()
     models = solver.run(prg, collapseTerms=True, collapseAtoms=False)
     os.unlink(inst)
@@ -346,8 +355,8 @@ def guess_inputs(instance):
 
 def get_contradictory_obs(instance):
 
-    inst = instance.to_file()
-    prg = [ contradictory_obs_prg, inst ]
+    inst   = instance.to_file()
+    prg    = [ contradictory_obs_prg, inst ]
     solver = GringoClasp()
     models = solver.run(prg, collapseTerms=True, collapseAtoms=False)
     os.unlink(inst)
@@ -356,8 +365,8 @@ def get_contradictory_obs(instance):
     return models[0]
 
 def get_reductions(instance):
-    inst = instance.to_file()
-    prg = [ reduction_prg, inst ]
+    inst   = instance.to_file()
+    prg    = [ reduction_prg, inst ]
     solver = GringoClasp()
     models = solver.run(prg,0)
     os.unlink(inst)
@@ -365,4 +374,3 @@ def get_reductions(instance):
     return models[0]
 
 
-    

@@ -51,8 +51,7 @@ pos_path(E,gen(X),gen(Y)) :-
        	vertex(gen(Y)).
 pos_path(E,X,gen(Y))    :-
        	pos_path(E,X,Z), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)).     
-                          
+       	vertex(gen(Y)).                               
 pos_path(E,X,gen(Y))    :-
        	neg_path(E,X,Z), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
        	vertex(gen(Y)).
@@ -70,18 +69,17 @@ neg_path(E,X,gen(Y))    :-
        	vertex(gen(Y)).
 
 % new inputs through repair
-input(E,"unknownup",1) :- rep(new_influence(E,X,S)).
-pos_path(E,"unknownup",X) :- vlabel(E,X,1), rep(new_influence(E,X,1)).
-neg_path(E,"unknownup",X) :- vlabel(E,X,-1), rep(new_influence(E,X,-1)).
-
+input(E,"unknownup") :- rep(new_influence(E,X,S)).
+pos_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X, 1), rep(new_influence(E,X,1)).
+neg_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X,-1), rep(new_influence(E,X,-1)).
 
 % Y gets a positive influence
-getspos(E,Y) :- input(E,X, 1), vertex(Y), pos_path(E,X,Y).
-getspos(E,Y) :- input(E,X,-1), vertex(Y), neg_path(E,X,Y).
+getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_path(E,X,Y).
+getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_path(E,X,Y).
 
 % Y gets a negative influence
-getsneg(E,Y) :- input(E,X, 1), vertex(Y), neg_path(E,X,Y).
-getsneg(E,Y) :- input(E,X,-1), vertex(Y), pos_path(E,X,Y).
+getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_path(E,X,Y).
+getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_path(E,X,Y).
 
 
 % labels must be consistent with depmat
