@@ -111,7 +111,7 @@ if __name__ == '__main__':
     if CZ  : print(' * No-change observations must be explained.')
     if FC  : print(' * All observed changes must be explained by an input.')
 
-  print('\nReading network',net_string, '...',end='')
+  print('\nReading network',net_string, '... ',end='')
   net = parsers.readSIFGraph(net_string)
   print('done.')
 
@@ -132,12 +132,12 @@ if __name__ == '__main__':
            " Dual:", len(unspecified))
 
 
-  print('\nReading observations',obs_string, '...',end='')
+  print('\nReading observations',obs_string, '... ',end='')
   mu = parsers.readProfile(obs_string)
   print('done.')
 
 
-  print('\nChecking observations',obs_string, '...',end='')
+  print('\nChecking observations',obs_string, '... ',end='')
   contradictions = query.get_contradictory_obs(mu)
   print('done.')
   if len(contradictions) == 0 : print('   Observations are consistent.')
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
 
   if args.autoinputs :
-    print('\nComputing input nodes ...',end='')
+    print('\nComputing input nodes ... ',end='')
     inputs = query.guess_inputs(net)
     net    = TermSet(net.union(inputs))
     print('done.')
@@ -189,7 +189,7 @@ if __name__ == '__main__':
 
 
   if args.scenfit :
-    print('\nComputing scenfit of network and data ...',end='')
+    print('\nComputing scenfit of network and data ... ',end='')
     scenfit = query.get_scenfit(net_with_data,SS, LC, CZ, FC, EP, SP)
     print('done.')
     if scenfit == 0 : print("   The network and data are consistent: scenfit = 0.")
@@ -197,7 +197,7 @@ if __name__ == '__main__':
       print("   The network and data are inconsistent: scenfit = ",str(scenfit),'.',sep='')
 
       if args.mics:
-        print('\nComputing minimal inconsistent cores (mic\'s) ...',end='')
+        print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
         mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, EP, SP)
         print('done.')
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
 
     if args.show_labelings >= 0 :
-      print('\nCompute scenfit labelings...',end='')
+      print('\nCompute scenfit labelings ... ',end='')
       labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, EP, SP)
       print('done.')
       count=0
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         utils.print_labeling(l)
 
     if args.show_predictions :
-      print('\nCompute predictions under scenfit ...',end='')
+      print('\nCompute predictions under scenfit ... ',end='')
       predictions = query.get_predictions_under_scenfit(net_with_data, SS, LC, CZ, FC, EP, SP)
       print('done.')
       utils.print_predictions(predictions)
@@ -230,7 +230,7 @@ if __name__ == '__main__':
 
 
   if not args.scenfit :
-    print('\nComputing mcos of network and data ...',end='')
+    print('\nComputing mcos of network and data ... ',end='')
     mcos = query.get_mcos(net_with_data, SS, LC, CZ, FC, EP, SP)
     print('done.')
     if mcos == 0 : print("   The network and data are consistent: mcos = 0.")
@@ -238,7 +238,7 @@ if __name__ == '__main__':
       print("   The network and data are inconsistent: mcos = ",str(mcos),'.',sep='')
 
       if args.mics:
-        print('\nComputing minimal inconsistent cores (mic\'s) ...',end='')
+        print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
         mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, EP, SP)
         print('done.')
@@ -252,7 +252,7 @@ if __name__ == '__main__':
             oldmic = mic
 
     if args.show_labelings >= 0 :
-      print('\nCompute mcos labelings...',end='')
+      print('\nCompute mcos labelings ... ',end='')
       labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, EP, SP)
       print('done.')
       count = 0
@@ -262,7 +262,7 @@ if __name__ == '__main__':
         utils.print_labeling(l)
 
     if args.show_predictions :
-      print('\nCompute predictions under mcos ...',end='')
+      print('\nCompute predictions under mcos ... ',end='')
       predictions = query.get_predictions_under_mcos(net_with_data, SS, LC, CZ, FC, EP, SP)
       print('done.')
       utils.print_predictions(predictions)
