@@ -121,14 +121,13 @@ if __name__ == '__main__':
 
 
   flist = os.listdir(obs_dir)
-  print('\nReading',len(flist),'observations from',obs_dir,'... ',end='')
+  print('\nReading',len(flist),'observation sets from',obs_dir,'... ',end='')
   MU = TermSet()
   for f in flist :
     exp = os.path.join(obs_dir,f)
     mu  = parsers.readProfile(exp)
     MU  = TermSet(MU.union(mu))
   print('done.')
-  print('  ',len(flist),'experiments.')
 
   print('\nChecking observations ... ',end='')
   contradictions = query.get_contradictory_obs(MU)
