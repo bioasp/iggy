@@ -41,7 +41,7 @@ if __name__ == '__main__':
     help="turn constraints on zero variations OFF, default is ON",
     action="store_true")
 
-  parser.add_argument('--propagate_unambigious_influences',
+  parser.add_argument('--propagate_unambiguous_influences',
     help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is OFF",
     action="store_true")
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
   if not (SP|EP):
     print(' * Using steady state assumption, all observed changes must be explained by an predecessor.')
     SS = True
-    if LC  : print(' * Unambigious influences must propagate.')
+    if LC  : print(' * Unambiguous influences must propagate.')
     if CZ  : print(' * No-change observations must be explained.')
     if FC  : print(' * All observed changes must be explained by an input.')
 
