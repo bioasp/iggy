@@ -140,7 +140,7 @@ if __name__ == '__main__':
   print('\nChecking observations',obs_string, '... ',end='')
   contradictions = query.get_contradictory_obs(mu)
   print('done.')
-  if len(contradictions) == 0 : print('   Observations are consistent.')
+  if len(contradictions) == 0 : print('   Observations are OK.')
   else:
     print('   Contradictory observations found. Please correct manually.')
     for c in contradictions : print ('  ',c)
