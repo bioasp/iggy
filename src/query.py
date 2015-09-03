@@ -55,7 +55,8 @@ remove_edges_prg        = root + '/encodings/remove_edges.lp'
 max_removed_edges_prg   = root + '/encodings/maximize_removed_edges.lp'
 min_removed_edges_prg   = root + '/encodings/minimize_removed_edges.lp'
 
-min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
+#min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
+min_repairs_prg         = root + '/encodings/minimize_weighted_repairs.lp'
 
 
 mics_prg                = root + '/encodings/mics.lp'
