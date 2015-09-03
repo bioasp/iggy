@@ -58,47 +58,49 @@ end
 % use number of vertices as upper bound for path length
 countvertices(C+1)    :- C = #count{vertex(X)}.
 
-% in network n exist a pos_path from X to Y
-pos_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
+% in network n exist a pos_e_path from X to Y
+pos_e_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
        	input(E,gen(X)), elabel(gen(X),gen(Y), 1), not input(E,gen(Y)),
        	vertex(gen(Y)).
-pos_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	pos_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
+pos_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
+       	pos_e_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
        	vertex(gen(Y)),
 	0==@member(Y,P), D<C, countvertices(C).     
                           
-pos_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	neg_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
+pos_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
+       	neg_e_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
        	vertex(gen(Y)),
 	0==@member(Y,P), D<C, countvertices(C).
                        
-% in network n exist a neg_path from X to Y
-neg_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
+% in network n exist a neg_e_path from X to Y
+neg_e_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
        	input(E,gen(X)), elabel(gen(X),gen(Y),-1), not input(E,gen(Y)),
        	vertex(gen(Y)).
-neg_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	neg_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
+neg_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
+       	neg_e_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
        	vertex(gen(Y)),
 	0==@member(Y,P), D<C, countvertices(C).
                           
-neg_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	pos_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
+neg_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
+       	pos_e_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
        	vertex(gen(Y)),
 	0==@member(Y,P), D<C, countvertices(C).
 
-% Y gets a positive influence
-getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_path(E,X,Y,_,P).
-getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_path(E,X,Y,_,P).
-
-% Y gets a negative influence
-getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_path(E,X,Y,_,P).
-getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_path(E,X,Y,_,P).
-
 
 % new inputs through repair
-input(E,"unknownup") :- rep(new_influence(E,X,S)).
-pos_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X, 1), rep(new_influence(E,X,1)).
-neg_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X,-1), rep(new_influence(E,X,-1)).
+input(E,gen("unknownup")) :- rep(new_influence(E,X,S)).
+obs_vlabel(E,gen("unknownup"),1):- rep(new_influence(E,X,S)).  
+elabel(gen("unknownup"), X,1)  :- rep(new_influence(E,X,1)).     
+elabel(gen("unknownup"), X,-1) :- rep(new_influence(E,X,-1)).     
+
+
+% Y gets a positive influence
+getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_e_path(E,X,Y,_,P).
+getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_e_path(E,X,Y,_,P).
+
+% Y gets a negative influence
+getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_e_path(E,X,Y,_,P).
+getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_e_path(E,X,Y,_,P).
 
 
 % labels must be consistent with depmat

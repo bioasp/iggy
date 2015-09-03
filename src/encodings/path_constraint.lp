@@ -1,77 +1,34 @@
 
 % compute getspos getsneg
 
-#begin_lua
-
-function string:split( inSplitPattern, outResults )
-  if not outResults then
-    outResults = { }
-  end
-  local theStart = 1
-  local theSplitStart, theSplitEnd = string.find( self, inSplitPattern, theStart )
-  while theSplitStart do
-    table.insert( outResults, string.sub( self, theStart, theSplitStart-1 ) )
-    theStart = theSplitEnd + 1
-    theSplitStart, theSplitEnd = string.find( self, inSplitPattern, theStart )
-  end
-  table.insert( outResults, string.sub( self, theStart ) )
-  return outResults
-end
-
-
-function strconc(x,y)
-  return tostring(x)..":"..tostring(y)
-end
-
-
-function Set (list)
-  local set = {}
-  for _, l in ipairs(list) do set[l] = true end
-  return set
-end
-
-function member(x,l)
-  local myString = tostring(l)
-  local myset = Set(myString:split(":"))
-  if myset[x] then 
-    return 1
-  else 
-    return 0
-  end
-end
-
-#end_lua.
-
-% use number of vertices as upper bound for path length
-countvertices(C+100)    :- C = #count{vertex(X)}.
-
 % in network n exist a pos_path from X to Y
-pos_path(E,gen(X),gen(Y)) :-
-       	input(E,gen(X)), elabel(gen(X),gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
-pos_path(E,X,gen(Y))    :-
-       	pos_path(E,X,Z), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)).                               
-pos_path(E,X,gen(Y))    :-
-       	neg_path(E,X,Z), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
+pos_path(E,X,Y) :-
+       	input(E,X), elabel(X,Y, 1), not input(E,Y),
+       	vertex(Y).
+pos_path(E,X,Y)    :-
+       	pos_path(E,X,Z), elabel(Z,Y, 1), not input(E,Y),
+       	vertex(Y).                               
+pos_path(E,X,Y)    :-
+       	neg_path(E,X,Z), elabel(Z,Y,-1), not input(E,Y),
+       	vertex(Y).
                        
 % in network n exist a neg_path from X to Y
-neg_path(E,gen(X),gen(Y)) :-
-       	input(E,gen(X)), elabel(gen(X),gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
-neg_path(E,X,gen(Y))    :-
-       	neg_path(E,X,Z), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
+neg_path(E,X,Y) :-
+       	input(E,X), elabel(X,Y,-1), not input(E,Y),
+       	vertex(Y).
+neg_path(E,X,Y)    :-
+       	neg_path(E,X,Z), elabel(Z,Y, 1), not input(E,Y),
+       	vertex(Y).
                           
-neg_path(E,X,gen(Y))    :-
-       	pos_path(E,X,Z), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
+neg_path(E,X,Y)    :-
+       	pos_path(E,X,Z), elabel(Z,Y,-1), not input(E,Y),
+       	vertex(Y).
 
 % new inputs through repair
-input(E,"unknownup") :- rep(new_influence(E,X,S)).
-pos_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X, 1), rep(new_influence(E,X,1)).
-neg_path(E,"unknownup",X,1, @strconc("unknownup",X)) :- vlabel(E,X,-1), rep(new_influence(E,X,-1)).
+input(E,gen("unknownup")) :- rep(new_influence(E,X,S)).
+obs_vlabel(E,gen("unknownup"),1):- rep(new_influence(E,X,S)).  
+elabel(gen("unknownup"), X,1)  :- rep(new_influence(E,X,1)).     
+elabel(gen("unknownup"), X,-1) :- rep(new_influence(E,X,-1)).     
 
 % Y gets a positive influence
 getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_path(E,X,Y).

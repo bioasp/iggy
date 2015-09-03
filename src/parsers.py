@@ -27,7 +27,6 @@ import __iggy__.profile_parser as profile_parser
 
 
 def readSIFGraph(filename):
-  p = sif_parser.Parser()
   """
   input: string, name of a file containing a graph description
   output: asp.TermSet, with atoms matching the contents of the input file
@@ -35,10 +34,10 @@ def readSIFGraph(filename):
   Parses a Simple Interaction Format (SIF) graph description, and returns
   a TermSet object.
   """
-
+  p    = sif_parser.Parser()
   accu = TermSet()
   file = open(filename,'r')
-  s = file.readline()
+  s    = file.readline()
   while s!="":
     try:
       accu = p.parse(s)
@@ -50,7 +49,6 @@ def readSIFGraph(filename):
 
 
 def readProfile(filename):
-  p = profile_parser.Parser()
   """
   input: string, name of a file containing a profile description
   output: asp.TermSet, with atoms matching the contents of the input file
@@ -58,10 +56,10 @@ def readProfile(filename):
   Parses a profile description, and returns
   a TermSet object.
   """
-
+  p    = profile_parser.Parser()
   accu = TermSet()
   file = open(filename,'r')
-  s = file.readline()
+  s    = file.readline()
   while s!="":
     try:
       accu = p.parse(s,filename)

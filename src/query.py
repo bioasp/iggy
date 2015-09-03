@@ -313,8 +313,7 @@ def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
 
-  inst     = instance.to_file("instance.lp")
-  exit()
+  inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)

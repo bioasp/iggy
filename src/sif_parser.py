@@ -34,32 +34,30 @@ class Lexer:
   t_MINUS = r'-1'
 
 
-def __init__(self):
-  import pyasp.ply.lex as lex
-  self.lexer = lex.lex(object = self, optimize=1, lextab='sif_parser_lextab')
+  def __init__(self):
+    import pyasp.ply.lex as lex
+    self.lexer = lex.lex(object = self, optimize=1, lextab='sif_parser_lextab')
 
-# Ignored characters
-t_ignore = " \t"
+  # Ignored characters
+  t_ignore = " \t"
 
-def t_newline(self, t):
-  r'\n+'
-  t.lexer.lineno += t.value.count("\n")
+  def t_newline(self, t):
+    r'\n+'
+    t.lexer.lineno += t.value.count("\n")
 	
-def t_error(self, t):
-  print("Illegal character '",str(t.value[0]),"'", sep='')
-  t.lexer.skip(1)
+  def t_error(self, t):
+    print("Illegal character '",str(t.value[0]),"'", sep='')
+    t.lexer.skip(1)
 
 
 class Parser:
-  tokens = Lexer.tokens
-
+  tokens     = Lexer.tokens
   precedence = ( )
 
   def __init__(self):
-    self.aux_node_counter=0
-    self.accu = TermSet()
-    self.args = []
-    self.lexer = Lexer()
+    self.accu   = TermSet()
+    self.args   = []
+    self.lexer  = Lexer()
     import pyasp.ply.yacc as yacc
     #self.parser = yacc.yacc(module=self, tabmodule='calc_parsetab', debugfile="calc_parser.out")
     self.parser = yacc.yacc(module=self,optimize=1,debug=0, write_tables=0)
@@ -70,27 +68,27 @@ class Parser:
     if len(t)<3 : 
       self.accu.add(Term('input', [t[1]]))
       print('input', t[1])
-    else :
+    else:
       #print t[1], t[2], t[3]
       self.accu.add(Term('edge', ["gen(\""+t[1]+"\")","gen(\""+t[3]+"\")"]))
       self.accu.add(Term('obs_elabel', ["gen(\""+t[1]+"\")","gen(\""+t[3]+"\")",t[2]]))
       #print Term('obs_elabel', ["gen(\""+t[1]+"\")","gen(\""+t[3]+"\")",t[2]])
 
 
-def p_node_expression(self, t):
-  '''node_expression : IDENT'''
-  if len(t)<3 : 
-    t[0]=t[1]
-    #print t[1]
-    self.accu.add(Term('vertex', ["gen(\""+t[1]+"\")"]))
-  else : t[0] = "unknown"
-
-		
-def p_error(self, t):
-  print("Syntax error at '",str(t),"'")
-
-def parse(self, line):
-  self.parser.parse(line, lexer=self.lexer.lexer)
-  return self.accu
+  def p_node_expression(self, t):
+    '''node_expression : IDENT'''
+    if len(t)<3 : 
+      t[0] = t[1]
+      #print t[1]
+      self.accu.add(Term('vertex', ["gen(\""+t[1]+"\")"]))
+    else: t[0] = "unknown"
+  
+  		
+  def p_error(self, t):
+    print("Syntax error at '",str(t),"'")
+  
+  def parse(self, line):
+    self.parser.parse(line, lexer=self.lexer.lexer)
+    return self.accu
 
 
