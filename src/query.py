@@ -277,6 +277,33 @@ def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
     os.unlink(inst)
     return models
     
+    
+def get_opt_add_remove_edges_inc(instance, SS, LC, CZ, FC, EP, SP):
+
+    sem = [sign_cons_prg]
+    if SS : sem.append(steady_state_prg)
+    if LC : sem.append(constr_luca_prg)
+    if CZ : sem.append(constr_zero_prg)
+    if FC : sem.append(founded_prg)
+    if EP : sem.append(elem_path_prg)
+    if SP : sem.append(some_path_prg)
+
+    inst     = instance.to_file("instance.lp")
+    
+    num_adds = 1
+
+    # loop till no better fit
+
+    prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
+    coptions = '--opt-strategy=5'
+    solver   = GringoClasp(clasp_options=coptions)
+    solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+    fit      = solution[0].score[0]
+    repairs  = solution[0].score[1]
+
+    os.unlink(inst)
+    return (fit,repairs)
+
 def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
 
     sem = [sign_cons_prg]
@@ -287,7 +314,8 @@ def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
     if EP : sem.append(elem_path_prg)
     if SP : sem.append(some_path_prg)
 
-    inst     = instance.to_file()    
+    inst     = instance.to_file("instance.lp")
+    exit()
     prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
     coptions = '--opt-strategy=5'
     solver   = GringoClasp(clasp_options=coptions)

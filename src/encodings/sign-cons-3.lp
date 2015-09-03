@@ -14,8 +14,6 @@ vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 
 
-input(E,V):- exp(E), input(V).
-
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
 1 {vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} 1 :- vertex(V), exp(E).

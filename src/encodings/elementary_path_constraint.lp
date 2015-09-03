@@ -19,8 +19,21 @@ function string:split( inSplitPattern, outResults )
 end
 
 
-function strconc(x,y)
-  return tostring(x)..":"..tostring(y)
+function strconc(l,x)
+  local myString = tostring(l)..":"..tostring(x)                                                  
+  local myset = myString:split(":")
+ 
+  table.sort(myset)
+  retstring = ""
+  for i,n in ipairs(myset) do 
+    if n=="" then
+	    --    print("WHOOOPS   ",n)
+    else
+      retstring= retstring..":"..n
+    end
+  end
+  return retstring
+--  return tostring(l)..":"..tostring(x)
 end
 
 
@@ -43,7 +56,7 @@ end
 #end_lua.
 
 % use number of vertices as upper bound for path length
-countvertices(C+100)    :- C = #count{vertex(X)}.
+countvertices(C+1)    :- C = #count{vertex(X)}.
 
 % in network n exist a pos_path from X to Y
 pos_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
