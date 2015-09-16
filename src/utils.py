@@ -19,13 +19,13 @@ import os
 
 def print_predictions(predictions) :
   predictions = sorted(predictions, key=lambda p: str(p.arg(0)))
-  exp = ''
-  pred_plus = set()
-  pred_minus = set()
-  pred_zero = set()
-  pred_not_plus = set()
+  exp            = ''
+  pred_plus      = set()
+  pred_minus     = set()
+  pred_zero      = set()
+  pred_not_plus  = set()
   pred_not_minus = set()
-  pred_change = set()
+  pred_change    = set()
   for p in predictions:
     if p.pred() == "new_pred" :
       if p.arg(2) == "1"        : pred_plus.add(p.arg(1))
