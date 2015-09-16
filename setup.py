@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2014, Sven Thiele <sthiele78@gmail.com>
 #
 # This file is part of iggy.
@@ -13,38 +14,29 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with ingranalyze.  If not, see <http://www.gnu.org/licenses/>.
-# -*- coding: utf-8 -*-
-from setuptools import setup
+# along with iggy.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sys
 import platform
 import distutils
 import site
 import sysconfig
-
+from setuptools import setup
 from setuptools.command.install import install as _install
-
-
-
-class install(_install):
-    def run(self):
-        _install.run(self)
                          
-setup(cmdclass={'install': install},
-      name='iggy',
-      version='1.3',
-      url='http://bioasp.github.io/iggy/',
-      license='GPLv3+',
-      description='A tool for consistency based analysis of influence graphs and observed systems behavior.',
-      long_description=open('README.rst').read(),
-      author='Sven Thiele',
-      author_email='sthiele78@gmail.com',
-      packages = ['__iggy__'],
-      package_dir = {'__iggy__' : 'src'},
-      package_data = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
-      scripts = ['iggy.py', 'opt_graph.py'],
-      install_requires=[
-        "pyasp == 1.4.1"
-      ]
+setup(
+  name='iggy',
+  version='1.3',
+  url='http://bioasp.github.io/iggy/',
+  license='GPLv3+',
+  description='A tool for consistency based analysis of influence graphs and observed systems behavior.',
+  long_description=open('README.rst').read(),
+  author='Sven Thiele',
+  author_email='sthiele78@gmail.com',
+  packages = ['__iggy__'],
+  package_dir = {'__iggy__' : 'src'},
+  package_data = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
+  scripts = ['iggy.py', 'opt_graph.py'],
+  install_requires=["pyasp == 1.4.1"]
 )

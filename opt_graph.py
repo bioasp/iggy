@@ -1,4 +1,5 @@
 #!python
+# -*- coding: utf-8 -*-
 # Copyright (c) 2014, Sven Thiele <sthiele78@gmail.com>
 #
 # This file is part of iggy.
@@ -15,16 +16,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with iggy.  If not, see <http://www.gnu.org/licenses/>.
-# -*- coding: utf-8 -*-
+
 from pyasp.asp import *
 import argparse
 from __iggy__ import query, utils, parsers
 
 if __name__ == '__main__':
   desc = (
-    'Opt-graph confronts a biological network given as interaction graphs with a set of experimental observations '
-    'given as signs that represent the concentration changes between two measured states. '
-    'Opt-graph computes the networks fitting the observation data by removing (or adding) a minimal number of edges in the given network')
+    'Opt-graph confronts a biological network given as interaction graphs with '
+    'sets of experimental observations given as signs that represent the '
+    'concentration changes between two measured states. Opt-graph computes the '
+    'networks fitting the observation data by removing (or adding) a minimal '
+    'number of edges in the given network')
   parser = argparse.ArgumentParser(description=desc)
   parser.add_argument('networkfile',
                       help='influence graph in SIF format')
@@ -32,23 +35,27 @@ if __name__ == '__main__':
                       help='directory of observations in bioquali format')
 
   parser.add_argument('--no_zero_constraints',
-    help="turn constraints on zero variations OFF, default is ON",
+    help = "turn constraints on zero variations OFF, default is ON",
     action="store_true")
 
   parser.add_argument('--propagate_unambiguous_influences',
-    help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is OFF",
+    help = 'turn constraints ON that if all predecessor of a node have the '
+           'same influence this must have an effect, default is OFF',
     action="store_true")
 
   parser.add_argument('--no_founded_constraints',
-    help="turn constraints OFF that every variation must be founded in an input, default is ON",
+    help='turn constraints OFF that every variation must be founded in an '
+         'input, default is ON',
     action="store_true")
 
   parser.add_argument('--depmat_elem_path',
-    help="do not use steady state assumption, instead a change must be explained by an elementary path from an input.",
+    help='do not use steady state assumption, instead a change must be '
+         'explained by an elementary path from an input.',
     action="store_true")
 
   parser.add_argument('--depmat_some_path',
-    help="do not use steady state assumption, instead a change must be explained by a path from an input.",
+    help='do not use steady state assumption, instead a change must be '
+         'explained by a path from an input.',
     action="store_true")
 
   parser.add_argument('--autoinputs',
@@ -59,7 +66,8 @@ if __name__ == '__main__':
     help="number of repairs to show, default is OFF, 0=all")
 
   parser.add_argument('--opt_graph',
-    help="compute opt-graph repairs (allows also adding edges), default is only removing edges",
+    help='compute opt-graph repairs (allows also adding edges), default is '
+         'only removing edges',
     action="store_true")
 
 
@@ -76,7 +84,8 @@ if __name__ == '__main__':
   EP  = args.depmat_elem_path
 
   if SP :
-    print(' * Not using steady state assumption,  observed changes might be transient.')
+    print(' * Not using steady state assumption,  observed changes might be '
+             'transient.')
     print(' * A path from an input must exist top explain changes.')
     SS = False
     LC = False
@@ -84,15 +93,18 @@ if __name__ == '__main__':
     FC = False
 
   if EP :
-    print(' * Not using steady state assumption,  observed changes might be transient.')
-    print(' * An elementary path from an input must exist top explain changes.')
+    print(' * Not using steady state assumption,  observed changes might be '
+             'transient.')
+    print(' * An elementary path from an input must exist top explain '
+             'changes.')
     SS = False
     LC = False
     CZ = False
     FC = False
 
   if not (SP|EP):
-    print(' * Using steady state assumption, all observed changes must be explained by an predecessor.')
+    print(' * Using steady state assumption, all observed changes must be '
+             'explained by an predecessor.')
     SS = True
     if LC  : print(' * Unambiguous influences must propagate.')
     if CZ  : print(' * No-change observations must be explained.')
@@ -167,23 +179,44 @@ if __name__ == '__main__':
 
   if args.opt_graph :
     print('\nComputing minimal number of changes add/remove edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
-    print('done.')
-    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'repairs.')
-
-
-    if args.show_repairs >= 0 and repairs > 0:
-      print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+    if EP :
+      # print('using incremental method ... ',end='')
+      # (scenfit,repairs) = query.get_opt_add_remove_edges_inc(net_with_data)
+      print('using greedy method ... ',end='')
+      (scenfit,repairs, edges) = query.get_opt_add_remove_edges_greedy(net_with_data)
       print('done.')
-      count = 0
-      for r in repairs :
-        count += 1
-        print('Repair ',str(count),':',sep='')
-        utils.print_repairs(r)
+      print('   The network and data can reach a scenfit of',scenfit,'with',
+	repairs,'removals and ',len(edges),'additions.')
+
+      if args.show_repairs >= 0 and repairs > 0:
+        print('\nCompute optimal repairs ... ',end='')
+        print(' use greedily added edges')
+        repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
+        print('done.')
+        count = 0
+        for r in repairs :
+          count += 1
+          print('Repair ',str(count),':',sep='')
+          for e in edges:
+            print('    add edge',str(e)[10:])
+          utils.print_repairs(r)
+
+    else : 
+      (scenfit,repairs) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+      print('done.')
+      print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'repairs.')
+  
+      if args.show_repairs >= 0 and repairs > 0:
+        print('\nCompute optimal repairs ... ',end='')
+        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+        print('done.')
+        count = 0
+        for r in repairs :
+          count += 1
+          print('Repair ',str(count),':',sep='')
+          utils.print_repairs(r)
 
 
   utils.clean_up()
-
 
 

@@ -33,7 +33,6 @@ function strconc(l,x)
     end
   end
   return retstring
---  return tostring(l)..":"..tostring(x)
 end
 
 

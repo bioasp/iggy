@@ -57,6 +57,7 @@ min_removed_edges_prg   = root + '/encodings/minimize_removed_edges.lp'
 
 #min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
 min_repairs_prg         = root + '/encodings/minimize_weighted_repairs.lp'
+max_add_edges_prg       = root + '/encodings/max_add_edges.lp'
 
 
 mics_prg                = root + '/encodings/mics.lp'
@@ -77,7 +78,8 @@ mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
 def get_scenfit(instance, SS, LC, CZ, FC, EP, SP):
-  '''returns the scenfit of data and model described by the ``TermSet`` object [instance].
+  '''returns the scenfit of data and model described by the 
+  ``TermSet`` object [instance].
   '''
   sem = [sign_cons_prg]
   if SS : sem.append(steady_state_prg)
@@ -99,7 +101,8 @@ def get_scenfit(instance, SS, LC, CZ, FC, EP, SP):
     
 def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   '''
-  returns a list of atmost [nm] ``TermSet`` representing scenfit labelings to the system described by the ``TermSet`` object [instance].
+  returns a list of atmost [nm] ``TermSet`` representing scenfit labelings
+  to the system described by the ``TermSet`` object [instance].
   '''
   sem = [sign_cons_prg]
   if SS : sem.append(steady_state_prg)
@@ -184,7 +187,7 @@ def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
 
-  inst     =   instance.to_file()
+  inst     = instance.to_file()
   prg      = sem + mcos + [inst]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
@@ -277,31 +280,135 @@ def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst)
   return models
 
-def get_opt_add_remove_edges_inc(instance, SS, LC, CZ, FC, EP, SP):
-
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
-  if FC : sem.append(founded_prg)
-  if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
+def get_opt_add_remove_edges_inc(instance):
+  '''
+   only apply with elementary path consistency notion
+  '''
+  sem      = [sign_cons_prg, elem_path_prg]
 
   inst     = instance.to_file("instance.lp")
-  
+ 
   num_adds = 1
+  maxfact  = String2TermSet('max_add_edges('+str(num_adds)+')')
+  fmaxfact = maxfact.to_file()
+  prg      = [ inst, fmaxfact,  
+	       min_repairs_prg, max_add_edges_prg
+	     ] + sem + scenfit
 
-  # loop till no better fit
-
-  prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
   fit      = solution[0].score[0]
   repairs  = solution[0].score[1]
+  os.unlink(fmaxfact)
+
+  print('fit,repairs:',fit,repairs)
+
+
+  best = False
+  # loop till no better solution can be found
+  while not best :
+    num_adds+= 1
+    maxfact  = String2TermSet('max_add_edges('+str(num_adds)+')')
+    fmaxfact = maxfact.to_file()
+    prg      = [ inst, fmaxfact,
+  	         min_repairs_prg, max_add_edges_prg
+  	       ] + sem + scenfit
+  
+    coptions = '--opt-strategy=5'
+    solver   = GringoClasp(clasp_options=coptions)
+    solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+    nfit     = solution[0].score[0]
+    nrepairs = solution[0].score[1]
+    os.unlink(fmaxfact)
+
+    print('fit,repairs:',nfit,nrepairs)
+
+    if (nfit==fit) and (nrepairs==repairs) : best = True
+    else:
+      fit     = nfit
+      repairs = nrepairs
 
   os.unlink(inst)
   return (fit,repairs)
+
+def get_opt_add_remove_edges_greedy(instance):
+  '''
+   only apply with elementary path consistency notion
+  '''
+  sem      = [sign_cons_prg, elem_path_prg]
+  inst     = instance.to_file("instance.lp")
+  maxfact  = String2TermSet('max_add_edges(1)')
+  fmaxfact = maxfact.to_file()
+  prg      = [ inst, fmaxfact,  
+	       min_repairs_prg, max_add_edges_prg, show_rep_prg,
+	     ] + sem + scenfit
+
+  # get first best edge
+  edges    = TermSet()
+  best     = True
+  coptions = '1 --project --opt-strategy=5 --opt-mode=optN'                 
+  solver   = GringoClasp(clasp_options=coptions)
+  models   = solver.run(prg, collapseTerms=True, collapseAtoms=False) 
+  fit      = models[0].score[0]
+  repairs  = models[0].score[1]
+
+  for a in models[0] :
+    if a.pred() == 'rep' :
+      if a.arg(0)[0:7]=='addedge' :
+#        print(a.arg(0)[7:])
+        edges = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
+        best  = False
+
+  # loop till no better solution can be found
+  while not best :
+    best     = True
+    f_edges  = TermSet(edges).to_file()
+    prg      = [ inst, fmaxfact, f_edges,
+                 min_repairs_prg, max_add_edges_prg, show_rep_prg,
+               ] + sem + scenfit
+
+    coptions = '1 --project --opt-strategy=5 --opt-mode=optN'
+    solver   = GringoClasp(clasp_options=coptions)                        
+    models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+      
+    os.unlink(f_edges)
+    nfit     = models[0].score[0]
+    nrepairs = models[0].score[1]
+    for a in models[0] :
+      if a.pred() == 'rep' :
+        if a.arg(0)[0:7]=='addedge' :
+#          print(a.arg(0)[7:])
+          edges   = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
+          best    = False
+          fit     = nfit
+          repairs = nrepairs-2
+
+  os.unlink(fmaxfact)
+  os.unlink(inst)
+  return (fit,repairs,edges)
+
+def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
+  '''
+   only apply with elementary path consistency notion
+  '''
+  sem      = [sign_cons_prg, elem_path_prg]
+  inst     = instance.to_file("instance.lp")
+ 
+  maxfact  = String2TermSet('max_add_edges(0)')
+  fmaxfact = maxfact.to_file()
+  f_edges  = TermSet(edges).to_file()
+  prg      = [ inst, fmaxfact, f_edges,
+	       min_repairs_prg, max_add_edges_prg,
+	       show_rep_prg
+	     ] + sem + scenfit
+  
+  coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN'
+  solver2  = GringoClasp(clasp_options=coptions)
+  models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+
+  os.unlink(inst)
+  return models
 
 def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
 
@@ -310,7 +417,11 @@ def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
   if LC : sem.append(constr_luca_prg)
   if CZ : sem.append(constr_zero_prg)
   if FC : sem.append(founded_prg)
-  if EP : sem.append(elem_path_prg)
+  if EP : 
+    print('error query.get_opt_add_remove_edges should not be called with'
+          'elementary path constraint, use instead'
+	  'get_opt_add_remove_edges_greedy')
+    exit()
   if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
