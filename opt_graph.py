@@ -84,7 +84,7 @@ if __name__ == '__main__':
   EP  = args.depmat_elem_path
 
   if SP :
-    print(' * Not using steady state assumption,  observed changes might be '
+    print(' * Not using steady state assumption, observed changes might be '
              'transient.')
     print(' * A path from an input must exist top explain changes.')
     SS = False
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     FC = False
 
   if EP :
-    print(' * Not using steady state assumption,  observed changes might be '
+    print(' * Not using steady state assumption, observed changes might be '
              'transient.')
     print(' * An elementary path from an input must exist top explain '
              'changes.')
@@ -180,38 +180,40 @@ if __name__ == '__main__':
   if args.opt_graph :
     print('\nComputing minimal number of changes add/remove edges ... ',end='')
     if EP :
-      # print('using incremental method ... ',end='')
-      # (scenfit,repairs) = query.get_opt_add_remove_edges_inc(net_with_data)
       print('using greedy method ... ',end='')
-      (scenfit,repairs, edges) = query.get_opt_add_remove_edges_greedy(net_with_data)
+      (scenfit,redges) = query.get_opt_add_remove_edges_greedy(net_with_data)
+     
       print('done.')
-      print('   The network and data can reach a scenfit of',scenfit,'with',
-	repairs,'removals and ',len(edges),'additions.')
+      print('   The network and data can reach a scenfit of',scenfit)
+      #      ,'with', repairs,'removals and ',len(edges),'additions.')
 
-      if args.show_repairs >= 0 :
-        if repairs > 0:
-          print('\nCompute optimal repairs ... ',end='')
-          print(' use greedily added edges')
-          repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
-          print('done.')
-          count = 0
-          for r in repairs :
-            count += 1
-            print('Repair ',str(count),':',sep='')
+      count_repairs = 1
+      for (edges,repairs) in redges:
+        if args.show_repairs >= 0 :
+          if repairs > 0:
+            print('\nCompute optimal repairs ... ',end='')
+            print(' use greedily added edges')
+            repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
+            print('done.')
+            count = 0
+            for r in repairs :
+              count += 1
+              print('Repair ',str(count),':',sep='')
+              for e in edges:
+                print('    add edge',str(e)[10:])
+              utils.print_repairs(r)
+          else:
+            print('Repair',count_repairs,':',sep='')
+            count_repairs+=1
             for e in edges:
-              print('    add edge',str(e)[10:])
-            utils.print_repairs(r)
-        else:
-          print('Repair 1:',sep='')
-          for e in edges:
-            print('    add edge',str(e)[10:])          
+              print('    add edge',str(e)[10:])          
 
     else : 
-      (scenfit,repairs) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+      (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
       print('done.')
-      print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'repairs.')
+      print('   The network and data can reach a scenfit of',scenfit,'with repairs of score',repairscore,'.')
   
-      if args.show_repairs >= 0 and repairs > 0:
+      if args.show_repairs >= 0 and repairscore > 0:
         print('\nCompute optimal repairs ... ',end='')
         repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
         print('done.')

@@ -344,8 +344,8 @@ def get_opt_add_remove_edges_greedy(instance):
 	       min_repairs_prg, max_add_edges_prg, show_rep_prg,
 	     ] + sem + scenfit
 
-  # get first best edge
-  edges    = TermSet()
+  # get first best edges
+  fedges    = []
   best     = True
   coptions = '1 --project --opt-strategy=5 --opt-mode=optN'                 
   solver   = GringoClasp(clasp_options=coptions)
@@ -353,40 +353,54 @@ def get_opt_add_remove_edges_greedy(instance):
   fit      = models[0].score[0]
   repairs  = models[0].score[1]
 
-  for a in models[0] :
-    if a.pred() == 'rep' :
-      if a.arg(0)[0:7]=='addedge' :
-#        print(a.arg(0)[7:])
-        edges = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
-        best  = False
-
-  # loop till no better solution can be found
-  while not best :
-    best     = True
-    f_edges  = TermSet(edges).to_file()
-    prg      = [ inst, fmaxfact, f_edges,
-                 min_repairs_prg, max_add_edges_prg, show_rep_prg,
-               ] + sem + scenfit
-
-    coptions = '1 --project --opt-strategy=5 --opt-mode=optN'
-    solver   = GringoClasp(clasp_options=coptions)                        
-    models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-      
-    os.unlink(f_edges)
-    nfit     = models[0].score[0]
-    nrepairs = models[0].score[1]
-    for a in models[0] :
+  for m in models:
+    for a in m:
       if a.pred() == 'rep' :
         if a.arg(0)[0:7]=='addedge' :
 #          print(a.arg(0)[7:])
-          edges   = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
-          best    = False
-          fit     = nfit
-          repairs = nrepairs-2
+          edge  = String2TermSet('obs_elabel'+(a.arg(0)[7:]))
+          best  = False
+    fedges.append(edge)
+ 
+  bfit=fit
+  tedges=[]
+  for edges in fedges:
+    # loop till no better solution can be found
+    while not best :
+      best     = True
+      f_edges  = TermSet(edges).to_file()
+      prg      = [ inst, fmaxfact, f_edges,
+                   min_repairs_prg, max_add_edges_prg, show_rep_prg,
+                 ] + sem + scenfit
+
+      coptions = '1 --project --opt-strategy=5 --opt-mode=optN'
+      solver   = GringoClasp(clasp_options=coptions)                        
+      models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+        
+      os.unlink(f_edges)
+      nfit     = models[0].score[0]
+      nrepairs = models[0].score[1]
+      for a in models[0] :
+        if a.pred() == 'rep' :
+          if a.arg(0)[0:7]=='addedge' :
+		  #            print(a.arg(0)[7:])
+            edges   = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
+            best    = False
+            fit     = nfit
+            repairs = nrepairs-2
+
+    if fit < bfit : bfit=fit
+    tedges.append((fit,edges,repairs))
+
+  # take only the results with the best fit
+  redges=[]
+  for (fit,edges,repairs) in tedges:
+    if fit == bfit: redges.append((edges,repairs))
+
 
   os.unlink(fmaxfact)
   os.unlink(inst)
-  return (fit,repairs,edges)
+  return (bfit,redges)
 
 def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   '''
