@@ -347,7 +347,7 @@ def get_opt_add_remove_edges_greedy(instance):
   # get first best edges
   fedges    = []
   best     = True
-  coptions = '1 --project --opt-strategy=5 --opt-mode=optN'                 
+  coptions = '0 --project --opt-strategy=5 --opt-mode=optN' 
   solver   = GringoClasp(clasp_options=coptions)
   models   = solver.run(prg, collapseTerms=True, collapseAtoms=False) 
   fit      = models[0].score[0]
@@ -357,11 +357,21 @@ def get_opt_add_remove_edges_greedy(instance):
     for a in m:
       if a.pred() == 'rep' :
         if a.arg(0)[0:7]=='addedge' :
-#          print(a.arg(0)[7:])
           edge  = String2TermSet('obs_elabel'+(a.arg(0)[7:]))
           best  = False
     fedges.append(edge)
  
+  temp=[]
+  for a in fedges:
+    if a in temp: print('found dup')
+    else: temp.append(a)
+
+  fedges = temp
+  print('switche..........')
+
+  for a in fedges:
+    print(a)
+
   bfit=fit
   tedges=[]
   for edges in fedges:

@@ -187,24 +187,24 @@ if __name__ == '__main__':
       print('   The network and data can reach a scenfit of',scenfit)
       #      ,'with', repairs,'removals and ',len(edges),'additions.')
 
-      count_repairs = 1
-      for (edges,repairs) in redges:
-        if args.show_repairs >= 0 :
+      count_repairs = 0
+
+      if args.show_repairs >= 0 :
+        print('\nCompute optimal repairs ... ',end='')
+        print(' use greedily added edges')
+        for (edges,repairs) in redges:
           if repairs > 0:
-            print('\nCompute optimal repairs ... ',end='')
-            print(' use greedily added edges')
             repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
             print('done.')
-            count = 0
             for r in repairs :
-              count += 1
-              print('Repair ',str(count),':',sep='')
+              count_repairs+=1
+              print('Repair ',str(count_repairs),':',sep='')
               for e in edges:
                 print('    add edge',str(e)[10:])
               utils.print_repairs(r)
           else:
-            print('Repair',count_repairs,':',sep='')
             count_repairs+=1
+            print('Repair',count_repairs,':',sep='')
             for e in edges:
               print('    add edge',str(e)[10:])          
 
