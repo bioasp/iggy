@@ -286,7 +286,7 @@ def get_opt_add_remove_edges_inc(instance):
   '''
   sem      = [sign_cons_prg, elem_path_prg]
 
-  inst     = instance.to_file("instance.lp")
+  inst     = instance.to_file()
  
   num_adds = 1
   maxfact  = String2TermSet('max_add_edges('+str(num_adds)+')')
@@ -337,74 +337,61 @@ def get_opt_add_remove_edges_greedy(instance):
    only apply with elementary path consistency notion
   '''
   sem      = [sign_cons_prg, elem_path_prg]
-  inst     = instance.to_file("instance.lp")
+  inst     = instance.to_file()
   maxfact  = String2TermSet('max_add_edges(1)')
   fmaxfact = maxfact.to_file()
   prg      = [ inst, fmaxfact,  
 	       min_repairs_prg, max_add_edges_prg, show_rep_prg,
 	     ] + sem + scenfit
 
-  # get first best edges
-  fedges    = []
-  best     = True
-  coptions = '0 --project --opt-strategy=5 --opt-mode=optN' 
-  solver   = GringoClasp(clasp_options=coptions)
-  models   = solver.run(prg, collapseTerms=True, collapseAtoms=False) 
-  fit      = models[0].score[0]
-  repairs  = models[0].score[1]
+  strt_edges = TermSet()
+  fedges     = [strt_edges]
+  bfit_set   = False
+  tedges     = []
 
-  for m in models:
-    for a in m:
-      if a.pred() == 'rep' :
-        if a.arg(0)[0:7]=='addedge' :
-          edge  = String2TermSet('obs_elabel'+(a.arg(0)[7:]))
-          best  = False
-    fedges.append(edge)
- 
-  temp=[]
-  for a in fedges:
-    if a in temp: print('found dup')
-    else: temp.append(a)
-
-  fedges = temp
-  print('switche..........')
-
-  for a in fedges:
-    print(a)
-
-  bfit=fit
-  tedges=[]
   for edges in fedges:
     # loop till no better solution can be found
-    while not best :
-      best     = True
+#      print('edges:',edges)
+      end      = True # this time its the end
       f_edges  = TermSet(edges).to_file()
       prg      = [ inst, fmaxfact, f_edges,
                    min_repairs_prg, max_add_edges_prg, show_rep_prg,
                  ] + sem + scenfit
 
-      coptions = '1 --project --opt-strategy=5 --opt-mode=optN'
+      coptions = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
       solver   = GringoClasp(clasp_options=coptions)                        
       models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-        
       os.unlink(f_edges)
-      nfit     = models[0].score[0]
-      nrepairs = models[0].score[1]
-      for a in models[0] :
-        if a.pred() == 'rep' :
-          if a.arg(0)[0:7]=='addedge' :
-		  #            print(a.arg(0)[7:])
-            edges   = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
-            best    = False
-            fit     = nfit
-            repairs = nrepairs-2
 
-    if fit < bfit : bfit=fit
-    tedges.append((fit,edges,repairs))
+      fit      = models[0].score[0]
+      if not bfit_set :              # set bfit
+        bfit     = fit
+        bfit_set = True
+      else: 
+        if fit < bfit : 
+#          print('new bfit:',str(bfit))
+          bfit=fit     # update bfit
+      repairs = models[0].score[1]
+      for m in models:
+        for a in m :
+          if a.pred() == 'rep' :
+            if a.arg(0)[0:7]=='addedge' :
+#              print ('new edge',a.arg(0)[7:])
+              nedges  = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
+              end     = False
+        if end:
+          if (edges,fit,repairs) not in tedges : 
+#            print('tedges append',edges)
+            tedges.append((edges,fit,repairs))
+        else : 
+          if nedges not in fedges :
+            fedges.append(nedges)
+        end = True
 
   # take only the results with the best fit
   redges=[]
-  for (fit,edges,repairs) in tedges:
+  for (edges,fit,repairs) in tedges:
+    print('red:  ',edges,str(fit),str(repairs))
     if fit == bfit: redges.append((edges,repairs))
 
 
@@ -417,7 +404,7 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
    only apply with elementary path consistency notion
   '''
   sem      = [sign_cons_prg, elem_path_prg]
-  inst     = instance.to_file("instance.lp")
+  inst     = instance.to_file()
  
   maxfact  = String2TermSet('max_add_edges(0)')
   fmaxfact = maxfact.to_file()

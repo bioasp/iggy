@@ -200,13 +200,13 @@ if __name__ == '__main__':
               count_repairs+=1
               print('Repair ',str(count_repairs),':',sep='')
               for e in edges:
-                print('    add edge',str(e)[10:])
+                print('    addedge',str(e)[10:],sep='')
               utils.print_repairs(r)
           else:
             count_repairs+=1
             print('Repair',count_repairs,':',sep='')
             for e in edges:
-              print('    add edge',str(e)[10:])          
+              print('    addedge',str(e)[10:],sep='')          
 
     else : 
       (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
