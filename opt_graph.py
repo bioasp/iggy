@@ -65,10 +65,11 @@ if __name__ == '__main__':
   parser.add_argument('--show_repairs',type=int, default=-1,
     help="number of repairs to show, default is OFF, 0=all")
 
-  parser.add_argument('--opt_graph',
-    help='compute opt-graph repairs (allows also adding edges), default is '
-         'only removing edges',
-    action="store_true")
+  parser.add_argument('--repair_mode', type=int, default=1,
+    help='choose repair mode:\n'
+	 ' 1 = add edges (default),\n'
+	 ' 2 = add +remove edges (opt-graph),\n'
+	 ' 3 = flip edges')
 
 
   args = parser.parse_args()
@@ -160,15 +161,15 @@ if __name__ == '__main__':
 
   net_with_data = TermSet(net.union(MU))
 
-  if not args.opt_graph :
-    print('\nComputing minimal number of removed edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+  if args.repair_mode==3 :
+    print('\nComputing minimal number of flipped edges ... ',end='')
+    (scenfit,repairs) = query.get_opt_flip_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
     print('done.')
-    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
+    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'flipped edges.')
 
     if args.show_repairs >= 0 and repairs > 0:
       print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+      repairs = query.get_opt_repairs_flip_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
       print('done.')
       count=0
       for r in repairs :
@@ -176,8 +177,7 @@ if __name__ == '__main__':
         print('Repair ',str(count),':',sep='')
         utils.print_repairs(r)
 
-
-  if args.opt_graph :
+  elif args.repair_mode==2 :
     print('\nComputing minimal number of changes add/remove edges ... ',end='')
     if EP :
       print('using greedy method ... ',end='')
@@ -223,7 +223,22 @@ if __name__ == '__main__':
           print('Repair ',str(count),':',sep='')
           utils.print_repairs(r)
 
+  else: # repair_mode==1
+    print('\nComputing minimal number of removed edges ... ',end='')
+    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+    print('done.')
+    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
 
-  utils.clean_up()
+    if args.show_repairs >= 0 and repairs > 0:
+      print('\nCompute optimal repairs ... ',end='')
+      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+      print('done.')
+      count=0
+      for r in repairs :
+        count += 1
+        print('Repair ',str(count),':',sep='')
+        utils.print_repairs(r)
+
+utils.clean_up()
 
 

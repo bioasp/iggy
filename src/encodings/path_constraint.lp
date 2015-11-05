@@ -38,6 +38,12 @@ getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_path(E,X,Y).
 getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_path(E,X,Y).
 getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_path(E,X,Y).
 
+mis_pos(E,and(Y)) :- elabel(Z,and(Y),1), not getspos(E,Y), exp(E).
+mis_pos(E,and(Y)) :- elabel(Z,and(Y),-1), not getsneg(E,Y), exp(E).
+
+mis_neg(E,and(Y)) :- elabel(Z,and(Y),1), not getsneg(E,Y), exp(E).
+mis_neg(E,and(Y)) :- elabel(Z,and(Y),-1), not getspos(E,Y), exp(E).
+
 
 % labels must be consistent with depmat
 

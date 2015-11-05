@@ -55,6 +55,8 @@ remove_edges_prg        = root + '/encodings/remove_edges.lp'
 max_removed_edges_prg   = root + '/encodings/maximize_removed_edges.lp'
 min_removed_edges_prg   = root + '/encodings/minimize_removed_edges.lp'
 
+flip_edges_prg          = root + '/encodings/flip_edges.lp'
+
 #min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
 min_repairs_prg         = root + '/encodings/minimize_weighted_repairs.lp'
 max_add_edges_prg       = root + '/encodings/max_add_edges.lp'
@@ -203,6 +205,7 @@ def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst) 
   return models
 
+
 def get_predictions_under_mcos(instance, SS, LC, CZ, FC, EP, SP):
   '''
   '''
@@ -279,6 +282,57 @@ def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
 
   os.unlink(inst)
   return models
+
+
+def get_opt_flip_edges(instance, SS, LC, CZ, FC, EP, SP):
+
+  sem = [sign_cons_prg]
+  if SS : sem.append(steady_state_prg)
+  if LC : sem.append(constr_luca_prg)
+  if CZ : sem.append(constr_zero_prg)
+  if FC : sem.append(founded_prg)
+  if EP : sem.append(elem_path_prg)
+  if SP : sem.append(some_path_prg)
+
+  inst     = instance.to_file()
+  prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
+  coptions = '--opt-strategy=5'
+  solver   = GringoClasp(clasp_options=coptions)
+  solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+  fit      = solution[0].score[0]
+  repairs  = solution[0].score[1]
+
+  os.unlink(inst)
+  return (fit,repairs)
+
+
+def get_opt_repairs_flip_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
+
+  sem = [sign_cons_prg]
+  if SS : sem.append(steady_state_prg)
+  if LC : sem.append(constr_luca_prg)
+  if CZ : sem.append(constr_zero_prg)
+  if FC : sem.append(founded_prg)
+  if EP : sem.append(elem_path_prg)
+  if SP : sem.append(some_path_prg)
+
+  inst     = instance.to_file()
+  prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
+
+  coptions = '--opt-strategy=5'
+  solver   = GringoClasp(clasp_options=coptions)
+  solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+  fit      = solution[0].score[0]
+  repairs  = solution[0].score[1]
+
+  prg      = prg + [show_rep_prg]
+  coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
+  solver2  = GringoClasp(clasp_options=coptions)
+  models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+
+  os.unlink(inst)
+  return models
+
 
 def get_opt_add_remove_edges_inc(instance):
   '''
