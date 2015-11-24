@@ -479,7 +479,7 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
 def get_opt_add_remove_edges(instance, OS, FP, FC, EP, SP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
-  if OS : sem.append(one)
+  if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : 
