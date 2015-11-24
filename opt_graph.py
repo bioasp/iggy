@@ -11,7 +11,7 @@
 #
 # iggy is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNEOS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -34,8 +34,8 @@ if __name__ == '__main__':
   parser.add_argument('observationfiles',
                       help='directory of observations in bioquali format')
 
-  parser.add_argument('--no_zero_constraints',
-    help = "turn constraints on zero variations OFF, default is ON",
+  parser.add_argument('--no_fwd_propagation',
+    help="turn forward propagation OFF, default is ON",
     action="store_true")
 
   parser.add_argument('--propagate_unambiguous_influences',
@@ -78,8 +78,7 @@ if __name__ == '__main__':
   obs_dir = args.observationfiles
 
 
-  LC  = args.propagate_unambiguous_influences
-  CZ  = not (args.no_zero_constraints)
+  FP  = not (args.no_fwd_propagation)
   FC  = not (args.no_founded_constraints)
   SP  = args.depmat_some_path
   EP  = args.depmat_elem_path
@@ -88,9 +87,8 @@ if __name__ == '__main__':
     print(' * Not using steady state assumption, observed changes might be '
              'transient.')
     print(' * A path from an input must exist top explain changes.')
-    SS = False
-    LC = False
-    CZ = False
+    OS = False
+    FP = False
     FC = False
 
   if EP :
@@ -98,17 +96,15 @@ if __name__ == '__main__':
              'transient.')
     print(' * An elementary path from an input must exist top explain '
              'changes.')
-    SS = False
-    LC = False
-    CZ = False
+    OS = False
+    FP = False
     FC = False
 
   if not (SP|EP):
     print(' * Using steady state assumption, all observed changes must be '
              'explained by an predecessor.')
-    SS = True
-    if LC  : print(' * Unambiguous influences must propagate.')
-    if CZ  : print(' * No-change observations must be explained.')
+    OS = True
+    if FP  : print(' * No-change observations must be explained.')
     if FC  : print(' * All observed changes must be explained by an input.')
 
 
@@ -163,13 +159,13 @@ if __name__ == '__main__':
 
   if args.repair_mode==3 :
     print('\nComputing minimal number of flipped edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_flip_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+    (scenfit,repairs) = query.get_opt_flip_edges(net_with_data, OS, FP, FC, EP, SP)
     print('done.')
     print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'flipped edges.')
 
     if args.show_repairs >= 0 and repairs > 0:
       print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_flip_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+      repairs = query.get_opt_repairs_flip_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
       print('done.')
       count=0
       for r in repairs :
@@ -209,13 +205,13 @@ if __name__ == '__main__':
               print('    addedge',str(e)[10:],sep='')          
 
     else : 
-      (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+      (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP, SP)
       print('done.')
       print('   The network and data can reach a scenfit of',scenfit,'with repairs of score',repairscore,'.')
   
       if args.show_repairs >= 0 and repairscore > 0:
         print('\nCompute optimal repairs ... ',end='')
-        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
         print('done.')
         count = 0
         for r in repairs :
@@ -225,13 +221,13 @@ if __name__ == '__main__':
 
   else: # repair_mode==1
     print('\nComputing minimal number of removed edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, SS, LC, CZ, FC, EP, SP)
+    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, OS, FP, FC, EP, SP)
     print('done.')
     print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
 
     if args.show_repairs >= 0 and repairs > 0:
       print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, SS, LC, CZ, FC, EP, SP)
+      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
       print('done.')
       count=0
       for r in repairs :
