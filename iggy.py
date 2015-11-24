@@ -10,7 +10,7 @@
 #
 # iggy is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNEOS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -37,12 +37,8 @@ if __name__ == '__main__':
   parser.add_argument("observationfile",
     help="observations in bioquali format")
 
-  parser.add_argument('--no_zero_constraints',
-    help="turn constraints on zero variations OFF, default is ON",
-    action="store_true")
-
-  parser.add_argument('--propagate_unambiguous_influences',
-    help="turn constraints ON that if all predecessor of a node have the same influence this must have an effect, default is OFF",
+  parser.add_argument('--no_fwd_propagation',
+    help="turn forward propagation OFF, default is ON",
     action="store_true")
 
   parser.add_argument('--no_founded_constraints',
@@ -82,8 +78,7 @@ if __name__ == '__main__':
   net_string = args.networkfile
   obs_string = args.observationfile
 
-  LC  = args.propagate_unambiguous_influences
-  CZ  = not (args.no_zero_constraints)
+  FP  = not (args.no_fwd_propagation)
   FC  = not (args.no_founded_constraints)
   SP  = args.depmat_some_path
   EP  = args.depmat_elem_path
@@ -91,24 +86,21 @@ if __name__ == '__main__':
   if SP :
     print(' * Not using steady state assumption,  observed changes might be transient.')
     print(' * A path from an input must exist top explain changes.')
-    SS = False
-    LC = False
-    CZ = False
+    OS = False
+    FP = False
     FC = False
 
   if EP :
     print(' * Not using steady state assumption,  observed changes might be transient.')
     print(' * An elementary path from an input must exist top explain changes.')
-    SS = False
-    LC = False
-    CZ = False
+    OS = False
+    FP = False
     FC = False
 
   if not (SP|EP):
     print(' * Using steady state assumption, all observed changes must be explained by an predecessor.')
-    SS = True
-    if LC  : print(' * Unambiguous influences must propagate.')
-    if CZ  : print(' * No-change observations must be explained.')
+    OS = True
+    if FP  : print(' * No-change observations must be explained.')
     if FC  : print(' * All observed changes must be explained by an input.')
 
   print('\nReading network',net_string, '... ',end='')
@@ -190,7 +182,7 @@ if __name__ == '__main__':
 
   if args.scenfit :
     print('\nComputing scenfit of network and data ... ',end='')
-    scenfit = query.get_scenfit(net_with_data,SS, LC, CZ, FC, EP, SP)
+    scenfit = query.get_scenfit(net_with_data,OS, FP, FC, EP, SP)
     print('done.')
     if scenfit == 0 : print("   The network and data are consistent: scenfit = 0.")
     else:
@@ -199,7 +191,7 @@ if __name__ == '__main__':
       if args.mics:
         print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
-        mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, EP, SP)
+        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP, SP)
         print('done.')
         count  = 1
         oldmic = 0
@@ -213,7 +205,7 @@ if __name__ == '__main__':
 
     if args.show_labelings >= 0 :
       print('\nCompute scenfit labelings ... ',end='')
-      labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, EP, SP)
+      labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP, SP)
       print('done.')
       count=0
       for l in labelings :
@@ -223,7 +215,7 @@ if __name__ == '__main__':
 
     if args.show_predictions :
       print('\nCompute predictions under scenfit ... ',end='')
-      predictions = query.get_predictions_under_scenfit(net_with_data, SS, LC, CZ, FC, EP, SP)
+      predictions = query.get_predictions_under_scenfit(net_with_data, OS, FP, FC, EP, SP)
       print('done.')
       utils.print_predictions(predictions)
 
@@ -231,7 +223,7 @@ if __name__ == '__main__':
 
   if not args.scenfit :
     print('\nComputing mcos of network and data ... ',end='')
-    mcos = query.get_mcos(net_with_data, SS, LC, CZ, FC, EP, SP)
+    mcos = query.get_mcos(net_with_data, OS, FP, FC, EP, SP)
     print('done.')
     if mcos == 0 : print("   The network and data are consistent: mcos = 0.")
     else: 
@@ -240,7 +232,7 @@ if __name__ == '__main__':
       if args.mics:
         print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
-        mics = query.get_minimal_inconsistent_cores(net_with_data, SS, LC, CZ, FC, EP, SP)
+        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP, SP)
         print('done.')
         count  = 1
         oldmic = 0
@@ -253,7 +245,7 @@ if __name__ == '__main__':
 
     if args.show_labelings >= 0 :
       print('\nCompute mcos labelings ... ',end='')
-      labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, SS, LC, CZ, FC, EP, SP)
+      labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP, SP)
       print('done.')
       count = 0
       for l in labelings :
@@ -263,7 +255,7 @@ if __name__ == '__main__':
 
     if args.show_predictions :
       print('\nCompute predictions under mcos ... ',end='')
-      predictions = query.get_predictions_under_mcos(net_with_data, SS, LC, CZ, FC, EP, SP)
+      predictions = query.get_predictions_under_mcos(net_with_data, OS, FP, FC, EP, SP)
       print('done.')
       utils.print_predictions(predictions)
 

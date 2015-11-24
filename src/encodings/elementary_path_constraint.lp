@@ -1,4 +1,4 @@
-
+depmat.
 % compute getspos getsneg
 
 #begin_lua
@@ -58,31 +58,34 @@ end
 countvertices(C+1)    :- C = #count{vertex(X)}.
 
 % in network n exist a pos_e_path from X to Y
-pos_e_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
-       	input(E,gen(X)), elabel(gen(X),gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
-pos_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	pos_e_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)),
+pos_e_path(E,X,Y,D, P) :- pos_e_path(E,X,Y,D, P,L).
+neg_e_path(E,X,Y,D, P) :- neg_e_path(E,X,Y,D, P,L).
+
+pos_e_path(E,X,Y,1, @strconc(X,Y),Y) :-
+       	input(E,X), elabel(X,Y, 1), not input(E,Y),
+       	vertex(Y).
+pos_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
+       	pos_e_path(E,X,Z,D,P), elabel(Z,Y, 1), not input(E,Y),
+       	vertex(Y),
 	0==@member(Y,P), D<C, countvertices(C).     
                           
-pos_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	neg_e_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)),
+pos_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
+       	neg_e_path(E,X,Z,D,P), elabel(Z,Y,-1), not input(E,Y),
+       	vertex(Y),
 	0==@member(Y,P), D<C, countvertices(C).
                        
 % in network n exist a neg_e_path from X to Y
-neg_e_path(E,gen(X),gen(Y),1, @strconc(X,Y)) :-
-       	input(E,gen(X)), elabel(gen(X),gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)).
-neg_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	neg_e_path(E,X,Z,D,P), elabel(Z,gen(Y), 1), not input(E,gen(Y)),
-       	vertex(gen(Y)),
+neg_e_path(E,X,Y,1, @strconc(X,Y),Y) :-
+       	input(E,X), elabel(X,Y,-1), not input(E,Y),
+       	vertex(Y).
+neg_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
+       	neg_e_path(E,X,Z,D,P), elabel(Z,Y, 1), not input(E,Y),
+       	vertex(Y),
 	0==@member(Y,P), D<C, countvertices(C).
                           
-neg_e_path(E,X,gen(Y), D+1,@strconc(P,Y))    :-
-       	pos_e_path(E,X,Z,D,P), elabel(Z,gen(Y),-1), not input(E,gen(Y)),
-       	vertex(gen(Y)),
+neg_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
+       	pos_e_path(E,X,Z,D,P), elabel(Z,Y,-1), not input(E,Y),
+       	vertex(Y),
 	0==@member(Y,P), D<C, countvertices(C).
 
 
@@ -94,19 +97,25 @@ elabel(gen("unknownup"), X,-1) :- rep(new_influence(E,X,-1)).
 
 
 % Y gets a positive influence
-getspos(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_e_path(E,X,Y,_,P).
-getspos(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_e_path(E,X,Y,_,P).
+getspos(E,Y,L) :- input(E,X), vlabel(E,X, 1), vertex(Y), pos_e_path(E,X,Y,_,P,L).
+getspos(E,Y,L) :- input(E,X), vlabel(E,X,-1), vertex(Y), neg_e_path(E,X,Y,_,P,L).
 
 % Y gets a negative influence
-getsneg(E,Y) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_e_path(E,X,Y,_,P).
-getsneg(E,Y) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_e_path(E,X,Y,_,P).
+getsneg(E,Y,L) :- input(E,X), vlabel(E,X, 1), vertex(Y), neg_e_path(E,X,Y,_,P,L).
+getsneg(E,Y,L) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_e_path(E,X,Y,_,P,L).
 
+getspos(E,Y) :- getspos(E,Y,L).
+getsneg(E,Y) :- getsneg(E,Y,L).
 
-mis_pos(E,and(Y)) :- elabel(Z,and(Y),1), not getspos(E,Y), exp(E).
-mis_pos(E,and(Y)) :- elabel(Z,and(Y),-1), not getsneg(E,Y), exp(E).
+cannull(E,Y) :- not getsneg(E,Y,L), not getspos(E,Y,L), exp(E), vertex(Y), vertex(L). 
+cannull(E,Y) :- getspos(E,Y), getsneg(E,Y).
+cannull(E,and(Y)) :- elabel(X,Y,S), cannull(E,X).
 
-mis_neg(E,and(Y)) :- elabel(Z,and(Y),1), not getsneg(E,Y), exp(E).
-mis_neg(E,and(Y)) :- elabel(Z,and(Y),-1), not getspos(E,Y), exp(E).
+getsppos(E, gen(Y)) :- getspos(E, gen(Y), L), not cannull(E,L), not getsneg(E,gen(Y)).
+getspneg(E, gen(Y)) :- getsneg(E, gen(Y), L), not cannull(E,L), not getspos(E,gen(Y)).
+
+cannull(E, gen(Y)) :- not getsppos(E, gen(Y)), not getspneg(E, gen(Y)), exp(E), vertex(gen(Y)).
+
 
 
 % labels must be consistent with depmat
@@ -117,4 +126,4 @@ mis_neg(E,and(Y)) :- elabel(Z,and(Y),-1), not getspos(E,Y), exp(E).
  :- vlabel(E,V,0), getspos(E,V), not getsneg(E,V).
  :- vlabel(E,V,0), getsneg(E,V), not getspos(E,V).
 
-#hide.
+%#hide.

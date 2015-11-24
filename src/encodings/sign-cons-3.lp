@@ -16,7 +16,7 @@ vertex(Y) :- edge(X,Y).
 
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
-1 {vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} 1 :- vertex(V), exp(E).
+1{vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} :- vertex(V), exp(E).
 1 {elabel(U,V,1), elabel(U,V,-1)} 1 :- edge(U,V), not rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
 % keep observed labeling of the edges

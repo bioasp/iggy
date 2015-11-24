@@ -9,7 +9,7 @@
 #
 # iggy is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNEOS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -31,9 +31,9 @@ guess_inputs_prg        = root + '/encodings/guess_inputs.lp'
 
 sign_cons_prg           = root + '/encodings/sign-cons-3.lp'
 
-steady_state_prg        = root + '/encodings/steady_state.lp'
-constr_luca_prg         = root + '/encodings/luca_constraints.lp'
-constr_zero_prg         = root + '/encodings/constrained_zero.lp'
+one_state_prg           = root + '/encodings/one_state.lp'
+bwd_prop_prg            = root + '/encodings/backward_propagation.lp'
+fwd_prop_prg            = root + '/encodings/forward_propagation.lp'
 founded_prg             = root + '/encodings/founded_constraints.lp'
 
 elem_path_prg           = root + '/encodings/elementary_path_constraint.lp'
@@ -46,7 +46,7 @@ error_measure_prg       = root + '/encodings/error_measure.lp'
 min_weighted_error_prg  = root + '/encodings/minimize_weighted_error.lp'
 
 add_influence_prg       = root + '/encodings/add_influence.lp'
-min_added_influence_prg = root + '/encodings/minimize_added_influnces.lp'
+min_added_influence_prg = root + '/encodings/minimize_added_influences.lp'
 
 add_edges_prg           = root + '/encodings/add_edges.lp'
 min_added_edges_prg     = root + '/encodings/minimize_added_edges.lp'
@@ -64,7 +64,7 @@ max_add_edges_prg       = root + '/encodings/max_add_edges.lp'
 
 mics_prg                = root + '/encodings/mics.lp'
 mics_constr_luca_prg    = root + '/encodings/mics_luca_constraints.lp'
-mics_constr_zero_prg    = root + '/encodings/mics_constrained_zero.lp'
+mics_fwd_prop_prg    = root + '/encodings/mics_constrained_zero.lp'
 mics_founded_prg        = root + '/encodings/mics_founded_constraints.lp'
 
 
@@ -79,14 +79,13 @@ scenfit = [error_measure_prg, min_weighted_error_prg, keep_inputs_prg]
 mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
-def get_scenfit(instance, SS, LC, CZ, FC, EP, SP):
+def get_scenfit(instance, OS, FP, FC, EP, SP):
   '''returns the scenfit of data and model described by the 
   ``TermSet`` object [instance].
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg, bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -101,20 +100,19 @@ def get_scenfit(instance, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst)
   return opt
     
-def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
+def get_scenfit_labelings(instance,nm, OS, FP, FC, EP, SP):
   '''
   returns a list of atmost [nm] ``TermSet`` representing scenfit labelings
   to the system described by the ``TermSet`` object [instance].
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg, bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
  
-  inst     = instance.to_file()
+  inst     = instance.to_file("instance.lp")
   prg      = sem + scenfit + [inst]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
@@ -130,13 +128,12 @@ def get_scenfit_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst)
   return models
      
-def get_predictions_under_scenfit(instance, SS, LC, CZ, FC, EP, SP):
+def get_predictions_under_scenfit(instance, OS, FP, FC, EP, SP):
   '''
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -157,13 +154,12 @@ def get_predictions_under_scenfit(instance, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst)    
   return models[0]
 
-def get_mcos(instance, SS, LC, CZ, FC, EP, SP):
+def get_mcos(instance, OS, FP, FC, EP, SP):
   '''
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg, bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -173,18 +169,18 @@ def get_mcos(instance, SS, LC, CZ, FC, EP, SP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+  
   opt      = solution[0].score[0]
 
   os.unlink(inst) 
   return opt
 
-def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
+def get_mcos_labelings(instance,nm, OS, FP, FC, EP, SP):
   '''
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg, bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -194,7 +190,7 @@ def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-
+  
   opt      = solution[0].score[0]
 
   prg      = prg + [show_labels_prg, show_rep_prg]
@@ -206,13 +202,12 @@ def get_mcos_labelings(instance,nm, SS, LC, CZ, FC, EP, SP):
   return models
 
 
-def get_predictions_under_mcos(instance, SS, LC, CZ, FC, EP, SP):
+def get_predictions_under_mcos(instance, OS, FP, FC, EP, SP):
   '''
   '''
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -234,12 +229,11 @@ def get_predictions_under_mcos(instance, SS, LC, CZ, FC, EP, SP):
   return models[0]
 
 
-def get_opt_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
+def get_opt_remove_edges(instance, OS, FP, FC, EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -256,12 +250,11 @@ def get_opt_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
   return (fit,repairs)
 
 
-def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
+def get_opt_repairs_remove_edges(instance,nm, OS, FP, FC, EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -284,12 +277,11 @@ def get_opt_repairs_remove_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
   return models
 
 
-def get_opt_flip_edges(instance, SS, LC, CZ, FC, EP, SP):
+def get_opt_flip_edges(instance, OS, FP, FC, EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -306,12 +298,11 @@ def get_opt_flip_edges(instance, SS, LC, CZ, FC, EP, SP):
   return (fit,repairs)
 
 
-def get_opt_repairs_flip_edges(instance,nm, SS, LC, CZ, FC, EP, SP):
+def get_opt_repairs_flip_edges(instance,nm, OS, FP, FC, EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -394,53 +385,63 @@ def get_opt_add_remove_edges_greedy(instance):
   inst     = instance.to_file()
   maxfact  = String2TermSet('max_add_edges(1)')
   fmaxfact = maxfact.to_file()
-  prg      = [ inst, fmaxfact,  
-	       min_repairs_prg, max_add_edges_prg, show_rep_prg,
-	     ] + sem + scenfit
+  prg      = [ inst, fmaxfact,
+               min_repairs_prg, show_rep_prg,
+             ] + sem + scenfit
+      
+  coptions = '1 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+  solver   = GringoClasp(clasp_options=coptions)                        
+  models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+  bfit     = models[0].score[0]
 
   strt_edges = TermSet()
-  fedges     = [strt_edges]
-  bfit_set   = False
+  fedges     = [(strt_edges,bfit)]
+  fedges2    = []
   tedges     = []
 
-  for edges in fedges:
-    # loop till no better solution can be found
-#      print('edges:',edges)
-      end      = True # this time its the end
-      f_edges  = TermSet(edges).to_file()
-      prg      = [ inst, fmaxfact, f_edges,
-                   min_repairs_prg, max_add_edges_prg, show_rep_prg,
-                 ] + sem + scenfit
+  coptions = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+  solver   = GringoClasp(clasp_options=coptions)                        
 
-      coptions = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
-      solver   = GringoClasp(clasp_options=coptions)                        
-      models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-      os.unlink(f_edges)
 
-      fit      = models[0].score[0]
-      if not bfit_set :              # set bfit
-        bfit     = fit
-        bfit_set = True
-      else: 
-        if fit < bfit : 
-#          print('new bfit:',str(bfit))
-          bfit=fit     # update bfit
-      repairs = models[0].score[1]
+  while fedges:
+    print ("TODO: ",len(fedges)+len(fedges2))
+    (edges,ofit) = fedges.pop()
+  # loop till no better solution can be found
+    print('(edges,ofit):',(edges,ofit))
+    end         = True # this time its the end
+    f_edges     = TermSet(edges).to_file()
+    prg         = [ inst, fmaxfact, f_edges,
+                    min_repairs_prg, max_add_edges_prg, show_rep_prg,
+                  ] + sem + scenfit
+
+    models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+    fit      = models[0].score[0]
+    repairs  = models[0].score[1]
+    os.unlink(f_edges)
+
+    if fit+1 < ofit : # more than one better
+      print('new bfit:',str(bfit))
+      if fit<bfit : bfit = fit     # update bfit
+      end  = False
+
+    if end : 
+      if (edges,bfit,repairs) not in tedges : 
+        print('LAST tedges append',edges)
+        tedges.append((edges,fit,repairs))
+    else : 
       for m in models:
         for a in m :
           if a.pred() == 'rep' :
             if a.arg(0)[0:7]=='addedge' :
-#              print ('new edge',a.arg(0)[7:])
+              print ('new edge',a.arg(0)[7:])
               nedges  = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
               end     = False
-        if end:
-          if (edges,fit,repairs) not in tedges : 
-#            print('tedges append',edges)
-            tedges.append((edges,fit,repairs))
-        else : 
-          if nedges not in fedges :
-            fedges.append(nedges)
-        end = True
+        if nedges not in fedges2 :
+           fedges2.append((nedges,fit))
+           
+    if not fedges :
+      fedges=fedges2
+      fedges2=[] # flip fedges
 
   # take only the results with the best fit
   redges=[]
@@ -448,10 +449,10 @@ def get_opt_add_remove_edges_greedy(instance):
     print('red:  ',edges,str(fit),str(repairs))
     if fit == bfit: redges.append((edges,repairs))
 
-
   os.unlink(fmaxfact)
   os.unlink(inst)
   return (bfit,redges)
+
 
 def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   '''
@@ -475,12 +476,11 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   os.unlink(inst)
   return models
 
-def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
+def get_opt_add_remove_edges(instance, OS, FP, FC, EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : 
     print('error query.get_opt_add_remove_edges should not be called with'
@@ -500,12 +500,11 @@ def get_opt_add_remove_edges(instance, SS, LC, CZ, FC, EP, SP):
   os.unlink(inst)
   return (fit,repairs)
 
-def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,EP, SP):
+def get_opt_repairs_add_remove_edges(instance,nm, OS, FP, FC,EP, SP):
 
-  sem = [sign_cons_prg]
-  if SS : sem.append(steady_state_prg)
-  if LC : sem.append(constr_luca_prg)
-  if CZ : sem.append(constr_zero_prg)
+  sem = [sign_cons_prg,bwd_prop_prg]
+  if OS : sem.append(one_state_prg)
+  if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
   if SP : sem.append(some_path_prg)
@@ -527,13 +526,12 @@ def get_opt_repairs_add_remove_edges(instance,nm, SS, LC, CZ, FC,EP, SP):
   os.unlink(inst)
   return models
     
-def get_minimal_inconsistent_cores(instance, SS, LC, CZ, FC, FESPC):
+def get_minimal_inconsistent_cores(instance, OS, FP, FC, FESPC):
   '''
   '''
   sem = [mics_prg, heu_prg]
-#  if SS   : sem.append(steady_state_prg)
-  if LC   : sem.append(mics_constr_luca_prg)
-  if CZ   : sem.append(mics_constr_zero_prg)
+#  if OS   : sem.append(bwd_prop_prg)
+  if FP   : sem.append(mics_fwd_prop_prg)
 #  if FC   : sem.append(mics_founded_prg)
 
   inst     = instance.to_file()   

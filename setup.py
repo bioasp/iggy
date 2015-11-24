@@ -38,5 +38,5 @@ setup(
   package_dir = {'__iggy__' : 'src'},
   package_data = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
   scripts = ['iggy.py', 'opt_graph.py'],
-  install_requires=["pyasp == 1.4.1"]
+  install_requires=["pyasp == 1.4.2"]
 )
