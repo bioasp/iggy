@@ -1,11 +1,6 @@
 % keep observed input variation
-:- vlabel(E,V,1), vertex(V), obs_vlabel(E,V,-1), input(E,V).
-:- vlabel(E,V,0), vertex(V), obs_vlabel(E,V,-1), input(E,V).
-:- vlabel(E,V,0), vertex(V), obs_vlabel(E,V, 1), input(E,V).
-:- vlabel(E,V,-1), vertex(V), obs_vlabel(E,V, 1), input(E,V).
-:- vlabel(E,V, 1), vertex(V), obs_vlabel(E,V, 0), input(E,V).
-:- vlabel(E,V, -1), vertex(V), obs_vlabel(E,V, 0), input(E,V).
+forbidden(E,V,T) :- input(E,V), obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 
 % A weak input
-:- vlabel(E,V, 1), vertex(V), obs_vlabel(E,V,notPlus), input(E,V).
-:- vlabel(E,V,-1), vertex(V), obs_vlabel(E,V,notMinus), input(E,V).
+forbidden(E,V, 1) :- input(E,V), obs_vlabel(E,V,notPlus).
+forbidden(E,V,-1) :- input(E,V), obs_vlabel(E,V,notMinus).

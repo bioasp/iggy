@@ -1,9 +1,8 @@
-depmat.
-% compute getspos getsneg
 
 #begin_lua
 
 function string:split( inSplitPattern, outResults )
+  --print("split",self)
   if not outResults then
     outResults = { }
   end
@@ -44,12 +43,16 @@ end
 
 function member(x,l)
   local myString = tostring(l)
-  local myset = Set(myString:split(":"))
-  if myset[x] then 
-    return 1
-  else 
-    return 0
+  local myset = myString:split(":")
+  for i,n in ipairs(myset) do
+ --   print(i,n)
+    if n==tostring(x) then
+      return 1
+    else
+      -- print("noteq")
+    end
   end
+  return 0
 end
 
 #end_lua.
@@ -61,7 +64,7 @@ countvertices(C+1)    :- C = #count{vertex(X)}.
 pos_e_path(E,X,Y,D, P) :- pos_e_path(E,X,Y,D, P,L).
 neg_e_path(E,X,Y,D, P) :- neg_e_path(E,X,Y,D, P,L).
 
-pos_e_path(E,X,Y,1, @strconc(X,Y),Y) :-
+pos_e_path(E,X,Y,1, @strconc(X,Y),X) :-
        	input(E,X), elabel(X,Y, 1), not input(E,Y),
        	vertex(Y).
 pos_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
@@ -75,7 +78,7 @@ pos_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
 	0==@member(Y,P), D<C, countvertices(C).
                        
 % in network n exist a neg_e_path from X to Y
-neg_e_path(E,X,Y,1, @strconc(X,Y),Y) :-
+neg_e_path(E,X,Y,1, @strconc(X,Y),X) :-
        	input(E,X), elabel(X,Y,-1), not input(E,Y),
        	vertex(Y).
 neg_e_path(E,X,Y, D+1,@strconc(P,Y),Z)    :-
@@ -107,23 +110,9 @@ getsneg(E,Y,L) :- input(E,X), vlabel(E,X,-1), vertex(Y), pos_e_path(E,X,Y,_,P,L)
 getspos(E,Y) :- getspos(E,Y,L).
 getsneg(E,Y) :- getsneg(E,Y,L).
 
-cannull(E,Y) :- not getsneg(E,Y,L), not getspos(E,Y,L), exp(E), vertex(Y), vertex(L). 
-cannull(E,Y) :- getspos(E,Y), getsneg(E,Y).
-cannull(E,and(Y)) :- elabel(X,Y,S), cannull(E,X).
 
-getsppos(E, gen(Y)) :- getspos(E, gen(Y), L), not cannull(E,L), not getsneg(E,gen(Y)).
-getspneg(E, gen(Y)) :- getsneg(E, gen(Y), L), not cannull(E,L), not getspos(E,gen(Y)).
+% elementary path constraint every change needs an elementary path
+forbidden(E,V, 1) :- exp(E), vertex(V), not getspos(E,V), not input(E,V).
+forbidden(E,V,-1) :- exp(E), vertex(V), not getsneg(E,V), not input(E,V).
 
-cannull(E, gen(Y)) :- not getsppos(E, gen(Y)), not getspneg(E, gen(Y)), exp(E), vertex(gen(Y)).
-
-
-
-% labels must be consistent with depmat
-
- :- vlabel(E,V, 1), not getspos(E,V), not input(E,V).
- :- vlabel(E,V,-1), not getsneg(E,V), not input(E,V).
-
- :- vlabel(E,V,0), getspos(E,V), not getsneg(E,V).
- :- vlabel(E,V,0), getsneg(E,V), not getspos(E,V).
-
-%#hide.
+depmat.

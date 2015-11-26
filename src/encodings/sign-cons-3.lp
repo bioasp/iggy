@@ -27,12 +27,37 @@ elabel(U,V,S) :- edge(U,V), obs_elabel(U,V,S), not error_edge(U,V), not rep(reme
 elabel(U,V,1)  :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), not rep(remedge(U,V,1)), rep(remedge(U,V,-1)).
 elabel(U,V,-1) :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
- 
+
+
+% influences
+infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
+% effects of a repair
+infl(E,V,S) :- rep(new_influence(E,V,S)).
+
+
+% pure influences
+pinfl(E,V, 1) :- elabel(U,V, 1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
+pinfl(E,V,-1) :- elabel(U,V,-1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
+pinfl(E,V,-1) :- elabel(U,V, 1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
+pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
+
+
+
+
+
+% constraints
+:- forbidden(E,V,S), vlabel(E,V,S).
+
 % levelbound constraints
 % if the initial level is at the minimum it cannot decrease anymore
-:- ismin(E,X), vlabel(E,X,-1).
+forbidden(E,V,-1) :- ismin(E,V).
 
 % if the initial level is at the maximum it cannot increase anymore
-:- ismax(E,X), vlabel(E,X,1).
- 
+forbidden(E,V, 1) :- ismax(E,V).
+
+
 #hide.
+% #show vlabel/3.
+% #show cannull/2.
+% #show pos_e_path/6.
+% #show neg_e_path/6.

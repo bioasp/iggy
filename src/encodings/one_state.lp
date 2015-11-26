@@ -1,2 +1,2 @@
  
-:- vlabel(E,V,T), vlabel(E,V,S), S!=T.
+forbidden(E,V,S) :- vlabel(E,V,T), sign(S), S!=T.

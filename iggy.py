@@ -45,12 +45,12 @@ if __name__ == '__main__':
     help="turn constraints OFF that every variation must be founded in an input, default is ON",
     action="store_true")
 
-  parser.add_argument('--depmat_elem_path',
-    help="do not use steady state assumption, instead a change must be explained by an elementary path from an input.",
+  parser.add_argument('--elempath',
+    help=" a change must be explained by an elementary path from an input.",
     action="store_true")
 
-  parser.add_argument('--depmat_some_path',
-    help="do not use steady state assumption, instead a change must be explained by a path from an input.",
+  parser.add_argument('--depmat',
+    help="combines multiple states, a change must be explained by an elementary path from an input.",
     action="store_true")
 
   parser.add_argument('--mics',
@@ -80,28 +80,33 @@ if __name__ == '__main__':
 
   FP  = not (args.no_fwd_propagation)
   FC  = not (args.no_founded_constraints)
-  SP  = args.depmat_some_path
-  EP  = args.depmat_elem_path
-
-  if SP :
-    print(' * Not using steady state assumption,  observed changes might be transient.')
-    print(' * A path from an input must exist top explain changes.')
-    OS = False
-    FP = False
-    FC = False
-
-  if EP :
-    print(' * Not using steady state assumption,  observed changes might be transient.')
+  EP  = args.elempath
+  DM  = args.depmat
+  
+  SP= False
+  
+  if DM :
+    print(' * DepMat combines multiple states.')
     print(' * An elementary path from an input must exist top explain changes.')
     OS = False
-    FP = False
-    FC = False
-
-  if not (SP|EP):
-    print(' * Using steady state assumption, all observed changes must be explained by an predecessor.')
+    EP = True
+    FP = True
+    FC = True
+    
+  else :
+    print(' * All observed changes must be explained by an predecessor.')
     OS = True
-    if FP  : print(' * No-change observations must be explained.')
-    if FC  : print(' * All observed changes must be explained by an input.')
+    if FP : print(' * 0-change must be explained.')
+    if FC : print(' * All observed changes must be explained by an input.')
+    if EP : print(' * An elementary path from an input must exist top explain changes.')
+
+
+
+  if (not args.scenfit) and EP :
+    print('\nMCoS and elementary path / DepMat do not work well together.'
+          'Please use --scenfit !')
+    exit()
+  
 
   print('\nReading network',net_string, '... ',end='')
   net = parsers.readSIFGraph(net_string)
@@ -118,10 +123,11 @@ if __name__ == '__main__':
     if a.pred() == 'vertex' : nodes.add(a.arg(0))
   unspecified = activations & inhibitions
 
-  print("   Nodes:", len(nodes),
-    " Activations:", len(activations),
-    " Inhibitions:", len(inhibitions),
-           " Dual:", len(unspecified))
+  print('\nNetwork stats:')
+  print("   Nodes =", len(nodes),
+    " Activations =", len(activations),
+    " Inhibitions =", len(inhibitions),
+           " Dual =", len(unspecified))
 
 
   print('\nReading observations',obs_string, '... ',end='')
@@ -132,16 +138,14 @@ if __name__ == '__main__':
   print('\nChecking observations',obs_string, '... ',end='')
   contradictions = query.get_contradictory_obs(mu)
   print('done.')
-  if len(contradictions) == 0 : print('   Observations are OK.')
+  if len(contradictions) == 0 : print('\nObservations are OK!')
   else:
-    print('   Contradictory observations found. Please correct manually.')
+    print('\nContradictory observations found. Please correct manually!')
     for c in contradictions : print ('  ',c)
     utils.clean_up()
     exit()
 
-
   # gather some stats on the observations  
-
   plus     = set()
   zero     = set()
   minus    = set()
@@ -160,14 +164,14 @@ if __name__ == '__main__':
   unobserved   = nodes -(plus|minus|zero|notplus| notminus)
   not_in_model = (plus|minus|notplus|zero|notminus)-nodes
 
-  print(     "   inputs:", len(inputs&nodes),
-           " observed +:", len(plus&nodes), 
-           " observed -:", len(minus&nodes),
-           " observed 0:", len(zero&nodes),
-     " observed notPlus:", len(notplus&nodes),
-    " observed notMinus:", len(notminus&nodes),
-           " unobserved:", len(unobserved),
-         " not in model:", len(not_in_model))
+  print("              inputs =", len(inputs&nodes))
+  print("          observed + =", len(plus&nodes))
+  print("          observed - =", len(minus&nodes))
+  print("          observed 0 =", len(zero&nodes))
+  print("    observed notPlus =", len(notplus&nodes))
+  print("   observed notMinus =", len(notminus&nodes))
+  print("          unobserved =", len(unobserved))
+  print("        not in model =", len(not_in_model))
 
 
   if args.autoinputs :
@@ -175,23 +179,23 @@ if __name__ == '__main__':
     inputs = query.guess_inputs(net)
     net    = TermSet(net.union(inputs))
     print('done.')
-    print("   number of inputs:", len(inputs))
+    print("\number of inputs:", len(inputs))
 
   net_with_data = TermSet(net.union(mu))
 
 
   if args.scenfit :
     print('\nComputing scenfit of network and data ... ',end='')
-    scenfit = query.get_scenfit(net_with_data,OS, FP, FC, EP, SP)
+    scenfit = query.get_scenfit(net_with_data, OS, FP, FC, EP)
     print('done.')
-    if scenfit == 0 : print("   The network and data are consistent: scenfit = 0.")
+    if scenfit == 0 : print("\nThe network and data are consistent: scenfit = 0.")
     else:
-      print("   The network and data are inconsistent: scenfit = ",str(scenfit),'.',sep='')
+      print("\nThe network and data are inconsistent: scenfit = ",str(scenfit),'.',sep='')
 
       if args.mics:
         print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
-        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP, SP)
+        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP)
         print('done.')
         count  = 1
         oldmic = 0
@@ -205,34 +209,37 @@ if __name__ == '__main__':
 
     if args.show_labelings >= 0 :
       print('\nCompute scenfit labelings ... ',end='')
-      labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP, SP)
+      labelings = query.get_scenfit_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP)
       print('done.')
       count=0
       for l in labelings :
         count+=1
-        print('Labeling ',str(count),':',sep='')
+        print('\nLabeling ',str(count),':',sep='')
         utils.print_labeling(l)
+        print('\n   Repairs:')
+        utils.print_repairs(l)
 
     if args.show_predictions :
       print('\nCompute predictions under scenfit ... ',end='')
-      predictions = query.get_predictions_under_scenfit(net_with_data, OS, FP, FC, EP, SP)
+      predictions = query.get_predictions_under_scenfit(net_with_data, OS, FP, FC, EP)
       print('done.')
+      print('\nPredictions:')
       utils.print_predictions(predictions)
 
 
 
   if not args.scenfit :
     print('\nComputing mcos of network and data ... ',end='')
-    mcos = query.get_mcos(net_with_data, OS, FP, FC, EP, SP)
+    mcos = query.get_mcos(net_with_data, OS, FP, FC, EP)
     print('done.')
-    if mcos == 0 : print("   The network and data are consistent: mcos = 0.")
+    if mcos == 0 : print("\nThe network and data are consistent: mcos = 0.")
     else: 
-      print("   The network and data are inconsistent: mcos = ",str(mcos),'.',sep='')
+      print("\nThe network and data are inconsistent: mcos = ",str(mcos),'.',sep='')
 
       if args.mics:
         print('\nComputing minimal inconsistent cores (mic\'s) ... ',end='')
         sys.stdout.flush()
-        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP, SP)
+        mics = query.get_minimal_inconsistent_cores(net_with_data, OS, FP, FC, EP)
         print('done.')
         count  = 1
         oldmic = 0
@@ -245,18 +252,21 @@ if __name__ == '__main__':
 
     if args.show_labelings >= 0 :
       print('\nCompute mcos labelings ... ',end='')
-      labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP, SP)
+      labelings = query.get_mcos_labelings(net_with_data, args.show_labelings, OS, FP, FC, EP)
       print('done.')
       count = 0
       for l in labelings :
         count += 1
-        print('Labeling ',str(count),':',sep='')
+        print('\nLabeling ',str(count),':',sep='')
         utils.print_labeling(l)
-
+        print('\n   Repairs:')
+        utils.print_repairs(l)
+        
     if args.show_predictions :
       print('\nCompute predictions under mcos ... ',end='')
-      predictions = query.get_predictions_under_mcos(net_with_data, OS, FP, FC, EP, SP)
+      predictions = query.get_predictions_under_mcos(net_with_data, OS, FP, FC, EP)
       print('done.')
+      print('\nPredictions:')
       utils.print_predictions(predictions)
 
 

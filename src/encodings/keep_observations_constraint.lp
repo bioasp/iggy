@@ -1,16 +1,8 @@
  
  % keep observed variations
-:- vlabel(E,V,1), vertex(V), obs_vlabel(E,V,-1).
-:- vlabel(E,V,0), vertex(V), obs_vlabel(E,V,-1).
-
-:- vlabel(E,V,-1), vertex(V), obs_vlabel(E,V,0).
-:- vlabel(E,V,1), vertex(V), obs_vlabel(E,V,0).
-
-:- vlabel(E,V,-1), vertex(V), obs_vlabel(E,V,1).
-:- vlabel(E,V,0), vertex(V), obs_vlabel(E,V,1).
-
+forbidden(E,V,T) :- obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 
 % A weak vertex variation has been observed
-:- vlabel(E,V,1), vertex(V), obs_vlabel(E,V,notPlus).
-:- vlabel(E,V,-1), vertex(V), obs_vlabel(E,V,notMinus).
+forbidden(E,V, 1) :- vertex(V), obs_vlabel(E,V,notPlus).
+forbidden(E,V,-1) :- vertex(V), obs_vlabel(E,V,notMinus).
 

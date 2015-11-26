@@ -71,6 +71,7 @@ mics_founded_prg        = root + '/encodings/mics_founded_constraints.lp'
 heu_prg                 = root + '/encodings/heuristic.lp'
 
 show_pred_prg           = root + '/encodings/show_predictions.lp'
+show_pred_dm_prg        = root + '/encodings/show_predictions_dm.lp'
 show_labels_prg         = root + '/encodings/show_vlabels.lp'
 show_err_prg            = root + '/encodings/show_errors.lp'
 show_rep_prg            = root + '/encodings/show_repairs.lp'
@@ -79,7 +80,7 @@ scenfit = [error_measure_prg, min_weighted_error_prg, keep_inputs_prg]
 mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
-def get_scenfit(instance, OS, FP, FC, EP, SP):
+def get_scenfit(instance, OS, FP, FC, EP):
   '''returns the scenfit of data and model described by the 
   ``TermSet`` object [instance].
   '''
@@ -88,7 +89,7 @@ def get_scenfit(instance, OS, FP, FC, EP, SP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
+
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [inst]
@@ -100,7 +101,7 @@ def get_scenfit(instance, OS, FP, FC, EP, SP):
   os.unlink(inst)
   return opt
     
-def get_scenfit_labelings(instance,nm, OS, FP, FC, EP, SP):
+def get_scenfit_labelings(instance,nm, OS, FP, FC, EP):
   '''
   returns a list of atmost [nm] ``TermSet`` representing scenfit labelings
   to the system described by the ``TermSet`` object [instance].
@@ -109,10 +110,9 @@ def get_scenfit_labelings(instance,nm, OS, FP, FC, EP, SP):
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
-  if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
+  if EP : sem.append(elem_path_prg)  
  
-  inst     = instance.to_file("instance.lp")
+  inst     = instance.to_file()
   prg      = sem + scenfit + [inst]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
@@ -128,7 +128,7 @@ def get_scenfit_labelings(instance,nm, OS, FP, FC, EP, SP):
   os.unlink(inst)
   return models
      
-def get_predictions_under_scenfit(instance, OS, FP, FC, EP, SP):
+def get_predictions_under_scenfit(instance, OS, FP, FC, EP):
   '''
   '''
   sem = [sign_cons_prg,bwd_prop_prg]
@@ -136,7 +136,6 @@ def get_predictions_under_scenfit(instance, OS, FP, FC, EP, SP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [inst]
@@ -146,7 +145,10 @@ def get_predictions_under_scenfit(instance, OS, FP, FC, EP, SP):
 
   opt      = solution[0].score[0]
 
-  prg      = prg + [show_pred_prg]
+  if OS :
+    prg    = prg + [show_pred_prg]
+  else :
+    prg    = prg + [show_pred_dm_prg]
   coptions = '--opt-strategy=5 --opt-mode=optN --enum-mode=cautious --opt-bound='+str(opt)
   solver2  = GringoClasp(clasp_options=coptions)
   models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
@@ -154,7 +156,7 @@ def get_predictions_under_scenfit(instance, OS, FP, FC, EP, SP):
   os.unlink(inst)    
   return models[0]
 
-def get_mcos(instance, OS, FP, FC, EP, SP):
+def get_mcos(instance, OS, FP, FC, EP):
   '''
   '''
   sem = [sign_cons_prg, bwd_prop_prg]
@@ -162,7 +164,6 @@ def get_mcos(instance, OS, FP, FC, EP, SP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + mcos + [inst]
@@ -175,7 +176,7 @@ def get_mcos(instance, OS, FP, FC, EP, SP):
   os.unlink(inst) 
   return opt
 
-def get_mcos_labelings(instance,nm, OS, FP, FC, EP, SP):
+def get_mcos_labelings(instance,nm, OS, FP, FC, EP):
   '''
   '''
   sem = [sign_cons_prg, bwd_prop_prg]
@@ -183,7 +184,6 @@ def get_mcos_labelings(instance,nm, OS, FP, FC, EP, SP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + mcos + [inst]
@@ -202,7 +202,7 @@ def get_mcos_labelings(instance,nm, OS, FP, FC, EP, SP):
   return models
 
 
-def get_predictions_under_mcos(instance, OS, FP, FC, EP, SP):
+def get_predictions_under_mcos(instance, OS, FP, FC, EP):
   '''
   '''
   sem = [sign_cons_prg,bwd_prop_prg]
@@ -210,7 +210,6 @@ def get_predictions_under_mcos(instance, OS, FP, FC, EP, SP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + mcos + [inst]
@@ -220,7 +219,11 @@ def get_predictions_under_mcos(instance, OS, FP, FC, EP, SP):
 
   opt      = solution[0].score[0]
 
-  prg      = prg + [show_pred_prg]
+  if OS :
+    prg    = prg + [show_pred_prg]
+  else :
+    prg    = prg + [show_pred_dm_prg]
+
   coptions = '--opt-strategy=5 --opt-mode=optN --enum-mode=cautious --opt-bound='+str(opt)
   solver2  = GringoClasp(clasp_options=coptions)
   models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
@@ -229,14 +232,13 @@ def get_predictions_under_mcos(instance, OS, FP, FC, EP, SP):
   return models[0]
 
 
-def get_opt_remove_edges(instance, OS, FP, FC, EP, SP):
+def get_opt_remove_edges(instance, OS, FP, FC, EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
@@ -250,14 +252,13 @@ def get_opt_remove_edges(instance, OS, FP, FC, EP, SP):
   return (fit,repairs)
 
 
-def get_opt_repairs_remove_edges(instance,nm, OS, FP, FC, EP, SP):
+def get_opt_repairs_remove_edges(instance,nm, OS, FP, FC, EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
@@ -277,14 +278,13 @@ def get_opt_repairs_remove_edges(instance,nm, OS, FP, FC, EP, SP):
   return models
 
 
-def get_opt_flip_edges(instance, OS, FP, FC, EP, SP):
+def get_opt_flip_edges(instance, OS, FP, FC, EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
@@ -298,14 +298,13 @@ def get_opt_flip_edges(instance, OS, FP, FC, EP, SP):
   return (fit,repairs)
 
 
-def get_opt_repairs_flip_edges(instance,nm, OS, FP, FC, EP, SP):
+def get_opt_repairs_flip_edges(instance,nm, OS, FP, FC, EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
@@ -476,7 +475,7 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   os.unlink(inst)
   return models
 
-def get_opt_add_remove_edges(instance, OS, FP, FC, EP, SP):
+def get_opt_add_remove_edges(instance, OS, FP, FC, EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
@@ -487,7 +486,7 @@ def get_opt_add_remove_edges(instance, OS, FP, FC, EP, SP):
           'elementary path constraint, use instead'
 	  'get_opt_add_remove_edges_greedy')
     exit()
-  if SP : sem.append(some_path_prg)
+
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
@@ -500,14 +499,13 @@ def get_opt_add_remove_edges(instance, OS, FP, FC, EP, SP):
   os.unlink(inst)
   return (fit,repairs)
 
-def get_opt_repairs_add_remove_edges(instance,nm, OS, FP, FC,EP, SP):
+def get_opt_repairs_add_remove_edges(instance,nm, OS, FP, FC,EP):
 
   sem = [sign_cons_prg,bwd_prop_prg]
   if OS : sem.append(one_state_prg)
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
-  if SP : sem.append(some_path_prg)
 
   inst = instance.to_file()    
   prg  = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]

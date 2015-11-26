@@ -26,14 +26,16 @@ def print_predictions(predictions) :
   pred_not_plus  = set()
   pred_not_minus = set()
   pred_change    = set()
+  maxsize = 0
   for p in predictions:
-    if p.pred() == "new_pred" :
+    if p.pred() == "pred" :
       if p.arg(2) == "1"        : pred_plus.add(p.arg(1))
       if p.arg(2) == "-1"       : pred_minus.add(p.arg(1))
       if p.arg(2) == "0"        : pred_zero.add(p.arg(1))
       if p.arg(2) == "notPlus"  : pred_not_plus.add(p.arg(1))
       if p.arg(2) == "notMinus" : pred_not_minus.add(p.arg(1))
       if p.arg(2) == "change"   : pred_change.add(p.arg(1))
+      if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
 
   pred_not_plus.difference_update(pred_minus)
   pred_not_plus.difference_update(pred_zero)
@@ -41,19 +43,38 @@ def print_predictions(predictions) :
   pred_not_minus.difference_update(pred_zero)
   pred_change.difference_update(pred_minus)
   pred_change.difference_update(pred_plus)
-  for p in pred_plus      : print('  ',p,'= +')
-  for p in pred_minus     : print('  ',p,'= -')
-  for p in pred_zero      : print('  ',p,'= 0')
-  for p in pred_not_plus  : print('  ',p,'= NOT +')
-  for p in pred_not_minus : print('  ',p,'= NOT -')
-  for p in pred_change    : print('  ',p,'= CHANGE')
+  for p in pred_plus      :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = +') 
+  for p in pred_minus     :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = -')
+  for p in pred_zero      :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = 0')
+  for p in pred_not_plus  :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = NOT +') 
+  for p in pred_not_minus :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = NOT -')
+  for p in pred_change    :
+    print('  ',p,end='')
+    for i in range(maxsize - len(p)) : print(' ', end='')
+    print(' = CHANGE')
 
-  print(' \n   predicted +:', len(pred_plus),
-             ' predicted -:', len(pred_minus),
-             ' predicted 0:', len(pred_zero),
-         ' predicted NOT +:', len(pred_not_plus),
-         ' predicted NOT -:', len(pred_not_minus),
-        ' predicted CHANGE:', len(pred_change))
+  print('')
+  print('        predicted + =', len(pred_plus))
+  print('        predicted - =', len(pred_minus))
+  print('        predicted 0 =', len(pred_zero))
+  print('    predicted NOT + =', len(pred_not_plus))
+  print('    predicted NOT - =', len(pred_not_minus))
+  print('   predicted CHANGE =', len(pred_change))
 
 
 def print_labeling(labelings) :
@@ -62,30 +83,40 @@ def print_labeling(labelings) :
   label_minus = set()
   label_zero  = set()
   repairs     = set()
+  maxsize = 0
   for l in labelings:
     if l.pred() == "vlabel" :
       if l.arg(2) == "1"  : label_plus.add(l.arg(1))
       if l.arg(2) == "-1" : label_minus.add(l.arg(1))
       if l.arg(2) == "0"  : label_zero.add(l.arg(1))
+      if len(l.arg(1)) > maxsize : maxsize = len(l.arg(1))
     if l.pred() == "err" : repairs.add(l)
     if l.pred() == "rep" : repairs.add(l)
 
-  for l in label_plus  : print('  ',l,'= +')
-  for l in label_minus : print('  ',l,'= -')
-  for l in label_zero  : print('  ',l,'= 0')
+  for l in label_plus  :
+    print('  ',l,end='')
+    for i in range(maxsize - len(l)) : print(' ', end='')
+    print(' = +')
+  for l in label_minus :
+    print('  ',l,end='')
+    for i in range(maxsize - len(l)) : print(' ', end='')
+    print(' = -')
+  for l in label_zero  :
+    print('  ',l,end='')
+    for i in range(maxsize - len(l)) : print(' ', end='')
+    print(' = 0')
   
-  print(' \n   labeled +:', len(label_plus),
-             ' labeled -:', len(label_minus),
-             ' labeled 0:', len(label_zero),end='')
-
-  for r in repairs     : print('   ',r.arg(0))
+  print(' \n   labeled + =', len(label_plus),
+             ' labeled - =', len(label_minus),
+             ' labeled 0 =', len(label_zero))
 
 
 def print_repairs(repairs) :
   repair = set()
   for r in repairs:
     if r.pred() == "rep" : repair.add(r)
-  for r in repair : print('   ',r.arg(0))
+    if r.pred() == "err" : repair.add(r)
+  for r in repair : print('  ',r.arg(0))
 
 
 def print_mic(mic, net, obs) :
