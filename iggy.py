@@ -82,9 +82,7 @@ if __name__ == '__main__':
   FC  = not (args.no_founded_constraints)
   EP  = args.elempath
   DM  = args.depmat
-  
-  SP= False
-  
+   
   if DM :
     print(' * DepMat combines multiple states.')
     print(' * An elementary path from an input must exist top explain changes.')
@@ -179,7 +177,7 @@ if __name__ == '__main__':
     inputs = query.guess_inputs(net)
     net    = TermSet(net.union(inputs))
     print('done.')
-    print("\number of inputs:", len(inputs))
+    print("\nNumber of inputs =", len(inputs))
 
   net_with_data = TermSet(net.union(mu))
 

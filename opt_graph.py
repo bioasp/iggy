@@ -38,25 +38,20 @@ if __name__ == '__main__':
     help="turn forward propagation OFF, default is ON",
     action="store_true")
 
-  parser.add_argument('--propagate_unambiguous_influences',
-    help = 'turn constraints ON that if all predecessor of a node have the '
-           'same influence this must have an effect, default is OFF',
-    action="store_true")
 
   parser.add_argument('--no_founded_constraints',
     help='turn constraints OFF that every variation must be founded in an '
          'input, default is ON',
     action="store_true")
 
-  parser.add_argument('--depmat_elem_path',
-    help='do not use steady state assumption, instead a change must be '
-         'explained by an elementary path from an input.',
+  parser.add_argument('--elempath',
+    help=" a change must be explained by an elementary path from an input.",
     action="store_true")
 
-  parser.add_argument('--depmat_some_path',
-    help='do not use steady state assumption, instead a change must be '
-         'explained by a path from an input.',
-    action="store_true")
+  parser.add_argument('--depmat',
+    help="combines multiple states, a change must be explained by an elementary path from an input.",
+    action="store_true")    
+
 
   parser.add_argument('--autoinputs',
     help='compute possible inputs of the network (nodes with indegree 0)',
@@ -77,35 +72,25 @@ if __name__ == '__main__':
   net_string = args.networkfile
   obs_dir = args.observationfiles
 
-
   FP  = not (args.no_fwd_propagation)
   FC  = not (args.no_founded_constraints)
-  SP  = args.depmat_some_path
-  EP  = args.depmat_elem_path
-
-  if SP :
-    print(' * Not using steady state assumption, observed changes might be '
-             'transient.')
-    print(' * A path from an input must exist top explain changes.')
+  EP  = args.elempath
+  DM  = args.depmat
+  
+  if DM :
+    print(' * DepMat combines multiple states.')
+    print(' * An elementary path from an input must exist top explain changes.')
     OS = False
-    FP = False
-    FC = False
+    EP = True
+    FP = True
+    FC = True
 
-  if EP :
-    print(' * Not using steady state assumption, observed changes might be '
-             'transient.')
-    print(' * An elementary path from an input must exist top explain '
-             'changes.')
-    OS = False
-    FP = False
-    FC = False
-
-  if not (SP|EP):
-    print(' * Using steady state assumption, all observed changes must be '
-             'explained by an predecessor.')
+  else :
+    print(' * All observed changes must be explained by an predecessor.')
     OS = True
-    if FP  : print(' * No-change observations must be explained.')
-    if FC  : print(' * All observed changes must be explained by an input.')
+    if FP : print(' * 0-change must be explained.')
+    if FC : print(' * All observed changes must be explained by an input.')
+    if EP : print(' * An elementary path from an input must exist top explain changes.')
 
 
   print('\nReading network',net_string, '... ',end='')
@@ -123,10 +108,10 @@ if __name__ == '__main__':
       if a.arg(2) == '-1' : inhibitions.add((a.arg(0),a.arg(1)))
     if a.pred() == 'vertex' : nodes.add(a.arg(0))
   unspecified = activations & inhibitions
-  print("   Nodes:", len(nodes),
-    " Activations:", len(activations),
-    " Inhibitions:", len(inhibitions),
-           " Dual:", len(unspecified))
+  print("   Nodes =", len(nodes),
+    " Activations =", len(activations),
+    " Inhibitions =", len(inhibitions),
+           " Dual =", len(unspecified))
 
 
   flist = os.listdir(obs_dir)
@@ -141,9 +126,9 @@ if __name__ == '__main__':
   print('\nChecking observations ... ',end='')
   contradictions = query.get_contradictory_obs(MU)
   print('done.')
-  if len(contradictions) == 0 : print('   Observations are OK.')
+  if len(contradictions) == 0 : print('\nObservations are OK.')
   else:
-    print('   Contradictory observations found. Please correct manually.')
+    print('\nContradictory observations found. Please correct manually.')
     for c in contradictions : print('  ',c)
     utils.clean_up()
     exit()
@@ -153,86 +138,86 @@ if __name__ == '__main__':
     inputs = query.guess_inputs(net)
     net    = TermSet(net.union(inputs))
     print('done.')
-    print('   number of inputs:', len(inputs))
+    print('\nNumber of inputs =', len(inputs))
 
   net_with_data = TermSet(net.union(MU))
 
   if args.repair_mode==3 :
     print('\nComputing minimal number of flipped edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_flip_edges(net_with_data, OS, FP, FC, EP, SP)
+    (scenfit,repairs) = query.get_opt_flip_edges(net_with_data, OS, FP, FC, EP)
     print('done.')
-    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'flipped edges.')
+    print('\nThe network and data can reach a scenfit of',scenfit,'with',repairs,'flipped edges.')
 
     if args.show_repairs >= 0 and repairs > 0:
       print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_flip_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
+      repairs = query.get_opt_repairs_flip_edges(net_with_data,args.show_repairs, OS, FP, FC, EP)
       print('done.')
       count=0
       for r in repairs :
         count += 1
-        print('Repair ',str(count),':',sep='')
+        print('\nRepair ',str(count),':',sep='')
         utils.print_repairs(r)
 
   elif args.repair_mode==2 :
     print('\nComputing minimal number of changes add/remove edges ... ',end='')
     if EP :
-      print('using greedy method ... ',end='')
+      print('   using greedy method ... ',end='')
       (scenfit,redges) = query.get_opt_add_remove_edges_greedy(net_with_data)
      
       print('done.')
-      print('   The network and data can reach a scenfit of',scenfit)
+      print('\nThe network and data can reach a scenfit of',scenfit)
       #      ,'with', repairs,'removals and ',len(edges),'additions.')
 
       count_repairs = 0
 
       if args.show_repairs >= 0 :
         print('\nCompute optimal repairs ... ',end='')
-        print(' use greedily added edges')
+        print('   use greedily added edges ...')
         for (edges,repairs) in redges:
           if repairs > 0:
             repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
             print('done.')
             for r in repairs :
               count_repairs+=1
-              print('Repair ',str(count_repairs),':',sep='')
+              print('\nRepair ',str(count_repairs),':',sep='')
               for e in edges:
                 print('    addedge',str(e)[10:],sep='')
               utils.print_repairs(r)
           else:
             count_repairs+=1
-            print('Repair',count_repairs,':',sep='')
+            print('\nRepair ',count_repairs,':',sep='')
             for e in edges:
               print('    addedge',str(e)[10:],sep='')          
 
     else : 
-      (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP, SP)
+      (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP)
       print('done.')
-      print('   The network and data can reach a scenfit of',scenfit,'with repairs of score',repairscore,'.')
+      print('\nThe network and data can reach a scenfit of',scenfit,'with repairs of score',str(repairscore)+'.')
   
       if args.show_repairs >= 0 and repairscore > 0:
         print('\nCompute optimal repairs ... ',end='')
-        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
+        repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP)
         print('done.')
         count = 0
         for r in repairs :
           count += 1
-          print('Repair ',str(count),':',sep='')
+          print('\nRepair ',str(count),':',sep='')
           utils.print_repairs(r)
 
   else: # repair_mode==1
     print('\nComputing minimal number of removed edges ... ',end='')
-    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, OS, FP, FC, EP, SP)
+    (scenfit,repairs) = query.get_opt_remove_edges(net_with_data, OS, FP, FC, EP)
     print('done.')
-    print('   The network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
+    print('\nThe network and data can reach a scenfit of',scenfit,'with',repairs,'removed edges.')
 
     if args.show_repairs >= 0 and repairs > 0:
       print('\nCompute optimal repairs ... ',end='')
-      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP, SP)
+      repairs = query.get_opt_repairs_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP)
       print('done.')
       count=0
       for r in repairs :
         count += 1
-        print('Repair ',str(count),':',sep='')
+        print('\nRepair ',str(count),':',sep='')
         utils.print_repairs(r)
 
 utils.clean_up()
