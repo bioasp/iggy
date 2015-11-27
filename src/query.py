@@ -59,7 +59,7 @@ flip_edges_prg          = root + '/encodings/flip_edges.lp'
 
 #min_repairs_prg         = root + '/encodings/minimize_repairs.lp'
 min_repairs_prg         = root + '/encodings/minimize_weighted_repairs.lp'
-max_add_edges_prg       = root + '/encodings/max_add_edges.lp'
+best_one_edge_prg      = root + '/encodings/best_one_edge.lp'
 
 
 mics_prg                = root + '/encodings/mics.lp'
@@ -165,7 +165,7 @@ def get_mcos(instance, OS, FP, FC, EP):
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
 
-  inst     = instance.to_file()
+  inst     = instance.to_file("instance.lp")
   prg      = sem + mcos + [inst]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
@@ -380,55 +380,70 @@ def get_opt_add_remove_edges_greedy(instance):
   '''
    only apply with elementary path consistency notion
   '''
-  sem      = [sign_cons_prg, elem_path_prg]
-  inst     = instance.to_file()
-  maxfact  = String2TermSet('max_add_edges(1)')
-  fmaxfact = maxfact.to_file()
-  prg      = [ inst, fmaxfact,
-               min_repairs_prg, show_rep_prg,
-             ] + sem + scenfit
+  sem        = [sign_cons_prg, elem_path_prg, fwd_prop_prg, bwd_prop_prg]
+  inst       = instance.to_file("instance.lp")
+
+  prg        = [ inst, remove_edges_prg,
+                 min_repairs_prg, show_rep_prg
+               ] + sem + scenfit
       
-  coptions = '1 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
-  solver   = GringoClasp(clasp_options=coptions)                        
-  models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-  bfit     = models[0].score[0]
+  coptions   = '1 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+  solver     = GringoClasp(clasp_options=coptions)                        
+  models     = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+  
+  bscenfit   = models[0].score[0]
+  brepscore  = models[0].score[1]
 
   strt_edges = TermSet()
-  fedges     = [(strt_edges,bfit)]
+  fedges     = [(strt_edges, bscenfit, brepscore)]
   fedges2    = []
   tedges     = []
 
-  coptions = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
-  solver   = GringoClasp(clasp_options=coptions)                        
-
+  coptions   = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+  solver     = GringoClasp(clasp_options=coptions)                        
 
   while fedges:
     print ("TODO: ",len(fedges)+len(fedges2))
-    (edges,ofit) = fedges.pop()
-  # loop till no better solution can be found
-    print('(edges,ofit):',(edges,ofit))
-    end         = True # this time its the end
-    f_edges     = TermSet(edges).to_file()
-    prg         = [ inst, fmaxfact, f_edges,
-                    min_repairs_prg, max_add_edges_prg, show_rep_prg,
-                  ] + sem + scenfit
+    (edges,oscenfit, orepscore) = fedges.pop()
+    print('(edges,oscenfit, orepscore):',(edges,oscenfit, orepscore))
+    print('len(edges):',len(edges))
+    
+    # extend till no better solution can be found
+    end       = True # assume this time its the end
+    f_edges   = TermSet(edges).to_file("fedges.lp")
+    prg       = [ best_one_edge_prg, inst, f_edges,
+                  min_repairs_prg, show_rep_prg,
+                ] + sem + scenfit
 
-    models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-    fit      = models[0].score[0]
-    repairs  = models[0].score[1]
+    models    = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+    nscenfit  = models[0].score[0]
+    nrepscore = models[0].score[1]
+
+    print('nscenfit:   ',nscenfit)
+    print('nrepscore:  ',nrepscore)
+
+    print('compl: ',nrepscore+2*(len(edges)))
+    
     os.unlink(f_edges)
-
-    if fit+1 < ofit : # more than one better
-      print('new bfit:',str(bfit))
-      if fit<bfit : bfit = fit     # update bfit
-      end  = False
+    
+    if (nscenfit+1 < oscenfit) or nrepscore+2*(len(edges)) < orepscore: # better score or more that 1 scenfit
+      print('better solution:')
+  
+      if (nscenfit<bscenfit):
+        bscenfit  = nscenfit # update bscenfit
+        brepscore = nrepscore
+      if (nscenfit == bscenfit) :
+        if (nrepscore<brepscore) : brepscore = nrepscore
+    
+      end = False
 
     if end : 
-      if (edges,bfit,repairs) not in tedges : 
-        print('LAST tedges append',edges)
-        tedges.append((edges,fit,repairs))
+      if (edges,oscenfit,orepscore) not in tedges and oscenfit <= bscenfit:
+        #print('LAST tedges append',edges)
+        tedges.append((edges,oscenfit,orepscore))
     else : 
       for m in models:
+        #print('MMM   ',models)
         for a in m :
           if a.pred() == 'rep' :
             if a.arg(0)[0:7]=='addedge' :
@@ -436,21 +451,20 @@ def get_opt_add_remove_edges_greedy(instance):
               nedges  = edges.union(String2TermSet('obs_elabel'+(a.arg(0)[7:])))
               end     = False
         if nedges not in fedges2 :
-           fedges2.append((nedges,fit))
+           fedges2.append((nedges,nscenfit,nrepscore))
            
     if not fedges :
       fedges=fedges2
       fedges2=[] # flip fedges
 
-  # take only the results with the best fit
+  # take only the results with the best scenfit
   redges=[]
-  for (edges,fit,repairs) in tedges:
-    print('red:  ',edges,str(fit),str(repairs))
-    if fit == bfit: redges.append((edges,repairs))
+  for (tedges,tscenfit,trepairs) in tedges:
+    print('red:  ',tedges,str(tscenfit),str(trepairs))
+    if tscenfit == bscenfit: redges.append((tedges,trepairs))
 
-  os.unlink(fmaxfact)
   os.unlink(inst)
-  return (bfit,redges)
+  return (bscenfit,redges)
 
 
 def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
@@ -460,17 +474,17 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   sem      = [sign_cons_prg, elem_path_prg]
   inst     = instance.to_file()
  
-  maxfact  = String2TermSet('max_add_edges(0)')
-  fmaxfact = maxfact.to_file()
   f_edges  = TermSet(edges).to_file()
-  prg      = [ inst, fmaxfact, f_edges,
-	       min_repairs_prg, max_add_edges_prg,
+  prg      = [ inst,  f_edges, remove_edges_prg,
+	       min_repairs_prg,
 	       show_rep_prg
 	     ] + sem + scenfit
   
   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN'
   solver2  = GringoClasp(clasp_options=coptions)
   models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+
+  #print(models)
 
   os.unlink(inst)
   return models
@@ -485,8 +499,6 @@ def get_opt_add_remove_edges(instance, OS, FP, FC, EP):
     print('error query.get_opt_add_remove_edges should not be called with'
           'elementary path constraint, use instead'
 	  'get_opt_add_remove_edges_greedy')
-    exit()
-
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]

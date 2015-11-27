@@ -108,6 +108,8 @@ if __name__ == '__main__':
       if a.arg(2) == '-1' : inhibitions.add((a.arg(0),a.arg(1)))
     if a.pred() == 'vertex' : nodes.add(a.arg(0))
   unspecified = activations & inhibitions
+
+  print('\nNetwork stats:')
   print("   Nodes =", len(nodes),
     " Activations =", len(activations),
     " Inhibitions =", len(inhibitions),
@@ -161,17 +163,18 @@ if __name__ == '__main__':
   elif args.repair_mode==2 :
     print('\nComputing minimal number of changes add/remove edges ... ',end='')
     if EP :
-      print('   using greedy method ... ',end='')
+      print('\n   using greedy method ... ',end='')
       (scenfit,redges) = query.get_opt_add_remove_edges_greedy(net_with_data)
      
       print('done.')
       print('\nThe network and data can reach a scenfit of',scenfit)
       #      ,'with', repairs,'removals and ',len(edges),'additions.')
 
+      #print('(scenfit,redges)',(scenfit,redges))
       count_repairs = 0
 
       if args.show_repairs >= 0 :
-        print('\nCompute optimal repairs ... ',end='')
+        print('\nCompute optimal repairs ... ')
         print('   use greedily added edges ...')
         for (edges,repairs) in redges:
           if repairs > 0:

@@ -103,7 +103,7 @@ if __name__ == '__main__':
   if (not args.scenfit) and EP :
     print('\nMCoS and elementary path / DepMat do not work well together.'
           'Please use --scenfit !')
-    exit()
+    #exit()
   
 
   print('\nReading network',net_string, '... ',end='')
