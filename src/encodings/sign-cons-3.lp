@@ -57,7 +57,7 @@ forbidden(E,V, 1) :- ismax(E,V).
 
 
 #hide.
-%#show vlabel/3.
+% #show vlabel/3.
 %#show err/1.
 %#show pos_path/3.
 %#show neg_path/3.
