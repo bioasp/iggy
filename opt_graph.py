@@ -179,18 +179,18 @@ if __name__ == '__main__':
         for (edges,repairs) in redges:
           if repairs > 0:
             repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
-            print('done.')
+            #print('done.')
             for r in repairs :
               count_repairs+=1
               print('\nRepair ',str(count_repairs),':',sep='')
               for e in edges:
-                print('    addedge',str(e)[10:],sep='')
+                print('   addedge',str(e)[4:],sep='')
               utils.print_repairs(r)
           else:
             count_repairs+=1
             print('\nRepair ',count_repairs,':',sep='')
             for e in edges:
-              print('    addedge',str(e)[10:],sep='')          
+              print('   addedge',str(e)[4:],sep='')
 
     else : 
       (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP)
