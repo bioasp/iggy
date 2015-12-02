@@ -45,8 +45,8 @@ pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E
 
 
 % if a node has been observed only one sign
-forbidden(E,V,T) :- vlabel(E,V,S1), obs_vlabel(E,V,S), sign(S), sign(T), T!=S1.
-forbidden(E,V,T) :- vlabel(E,V,S1), err(flip(E,V,N)), obs_vlabel(E,V,S), sign(T), T!=S1.
+% forbidden(E,V,T) :- vlabel(E,V,S1), obs_vlabel(E,V,S), sign(S), sign(T), T!=S1.
+% forbidden(E,V,T) :- vlabel(E,V,S1), err(flip(E,V,N)), obs_vlabel(E,V,S), sign(T), T!=S1.
 
 % constraints
 :- forbidden(E,V,S), vlabel(E,V,S).
