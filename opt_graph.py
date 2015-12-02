@@ -76,22 +76,23 @@ if __name__ == '__main__':
   FC  = not (args.no_founded_constraints)
   EP  = args.elempath
   DM  = args.depmat
-  
+  print('_____________________________________________________________________\n')
   if DM :
-    print(' * DepMat combines multiple states.')
-    print(' * An elementary path from an input must exist top explain changes.')
+    print(' + DepMat combines multiple states.')
+    print(' + An elementary path from an input must exist to explain changes.')
     OS = False
     EP = True
     FP = True
     FC = True
 
   else :
-    print(' * All observed changes must be explained by an predecessor.')
+    print(' + All observed changes must be explained by an predecessor.')
     OS = True
-    if FP : print(' * 0-change must be explained.')
-    if FC : print(' * All observed changes must be explained by an input.')
-    if EP : print(' * An elementary path from an input must exist top explain changes.')
-
+    if FP : print(' + 0-change must be explained.')
+    if FC : print(' + All observed changes must be explained by an input.')
+    if EP : print(' + An elementary path from an input must exist top explain changes.')
+    
+  print('_____________________________________________________________________')
 
   print('\nReading network',net_string, '... ',end='')
   net = parsers.readSIFGraph(net_string)
@@ -110,10 +111,10 @@ if __name__ == '__main__':
   unspecified = activations & inhibitions
 
   print('\nNetwork stats:')
-  print("   Nodes =", len(nodes),
-    " Activations =", len(activations),
-    " Inhibitions =", len(inhibitions),
-           " Dual =", len(unspecified))
+  print("         Nodes =", len(nodes))
+  print("   Activations =", len(activations))
+  print("   Inhibitions =", len(inhibitions))
+  print("          Dual =", len(unspecified))
 
 
   flist = os.listdir(obs_dir)
