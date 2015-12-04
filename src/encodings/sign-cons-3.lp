@@ -16,7 +16,7 @@ vertex(Y) :- edge(X,Y).
 
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
-1{vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} :- vertex(V), exp(E).
+1 {vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} :- vertex(V), exp(E).
 1 {elabel(U,V,1), elabel(U,V,-1)} 1 :- edge(U,V), not rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
 % keep observed labeling of the edges
@@ -40,8 +40,8 @@ pinfl(E,V, 1) :- elabel(U,V, 1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E
 pinfl(E,V,-1) :- elabel(U,V,-1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
 pinfl(E,V,-1) :- elabel(U,V, 1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
 pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
-
-
+% effects of a repair
+pinfl(E,V,S) :- rep(new_influence(E,V,S)).
 
 
 % if a node has been observed only one sign
