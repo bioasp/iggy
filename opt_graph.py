@@ -99,10 +99,9 @@ if __name__ == '__main__':
   print('done.')
 
   # gather stats on the network
-
   activations = set()
   inhibitions = set()
-  nodes=set()
+  nodes       = set()
   for a in net:
     if a.pred() == 'obs_elabel' :
       if a.arg(2) == '1'  : activations.add((a.arg(0),a.arg(1)))
@@ -171,7 +170,6 @@ if __name__ == '__main__':
       print('\nThe network and data can reach a scenfit of',scenfit)
       #      ,'with', repairs,'removals and ',len(edges),'additions.')
 
-      #print('(scenfit,redges)',(scenfit,redges))
       count_repairs = 0
 
       if args.show_repairs >= 0 :

@@ -114,7 +114,7 @@ if __name__ == '__main__':
   # gather some stats on the network
   activations = set()
   inhibitions = set()
-  nodes=set()
+  nodes       = set()
   for a in net:
     if a.pred() == 'obs_elabel' :
       if a.arg(2) == '1'  : activations.add((a.arg(0),a.arg(1)))
@@ -224,7 +224,6 @@ if __name__ == '__main__':
       print('done.')
       print('\nPredictions:')
       utils.print_predictions(predictions)
-
 
 
   if not args.scenfit :
