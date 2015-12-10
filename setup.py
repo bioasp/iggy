@@ -16,27 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with iggy.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-import platform
-import distutils
-import site
-import sysconfig
 from setuptools import setup
-from setuptools.command.install import install as _install
                          
 setup(
-  name='iggy',
-  version='1.3',
-  url='http://bioasp.github.io/iggy/',
-  license='GPLv3+',
-  description='A tool for consistency based analysis of influence graphs and observed systems behavior.',
-  long_description=open('README.rst').read(),
-  author='Sven Thiele',
-  author_email='sthiele78@gmail.com',
-  packages = ['__iggy__'],
-  package_dir = {'__iggy__' : 'src'},
-  package_data = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
-  scripts = ['iggy.py', 'opt_graph.py'],
-  install_requires=["pyasp == 1.4.2"]
+  name             = 'iggy',
+  version          = '1.3',
+  url              = 'http://bioasp.github.io/iggy/',
+  license          = 'GPLv3+',
+  description      = 'A tool for consistency based analysis of influence graphs and observed systems behavior.',
+  long_description = open('README.rst').read(),
+  author           = 'Sven Thiele',
+  author_email     = 'sthiele78@gmail.com',
+  packages         = ['__iggy__'],
+  package_dir      = {'__iggy__' : 'src'},
+  package_data     = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
+  scripts          = ['iggy.py', 'opt_graph.py'],
+  install_requires = ['pyasp == 1.4.2']
 )
