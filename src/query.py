@@ -142,7 +142,6 @@ def get_predictions_under_scenfit(instance, OS, FP, FC, EP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-
   opt      = solution[0].score[0]
 
   if OS :
@@ -170,7 +169,6 @@ def get_mcos(instance, OS, FP, FC, EP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-  
   opt      = solution[0].score[0]
 
   os.unlink(inst) 
@@ -190,7 +188,6 @@ def get_mcos_labelings(instance,nm, OS, FP, FC, EP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-  
   opt      = solution[0].score[0]
 
   prg      = prg + [show_labels_prg, show_rep_prg]
@@ -216,7 +213,6 @@ def get_predictions_under_mcos(instance, OS, FP, FC, EP):
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-
   opt      = solution[0].score[0]
 
   if OS :
@@ -262,13 +258,11 @@ def get_opt_repairs_remove_edges(instance,nm, OS, FP, FC, EP):
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, min_repairs_prg, inst ]
-
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
   fit      = solution[0].score[0]
   repairs  = solution[0].score[1]
-
   prg      = prg + [show_rep_prg]
   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
   solver2  = GringoClasp(clasp_options=coptions)
@@ -308,13 +302,11 @@ def get_opt_repairs_flip_edges(instance,nm, OS, FP, FC, EP):
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
-
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
   fit      = solution[0].score[0]
   repairs  = solution[0].score[1]
-
   prg      = prg + [show_rep_prg]
   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
   solver2  = GringoClasp(clasp_options=coptions)
@@ -330,23 +322,23 @@ def get_opt_add_remove_edges_greedy(instance):
   '''
   sem        = [sign_cons_prg, elem_path_prg, fwd_prop_prg, bwd_prop_prg]
   inst       = instance.to_file()
-
   prg        = [ inst, remove_edges_prg,
                  min_repairs_prg, show_rep_prg
                ] + sem + scenfit
-      
   coptions   = '1 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
   solver     = GringoClasp(clasp_options=coptions)                        
   models     = solver.run(prg, collapseTerms=True, collapseAtoms=False)
   
   bscenfit   = models[0].score[0]
   brepscore  = models[0].score[1]
-
+  
+  #print('bscenfit:   ',bscenfit)
+  #print('brepscore:  ',brepscore)
+    
   strt_edges = TermSet()
   fedges     = [(strt_edges, bscenfit, brepscore)]
   fedges2    = []
   tedges     = []
-
   coptions   = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
   solver     = GringoClasp(clasp_options=coptions)                        
 
@@ -362,18 +354,17 @@ def get_opt_add_remove_edges_greedy(instance):
     prg       = [ best_one_edge_prg, remove_edges_prg, inst, f_oedges,
                   min_repairs_prg, show_rep_prg,
                 ] + sem + scenfit
-
     models    = solver.run(prg, collapseTerms=True, collapseAtoms=False)
     nscenfit  = models[0].score[0]
     nrepscore = models[0].score[1]
 
+    #k=1 # factor how many inconsistency must an edge remove
     #print('nscenfit:   ',nscenfit)
     #print('nrepscore:  ',nrepscore)
     #print('compl: ',nrepscore+2*(len(oedges)))
-    
 
     
-    if (nscenfit+1 < oscenfit) or nrepscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
+    if (nscenfit < oscenfit) or nrepscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
       #print('maybe better solution:')
   
     
@@ -397,10 +388,10 @@ def get_opt_add_remove_edges_greedy(instance):
         for s in starts:
           n2scenfit  = s.score[0]
           n2repscore = s.score[1]
-          #print('n2scenfit:   ', n2scenfit)
-          #print('n2repscore:  ', n2repscore)
+          print('n2scenfit:   ', n2scenfit)
+          print('n2repscore:  ', n2repscore)
           
-          if (n2scenfit+1 < oscenfit) or n2repscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
+          if (n2scenfit < oscenfit) or n2repscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
             #print('better solution:')
             if (n2scenfit<bscenfit):
               bscenfit  = n2scenfit # update bscenfit
@@ -452,7 +443,6 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   prg      = [ remove_edges_prg, inst, f_edges,
                min_repairs_prg, show_rep_prg,
              ] + sem + scenfit
-  
   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN'
   solver2  = GringoClasp(clasp_options=coptions)
   models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
@@ -491,15 +481,13 @@ def get_opt_repairs_add_remove_edges(instance,nm, OS, FP, FC,EP):
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
 
-  inst = instance.to_file()    
-  prg  = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
-
+  inst     = instance.to_file()    
+  prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
   fit      = solution[0].score[0]
   repairs  = solution[0].score[1]
-
   prg      = prg + [show_rep_prg]
   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
   solver2  = GringoClasp(clasp_options=coptions)
