@@ -332,8 +332,10 @@ def get_opt_add_remove_edges_greedy(instance):
   bscenfit   = models[0].score[0]
   brepscore  = models[0].score[1]
   
+  #print('model:   ',models[0])  
   #print('bscenfit:   ',bscenfit)
   #print('brepscore:  ',brepscore)
+  
     
   strt_edges = TermSet()
   fedges     = [(strt_edges, bscenfit, brepscore)]
@@ -347,40 +349,38 @@ def get_opt_add_remove_edges_greedy(instance):
     (oedges, oscenfit, orepscore) = fedges.pop()
     #print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
     #print('len(oedges):',len(oedges))
-    
+
     # extend till no better solution can be found
     end       = True # assume this time its the end
     f_oedges  = TermSet(oedges).to_file()
-    prg       = [ best_one_edge_prg, remove_edges_prg, inst, f_oedges,
-                  min_repairs_prg, show_rep_prg,
+    prg       = [ inst, f_oedges, remove_edges_prg, best_one_edge_prg,
+                  min_repairs_prg, show_rep_prg
                 ] + sem + scenfit
     models    = solver.run(prg, collapseTerms=True, collapseAtoms=False)
     nscenfit  = models[0].score[0]
     nrepscore = models[0].score[1]
 
-    #k=1 # factor how many inconsistency must an edge remove
     #print('nscenfit:   ',nscenfit)
     #print('nrepscore:  ',nrepscore)
     #print('compl: ',nrepscore+2*(len(oedges)))
 
-    
     if (nscenfit < oscenfit) or nrepscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
       #print('maybe better solution:')
-  
-    
+
       for m in models:
         #print('MMM   ',models)
-        for a in m :
-          nend = TermSet()
+        nend = TermSet()
+        for a in m :          
           if a.pred() == 'rep' :
             if a.arg(0)[0:7]=='addeddy' :
-              #print('new edge to ',a.arg(0)[8:-1])
+              #print('new addeddy to',a.arg(0)[8:-1])
               nend  = String2TermSet('edge_end('+(a.arg(0)[8:-1])+')')
-        # get start of the edge
-        #print('search best edge start')
+        # get starts of the edge
+        #print('search best edge starts')
         f_end  = TermSet(nend).to_file()
-        prg    = [ remove_edges_prg, best_edge_start_prg, inst, f_oedges, f_end,
-                   min_repairs_prg, show_rep_prg,
+
+        prg    = [ inst, f_oedges, remove_edges_prg, f_end, best_edge_start_prg,
+                   min_repairs_prg, show_rep_prg
                  ] + sem + scenfit
         starts = solver.run(prg, collapseTerms=True, collapseAtoms=False)
         os.unlink(f_end)
@@ -388,9 +388,9 @@ def get_opt_add_remove_edges_greedy(instance):
         for s in starts:
           n2scenfit  = s.score[0]
           n2repscore = s.score[1]
-          print('n2scenfit:   ', n2scenfit)
-          print('n2repscore:  ', n2repscore)
-          
+          #print('n2scenfit:   ', n2scenfit)
+          #print('n2repscore:  ', n2repscore)
+
           if (n2scenfit < oscenfit) or n2repscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
             #print('better solution:')
             if (n2scenfit<bscenfit):
@@ -398,24 +398,24 @@ def get_opt_add_remove_edges_greedy(instance):
               brepscore = n2repscore
             if (n2scenfit == bscenfit) :
               if (n2repscore<brepscore) : brepscore = n2repscore
-                    
+
             nedge = TermSet()
             for a in s :
               if a.pred() == 'rep' :
                 if a.arg(0)[0:7]=='addedge' :
                   #print('new edge ',a.arg(0)[8:-1])
-                  nedge = String2TermSet('edge('+(a.arg(0)[8:-1])+')')
+                  nedge = String2TermSet('obs_elabel('+(a.arg(0)[8:-1])+')')
                   end   = False
 
             nedges= oedges.union(nedge)
             if nedges not in fedges2 :
               fedges2.append((nedges,n2scenfit,n2repscore))
-           
+
     if end : 
       if (oedges,oscenfit,orepscore) not in tedges and oscenfit <= bscenfit:
         #print('LAST tedges append',edges)
         tedges.append((oedges,oscenfit,orepscore))
-        
+
     if not fedges :
       fedges=fedges2
       fedges2=[] # flip fedges
@@ -440,12 +440,17 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   sem      = [sign_cons_prg, elem_path_prg, fwd_prop_prg, bwd_prop_prg]
   inst     = instance.to_file() 
   f_edges  = TermSet(edges).to_file()
-  prg      = [ remove_edges_prg, inst, f_edges,
+  prg      = [ inst, f_edges, remove_edges_prg,
                min_repairs_prg, show_rep_prg,
              ] + sem + scenfit
-  coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN'
-  solver2  = GringoClasp(clasp_options=coptions)
-  models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+  coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+  solver   = GringoClasp(clasp_options=coptions)
+  models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+  #print(models)
+  #nscenfit  = models[0].score[0]
+  #nrepscore = models[0].score[1]
+  #print('scenfit:   ', nscenfit)
+  #print('repscore:  ', nrepscore) 
 
   os.unlink(f_edges)
   os.unlink(inst)
