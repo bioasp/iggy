@@ -164,7 +164,8 @@ def get_mcos(instance, OS, FP, FC, EP):
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
 
-  inst     = instance.to_file("instance.lp")
+  inst     = instance.to_file()
+  #exit()
   prg      = sem + mcos + [inst]
   coptions = '--opt-strategy=5'
   solver   = GringoClasp(clasp_options=coptions)
@@ -332,7 +333,7 @@ def get_opt_add_remove_edges_greedy(instance):
   bscenfit   = models[0].score[0]
   brepscore  = models[0].score[1]
   
-  #print('model:   ',models[0])  
+  #print('model:   ',models[0])
   #print('bscenfit:   ',bscenfit)
   #print('brepscore:  ',brepscore)
   
@@ -366,7 +367,8 @@ def get_opt_add_remove_edges_greedy(instance):
 
     if (nscenfit < oscenfit) or nrepscore+2*(len(oedges)) < orepscore: # better score or more that 1 scenfit
       #print('maybe better solution:')
-
+      #print('#models: ',len(models))
+   
       for m in models:
         #print('MMM   ',models)
         nend = TermSet()

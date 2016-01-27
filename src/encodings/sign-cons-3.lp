@@ -54,14 +54,16 @@ pinfl(E,V,S) :- rep(new_influence(E,V,S)).
 % levelbound constraints
 % if the initial level is at the minimum it cannot decrease anymore
 forbidden(E,V,-1) :- ismin(E,V).
-
 % if the initial level is at the maximum it cannot increase anymore
 forbidden(E,V, 1) :- ismax(E,V).
 
 
 #hide.
-% #show vlabel/3.
-%#show err/1.
-%#show pos_path/3.
-%#show neg_path/3.
+%#show vlabel/3.
+% #show err/1.
+%  #show pos_path/3.
+%  #show neg_path/3.
 % #show strange/3.
+% #show infl/3.
+%#show pinfl/3.
+% #show forbidden/3.

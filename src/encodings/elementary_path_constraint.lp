@@ -58,18 +58,23 @@ function Set (list)
 end
 
 function member(x,l)
+--  print("member")
+--  print(x)
+--  print(l)
   local myString = tostring(l)
   local myset = myString:split(":")
+  
   for i,n in ipairs(myset) do
- --   print(i,n)
+--    print(i,n)
     if n==tostring(x) then
       return 1
     else
-      -- print("noteq")
+--      print("noteq")
     end
   end
   return 0
 end
+
 
 #end_lua.
 
@@ -86,15 +91,17 @@ elabel(gen("unknownup"), X,-1)   :- rep(new_influence(E,X,-1)).
 % in a network exists under Condition E a positive path to X
 
 pos_path(E,X,@str(X)) :- input(E,X), vlabel(E,X, 1).
+
 neg_path(E,X,@str(X)) :- input(E,X), vlabel(E,X,-1).
 
 pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), 
                                elabel(Y,X, 1), not input(E,X), X!=Y,
 	                       0==@member(X,P).     
+
                           
 neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), 
                                elabel(Y,X,-1), not input(E,X), X!=Y,
-	                       0==@member(X,P).     
+	                       0==@member(X,P).
 
 pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), 
                                elabel(Y,X,-1), not input(E,X), X!=Y,
@@ -102,12 +109,64 @@ pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P),
                        
 neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), 
                                elabel(Y,X, 1), not input(E,X), X!=Y,
-	                       0==@member(X,P).     
+	                       0==@member(X,P).
 
 pos_path(E,V) :- pos_path(E,V,P).
 neg_path(E,V) :- neg_path(E,V,P).
 
+
+
+% pure influences
+prinfl(E,V, 1) :- elabel(U,V, 1),
+                  pos_path(E,V,P),1==@member(U,P),
+                  vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
+prinfl(E,V,-1) :- elabel(U,V,-1),
+                  neg_path(E,V,P),1==@member(U,P),
+                  vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
+prinfl(E,V,-1) :- elabel(U,V, 1),
+                  neg_path(E,V,P),1==@member(U,P),
+                  vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
+prinfl(E,V, 1) :- elabel(U,V,-1),
+                  pos_path(E,V,P),1==@member(U,P),
+                  vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
+
+
+
 forbidden(E,V, 1) :- exp(E), vertex(V), not pos_path(E,V), not input(E,V).
 forbidden(E,V,-1) :- exp(E), vertex(V), not neg_path(E,V), not input(E,V).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
