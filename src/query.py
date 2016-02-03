@@ -467,7 +467,7 @@ def get_opt_add_remove_edges(instance, OS, FP, FC, EP):
   if EP : 
     print('error query.get_opt_add_remove_edges should not be called with'
           'elementary path constraint, use instead'
-	  'get_opt_add_remove_edges_greedy')
+          'get_opt_add_remove_edges_greedy')
 
   inst     = instance.to_file()
   prg      = sem + scenfit + [remove_edges_prg, add_edges_prg, min_repairs_prg, inst ]
