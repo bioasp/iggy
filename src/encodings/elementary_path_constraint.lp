@@ -90,24 +90,24 @@ elabel(gen("unknownup"), X,-1)   :- rep(new_influence(E,X,-1)).
 
 % in a network exists under Condition E a positive path to X
 
-pos_path(E,X,@str(X)) :- input(E,X), vlabel(E,X, 1).
+pos_path(E,X,@str(X)) :- input(E,X), vlabel(E,X, 1), not ismax(E,X).
 
-neg_path(E,X,@str(X)) :- input(E,X), vlabel(E,X,-1).
+neg_path(E,X,@str(X)) :- input(E,X), vlabel(E,X,-1), not ismin(E,X).
 
-pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), 
+pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismax(E,X), 
                                elabel(Y,X, 1), not input(E,X), X!=Y,
 	                       0==@member(X,P).     
 
                           
-neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), 
+neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismin(E,X), 
                                elabel(Y,X,-1), not input(E,X), X!=Y,
 	                       0==@member(X,P).
 
-pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), 
+pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismax(E,X), 
                                elabel(Y,X,-1), not input(E,X), X!=Y,
 	                       0==@member(X,P).     
                        
-neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), 
+neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismin(E,X), 
                                elabel(Y,X, 1), not input(E,X), X!=Y,
 	                       0==@member(X,P).
 
