@@ -15,5 +15,6 @@ forbidden(E,and(V),0) :- infl(E,and(V),-1), not infl(E,and(V), 1), not infl(E,an
 
 
 % constraint zero for depmat does not work with and nodes
-forbidden(E,gen(V), 0) :- prinfl(E,gen(V),-1), not pos_path(E,gen(V)), not input(E,gen(V)).
-forbidden(E,gen(V), 0) :- prinfl(E,gen(V), 1), not neg_path(E,gen(V)), not input(E,gen(V)).
+forbidden(E,gen(V), 0) :- prinfl(E,gen(V), 1), not neg_path(E,gen(V)), not input(E,gen(V)), not ismax(E,gen(V)).
+forbidden(E,gen(V), 0) :- prinfl(E,gen(V),-1), not pos_path(E,gen(V)), not input(E,gen(V)), not ismin(E,gen(V)).
+
