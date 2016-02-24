@@ -62,9 +62,9 @@ if __name__ == '__main__':
 
   parser.add_argument('--repair_mode', type=int, default=1,
     help='choose repair mode:\n'
-	 ' 1 = add edges (default),\n'
-	 ' 2 = add + remove edges (opt-graph),\n'
-	 ' 3 = flip edges')
+         ' 1 = add edges (default),\n'
+         ' 2 = add + remove edges (opt-graph),\n'
+         ' 3 = flip edges')
 
 
   args = parser.parse_args()
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     if FP : print(' + 0-change must be explained.')
     if FC : print(' + All observed changes must be explained by an input.')
     if EP : print(' + An elementary path from an input must exist top explain changes.')
-    
+
   print('_____________________________________________________________________')
 
   print('\nReading network',net_string, '... ',end='')
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     if EP :
       print('\n   using greedy method ... ',end='')
       (scenfit,redges) = query.get_opt_add_remove_edges_greedy(net_with_data)
-     
+
       print('done.')
       print('\nThe network and data can reach a scenfit of',scenfit)
       #      ,'with', repairs,'removals and ',len(edges),'additions.')
@@ -191,11 +191,11 @@ if __name__ == '__main__':
             for e in edges:
               print('   addedge',str(e)[10:],sep='')
 
-    else : 
+    else :
       (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP)
       print('done.')
       print('\nThe network and data can reach a scenfit of',scenfit,'with repairs of score',str(repairscore)+'.')
-  
+
       if args.show_repairs >= 0 and repairscore > 0:
         print('\nCompute optimal repairs ... ',end='')
         repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP)
