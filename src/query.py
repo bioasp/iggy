@@ -344,20 +344,18 @@ def get_opt_add_remove_edges_greedy(instance):
 
   strt_edges = TermSet()
   fedges     = [(strt_edges, bscenfit, brepscore)]
-  dedges     = []
   tedges     = []
+  dedges     = []
   coptions   = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
   solver     = GringoClasp(clasp_options=coptions)
 
   while fedges:
     sys.stdout.flush()
-    #print ("TODO: ",len(fedges))
+    print ("TODO: ",len(fedges))
     (oedges, oscenfit, orepscore) = fedges.pop()
-    if bscenfit==0 :
-      if orepscore>=brepscore:
-        continue
-    #print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
-    #print('len(oedges):',len(oedges))
+
+    print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
+    print('len(oedges):',len(oedges))
 
     # extend till no better solution can be found
     end       = True # assume this time its the end
@@ -369,13 +367,12 @@ def get_opt_add_remove_edges_greedy(instance):
     nscenfit  = models[0].score[0]
     nrepscore = models[0].score[1]+2*(len(oedges))
 
-    #print('nscenfit:   ',nscenfit)
-    #print('nrepscore:  ',nrepscore)
-
+    print('nscenfit:   ',nscenfit)
+    print('nrepscore:  ',nrepscore)
 
     if (nscenfit < oscenfit) or nrepscore < orepscore: # better score or more that 1 scenfit
-      #print('maybe better solution:')
-      #print('#models: ',len(models))
+      print('maybe better solution:')
+      print('#models: ',len(models))
 
       for m in models:
         #print('MMM   ',models)
@@ -383,11 +380,11 @@ def get_opt_add_remove_edges_greedy(instance):
         for a in m :
           if a.pred() == 'rep' :
             if a.arg(0)[0:7]=='addeddy' :
-              #print('new addeddy to',a.arg(0)[8:-1])
+              print('new addeddy to',a.arg(0)[8:-1])
               nend  = String2TermSet('edge_end('+(a.arg(0)[8:-1])+')')
 
               # search starts of the addeddy
-              #print('search best edge starts')
+              print('search best edge starts')
               f_end  = TermSet(nend).to_file()
 
               prg    = [ inst, f_oedges, remove_edges_prg, f_end, best_edge_start_prg,
@@ -395,15 +392,15 @@ def get_opt_add_remove_edges_greedy(instance):
                        ] + sem + scenfit
               starts = solver.run(prg, collapseTerms=True, collapseAtoms=False)
               os.unlink(f_end)
-              #print(starts)
+              print(starts)
               for s in starts:
                 n2scenfit  = s.score[0]
                 n2repscore = s.score[1]+2*(len(oedges))
-                #print('n2scenfit:   ', n2scenfit)
-                #print('n2repscore:  ', n2repscore)
+                print('n2scenfit:   ', n2scenfit)
+                print('n2repscore:  ', n2repscore)
 
                 if (n2scenfit < oscenfit) or n2repscore < orepscore: # better score or more that 1 scenfit
-                  #print('better solution:')
+                  print('better solution:')
                   if (n2scenfit<bscenfit):
                     bscenfit  = n2scenfit # update bscenfit
                     brepscore = n2repscore
@@ -414,23 +411,18 @@ def get_opt_add_remove_edges_greedy(instance):
                   for a in s :
                     if a.pred() == 'rep' :
                       if a.arg(0)[0:7]=='addedge' :
-                        #print('new edge ',a.arg(0)[8:-1])
+                        print('new edge ',a.arg(0)[8:-1])
                         nedge = String2TermSet('obs_elabel('+(a.arg(0)[8:-1])+')')
                         end   = False
 
-                  nedges= oedges.union(nedge)
-                  if n2scenfit==0: # can't get better
-                    if (nedges,n2scenfit,n2repscore) not in tedges and n2repscore == brepscore:
-                      #print('LAST1 tedges append',nedges)
-                      tedges.append((nedges,n2scenfit,n2repscore))
-                  else:
-                    if (nedges,n2scenfit,n2repscore) not in fedges and nedges not in dedges:
-                      fedges.append((nedges,n2scenfit,n2repscore))
-                      dedges.append(nedges) 
+                  nedges = oedges.union(nedge)
+                  if (nedges,n2scenfit,n2repscore) not in fedges and nedges not in dedges:
+                    fedges.append((nedges,n2scenfit,n2repscore))
+                    dedges.append(nedges)
 
     if end : 
       if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
-        #print('LAST2 tedges append',oedges)
+        print('LAST tedges append',oedges)
         tedges.append((oedges,oscenfit,orepscore))
 
     # end while
