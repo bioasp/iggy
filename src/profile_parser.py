@@ -29,7 +29,7 @@ class Lexer:
     'MIN'      : 'MIN',
     'MAX'      : 'MAX'
   }
-  
+
   tokens = [
     'IDENT',
     'EQ',
@@ -40,7 +40,7 @@ class Lexer:
     #'NOTMINUS',
     #'INPUT',
     #'MIN',
-    #'MAX'                
+    #'MAX'
   ]+ list(reserved.values())
 
   # Token expressions
@@ -49,14 +49,14 @@ class Lexer:
     r'[a-zA-Z][a-zA-Z0-9_:\-\[\]/]*'
     t.type = self.reserved.get(t.value,'IDENT')    # Check for reserved words
     return t
-    
+
   t_EQ       = r'='
   t_NULL     = r'0'
   t_PLUS     = r'[1\+]+'
   t_MINUS    = r'-[1]*'
   t_MIN      = r'MIN'
   t_MAX      = r'MAX'
-  
+
 
   def __init__(self):
     import pyasp.ply.lex as lex
@@ -68,7 +68,7 @@ class Lexer:
   def t_newline(self, t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
-  
+
   def t_error(self, t):
     print("Illegal character '",str(t.value[0]),"'", sep='')
     t.lexer.skip(1)
