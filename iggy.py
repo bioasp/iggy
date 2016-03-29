@@ -105,7 +105,7 @@ if __name__ == '__main__':
     #print('\nMCoS and elementary path / DepMat do not work well together.'
           #'Please use --scenfit !')
     #exit()
-  
+
 
   print('\nReading network',net_string, '... ',end='')
   net = parsers.readSIFGraph(net_string)
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         utils.print_labeling(l)
         print('\n   Repairs:')
         utils.print_repairs(l)
-        
+
     if args.show_predictions :
       print('\nCompute predictions under mcos ... ',end='')
       predictions = query.get_predictions_under_mcos(net_with_data, OS, FP, FC, EP)
