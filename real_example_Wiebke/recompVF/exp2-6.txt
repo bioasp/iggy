@@ -1,0 +1,9 @@
+pi3k = input
+pi3k = -
+erk = -
+gab1_ps = -
+plcg = 0
+akt = -
+jak2_p = -
+shp2 = notPlus
+stat5ab_py = 0

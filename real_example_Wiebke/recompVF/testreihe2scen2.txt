@@ -1,0 +1,11 @@
+depor            = input 
+depor            = 0
+shp2_ph          = input
+shp2_ph          = -
+akt              = 0
+erk              = -
+shp2             = +
+gab1_ps          = +
+jak2_p           = 0
+stat5ab_py       = 0  
+plcg             = 0

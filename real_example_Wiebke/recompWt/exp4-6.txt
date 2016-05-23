@@ -1,0 +1,11 @@
+mek1 = input
+mek1 = +
+pi3k = input
+pi3k = -
+erk = notMinus
+gab1_ps = notMinus
+plcg = notPlus
+akt = -
+jak2_p = notMinus
+shp2 = 0
+stat5ab_py = notMinus

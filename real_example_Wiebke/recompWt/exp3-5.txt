@@ -1,0 +1,11 @@
+mek1 = input
+mek1 = -
+depor = input
+depor = 0
+erk = -
+gab1_ps = notMinus
+plcg = notMinus
+akt = 0
+jak2_p = 0
+shp2 = 0
+stat5ab_py = notMinus
