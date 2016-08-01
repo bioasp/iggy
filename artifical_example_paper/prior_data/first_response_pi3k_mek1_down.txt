@@ -1,6 +1,8 @@
 depor                       = input
+mek1                        = input
 pi3k                        = input
 
+grb2_sos = 0
 akt = -
 cis = 0
 depor = 0
@@ -9,7 +11,7 @@ gab1_bpi3k_py = -
 gab1_bras_py = -
 gab1_bshp2_ph_py = -
 gab1_ps = -
-grb2_sos = +
+grb2_sos = 0
 jak2_p = 0
 mek1 = -
 mtor = -
