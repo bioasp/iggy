@@ -1,9 +1,0 @@
-pi3k = input
-pi3k = -
-erk = notPlus
-gab1_ps = +
-plcg = notMinus
-akt = -
-jak2_p = +
-shp2 = notMinus
-stat5ab_py = notMinus
