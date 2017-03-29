@@ -20,7 +20,7 @@ from setuptools import setup
                          
 setup(
   name             = 'iggy',
-  version          = '1.3',
+  version          = '1.4',
   url              = 'http://bioasp.github.io/iggy/',
   license          = 'GPLv3+',
   description      = 'A tool for consistency based analysis of influence graphs and observed systems behavior.',
@@ -31,5 +31,5 @@ setup(
   package_dir      = {'__iggy__' : 'src'},
   package_data     = {'__iggy__' : ['encodings/*.lp','encodings/*.gringo']},
   scripts          = ['iggy.py', 'opt_graph.py'],
-  install_requires = ['pyasp == 1.4.2']
+  install_requires = ['pyasp == 1.4.3']
 )
