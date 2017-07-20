@@ -350,7 +350,7 @@ def get_opt_add_remove_edges_greedy(instance):
   solver     = GringoClasp(clasp_options=coptions)
 
   while fedges:
-    sys.stdout.flush()
+#    sys.stdout.flush()
 #    print ("TODO: ",len(fedges))
     (oedges, oscenfit, orepscore) = fedges.pop()
 
