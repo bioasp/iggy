@@ -24,6 +24,7 @@ This module contains the queries which can be asked to the model and data.
 import os
 import tempfile
 from pyasp.asp import *
+from pyasp.term import String2TermSet;
 
 root = __file__.rsplit('/', 1)[0]
 contradictory_obs_prg   = root + '/encodings/contradictory_obs.lp'

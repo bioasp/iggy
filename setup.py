@@ -20,7 +20,7 @@ from setuptools import setup
                          
 setup(
   name             = 'iggy',
-  version          = '1.4',
+  version          = '1.4.1',
   url              = 'http://bioasp.github.io/iggy/',
   license          = 'GPLv3+',
   description      = 'A tool for consistency based analysis of influence graphs and observed systems behavior.',
