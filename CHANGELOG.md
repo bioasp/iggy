@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
   Pyasp 1.4.2 has been broken so we had make an emergency release an update to the new version 1.4.3.
   Older version of iggy wont install properly anymore.
 
-## [v1.2]- 2015, Jun 26
+## [v1.2] - 2015, Jun 26
 ### Added
 - Added level bound constraints.
   Now one can add information about the initial state of a node to the experiment profile.
@@ -28,9 +28,9 @@ All notable changes to this project will be documented in this file.
  
 ### Changed
 - Use pyasp-1.4.1
-- port to python 3
+- Port to python 3
 
-## [v0.5]
+## [v0.5] - 2015, Feb 04
 ### Added
 - This CHANGELOG file
 
@@ -38,7 +38,9 @@ All notable changes to this project will be documented in this file.
 - Fixed problem with wrongly computed numbers of unlabeled nodes and measured nodes which are not in the model
 - Fixed problem with doubled soultions when enumerating colorings resp. repairs
 
-## [v1.0] (unreleased)
- Initial release
-
+## [Undocumented versions]
+- 0.4
+- 0.3
+- 0.2
+- 0.1dev
 
