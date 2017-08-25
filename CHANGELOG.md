@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix missing pyasp import.
 
 ## v1.4 - 2017, Mar 29
-## Changed
+### Changed
 - Use pyasp-1.4.3
   Pyasp 1.4.2 has been broken so we had make an emergency release an update to the new version 1.4.3.
   Older version of iggy wont install properly anymore.
