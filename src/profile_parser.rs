@@ -2,19 +2,26 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 
-pub fn read(file: &File) -> String {
+
+pub fn read(file: &File) -> Profile {
     let file = BufReader::new(file);
-    let mut graph = String::new();
+    let mut profile = String::new();
     for line in file.lines() {
         let l = line.unwrap();
-        println!("{}", l);
-
         match profile::statement(&l) {
-            Ok(r) => graph = graph + &r,
+            Ok(r) => profile = profile + &r,
             Err(e) => println!("Parse error: {}", e),
         }
     }
-    graph
+    Profile(profile)
+}
+
+#[derive(Debug, Clone)]
+pub struct Profile(String);
+impl Profile { 
+    pub fn to_string(&self) -> &str {
+      &self.0
+    }
 }
 
 peg! profile(

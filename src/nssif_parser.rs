@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 
+
 pub fn read(file: &File) -> Graph {
     let file = BufReader::new(file);
     let mut graph = Graph::empty();
@@ -89,6 +90,21 @@ impl Graph {
         }
         res
     }
+
+    // gather some stats on the network
+    // for a in net:
+    //   if a.pred() == 'obs_elabel' :
+    //     if a.arg(2) == '1'  : activations.add((a.arg(0),a.arg(1)))
+    //     if a.arg(2) == '-1' : inhibitions.add((a.arg(0),a.arg(1)))
+    //   if a.pred() == 'vertex' : nodes.add(a.arg(0))
+    // unspecified = activations & inhibitions
+
+    // println!('\nNetwork stats:')
+    // println!("         Nodes = {}", self.nodes.len())
+    // println!("   Activations = {}", self.p_edges.len())
+    // println!("   Inhibitions = {}", self.n_edges.len())
+    // println!("          Both = {}", )
+    // println!("       Unknown = {}", self.u_edges.len())
 }
 
 #[derive(Debug, Clone)]
