@@ -2,7 +2,6 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 
-
 pub fn read(file: &File) -> Graph {
     let file = BufReader::new(file);
     let mut graph = Graph::empty();
@@ -125,7 +124,7 @@ pub struct Expression {
 }
 
 peg! nssif(
-    r#"  
+    r#"
   use super::Statement;
   use super::Expression;
   use super::SNode::List;

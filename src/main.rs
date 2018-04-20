@@ -60,25 +60,18 @@ node) and weak predictions (e.g., the value of  a node increases or remains unch
                           .get_matches();
 
     let filename = matches.value_of("networkfile").unwrap();
-    println!("Reading network model from {}.",filename);
+    println!("Reading network model from {}.", filename);
     let f = File::open(filename).unwrap();
     let graph = nssif_parser::read(&f);
 
     let filename = matches.value_of("observationfile").unwrap();
-    println!("Reading observations from {}.",filename);
+    println!("Reading observations from {}.", filename);
     let f = File::open(filename).unwrap();
     let profile = profile_parser::read(&f);
 
-    print!("Checking observations ...");
-    query::get_contradictory_obs(&profile);
-    println!("done.");
-    // if len(contradictions) == 0 : print('\nObservations are OK!')
-    // else:
-    //   print('\nContradictory observations found. Please correct manually!')
-    //   for c in contradictions : print ('  ',c)
-    //   utils.clean_up()
-    //   exit()
-
+    if !query::check_observations(&profile) {
+        return;
+    }
     // # gather some stats on the observations
     // plus     = set()
     // zero     = set()
