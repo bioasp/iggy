@@ -56,28 +56,28 @@ impl Profile {
     pub fn to_string(&self, name: &str) -> String {
         let mut res = String::new();
         for s in &self.plus {
-            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),1).";
+            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),1). ";
         }
         for s in &self.input {
-            res = res + "input(" + name + ",gen(" + &s + ")).";
+            res = res + "input(" + name + ",gen(" + &s + ")). ";
         }
         for s in &self.minus {
-            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),-1).";
+            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),-1). ";
         }
         for s in &self.zero {
-            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),0).";
+            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),0). ";
         }
         for s in &self.notplus {
-            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),notPlus).";
+            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),notPlus). ";
         }
         for s in &self.notminus {
-            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),notMinus).";
+            res = res + "obs_vlabel(" + name + ",gen(" + &s + "),notMinus). ";
         }
         for s in &self.min {
-            res = res + "ismin(" + name + ",gen(" + &s + ")).";
+            res = res + "ismin(" + name + ",gen(" + &s + ")). ";
         }
         for s in &self.max {
-            res = res + "ismax(" + name + ",gen(" + &s + ")).";
+            res = res + "ismax(" + name + ",gen(" + &s + ")). ";
         }
         res
     }

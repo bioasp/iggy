@@ -97,8 +97,15 @@ pub fn check_observations(profile: &Profile) -> bool {
                     .unwrap()
                     .to_string()
                     .unwrap();
-                println!("BAH {}",atom.arguments().unwrap().iter().nth(2).unwrap().to_string().unwrap());
-                match atom.arguments().unwrap().iter().nth(2).unwrap().to_string().unwrap().as_ref() {
+                let x: String = atom.arguments()
+                    .unwrap()
+                    .iter()
+                    .nth(2)
+                    .unwrap()
+                    .to_string()
+                    .unwrap();
+                //TODO remove trimming with next clingo version
+                match x.trim_matches(char::from(0)).as_ref() {
                     "r1" => {
                         println!("Node {} has two contradictory observations 0 and +", node);
                     }
