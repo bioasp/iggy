@@ -43,7 +43,7 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
                                .help("Disable foundedness constraints"))
                           .arg(Arg::with_name("elempath")
                                .long("elempath")
-                               .help("a change must be explained by an elementary path from an input"))
+                               .help("Every change must be explained by an elementary path from an input"))
                           .arg(Arg::with_name("depmat")
                                .long("depmat")
                                .help("Combine multiple states, a change must be explained by an elementary path from an input"))
