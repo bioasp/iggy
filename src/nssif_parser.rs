@@ -1,18 +1,21 @@
+use std::collections::HashSet;
 use std::fs::File;
-use std::io::BufReader;
 use std::io::BufRead;
+use std::io::BufReader;
 
 pub fn read(file: &File) -> Graph {
     let file = BufReader::new(file);
     let mut graph = Graph::empty();
     for line in file.lines() {
-        let l = line.unwrap();
-        println!("{}", l);
-        match nssif::statement(&l) {
-            Ok(r) => {
-                graph.add(r);
+        let l1 = line.unwrap();
+        let l = l1.trim();
+        if l.len() != 0 {
+            match nssif::statement(&l) {
+                Ok(r) => {
+                    graph.add(r);
+                }
+                Err(e) => println!("Parse error: {}", e),
             }
-            Err(e) => println!("Parse error: {}", e),
         }
     }
     graph
@@ -20,25 +23,27 @@ pub fn read(file: &File) -> Graph {
 
 #[derive(Debug, Clone)]
 pub struct Graph {
-    nodes: Vec<String>,
-    p_edges: Vec<(String, String)>,
-    n_edges: Vec<(String, String)>,
+    pub or_nodes: HashSet<String>,
+    pub and_nodes: HashSet<String>,
+    pub p_edges: Vec<(String, String)>,
+    pub n_edges: Vec<(String, String)>,
 }
 impl Graph {
     pub fn empty() -> Graph {
         Graph {
-            nodes: vec![],
+            or_nodes: HashSet::new(),
+            and_nodes: HashSet::new(),
             p_edges: vec![],
             n_edges: vec![],
         }
     }
     fn add(&mut self, stm: Statement) {
-        let targetnode = "or(".to_string() + &stm.target + ")";
-        self.nodes.push(targetnode.clone());
+        let targetnode = format!("or({})", stm.target);
+        self.or_nodes.insert(stm.target);
         match stm.start {
             SNode::Single(expr) => {
-                let startnode = "or(".to_string() + &expr.ident + ")";
-                self.nodes.push(startnode.clone());
+                let startnode = format!("or({})", expr.ident);
+                self.or_nodes.insert(expr.ident); //startnode.clone());
                 if expr.negated {
                     self.n_edges.push((startnode, targetnode));
                 } else {
@@ -46,39 +51,42 @@ impl Graph {
                 }
             }
             SNode::List(l) => {
-                let mut andnode = "and(".to_string();
+                let mut inner = "".to_string();
                 let mut pos = vec![];
                 let mut neg = vec![];
                 for expr in l {
                     if expr.negated {
-                        andnode = andnode + "!" + &expr.ident + "&";
+                        inner = format!("neg__{}__AND__{}", &expr.ident, inner);
                         neg.push(expr.ident);
                     } else {
-                        andnode = andnode + &expr.ident + "&";
+                        inner = format!("{}__AND__{}", &expr.ident, inner);
                         pos.push(expr.ident);
                     }
                 }
-                andnode = andnode + ")";
-                self.nodes.push(andnode.clone());
+                let andnode = format!("and({})", inner);
+                self.and_nodes.insert(andnode.clone());
                 self.p_edges.push((andnode.clone(), targetnode.clone()));
 
                 for node in pos {
-                    let startnode = "or(".to_string() + &node + ")";
-                    self.nodes.push(startnode.clone());
+                    let startnode = format!("or({})", node);
+                    self.or_nodes.insert(node);
                     self.p_edges.push((startnode.clone(), andnode.clone()));
                 }
                 for node in neg {
-                    let startnode = "or(".to_string() + &node + ")";
-                    self.nodes.push(startnode.clone());
+                    let startnode = format!("or({})", node);
+                    self.or_nodes.insert(node);
                     self.n_edges.push((startnode.clone(), andnode.clone()));
                 }
             }
         }
-        self.nodes.dedup();
     }
+
     pub fn to_string(&self) -> String {
         let mut res = String::new();
-        for node in &self.nodes {
+        for node in &self.or_nodes {
+            res = res + "vertex(or(" + node + ")).\n"
+        }
+        for node in &self.and_nodes {
             res = res + "vertex(" + node + ").\n"
         }
         for &(ref s, ref t) in &self.p_edges {
@@ -89,21 +97,6 @@ impl Graph {
         }
         res
     }
-
-    // gather some stats on the network
-    // for a in net:
-    //   if a.pred() == 'obs_elabel' :
-    //     if a.arg(2) == '1'  : activations.add((a.arg(0),a.arg(1)))
-    //     if a.arg(2) == '-1' : inhibitions.add((a.arg(0),a.arg(1)))
-    //   if a.pred() == 'vertex' : nodes.add(a.arg(0))
-    // unspecified = activations & inhibitions
-
-    // println!('\nNetwork stats:')
-    // println!("         Nodes = {}", self.nodes.len())
-    // println!("   Activations = {}", self.p_edges.len())
-    // println!("   Inhibitions = {}", self.n_edges.len())
-    // println!("          Both = {}", )
-    // println!("       Unknown = {}", self.u_edges.len())
 }
 
 #[derive(Debug, Clone)]
@@ -119,7 +112,7 @@ pub enum SNode {
 }
 #[derive(Debug, Clone)]
 pub struct Expression {
-    negated: bool,
+    negated: bool, //TODO: make enum modified NO, NEGATED/ UNKNOWN
     ident: String,
 }
 

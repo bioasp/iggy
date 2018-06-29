@@ -66,12 +66,6 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
                                .help("Show predictions"))
                           .get_matches();
 
-    //   let FP  = ! matches.is_present("fwd_propagation_off");
-    //   let FC  = ! matches.is_present("founded_constraints_off");
-    //   let EP  = matches.is_present("elempath");
-    //   let DM  = matches.is_present("depmat");
-    //   let OS;
-
     println!("_____________________________________________________________________\n");
     let setting = if matches.is_present("depmat") {
         println!(" + DepMat combines multiple states.");
