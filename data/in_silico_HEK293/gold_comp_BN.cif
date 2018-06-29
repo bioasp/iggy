@@ -5,6 +5,7 @@ pi3k&mtorc1	->	mtorc2
 !ras_gap&grb2_sos	->	mek1
 !ras_gap&grb2_sos	->	pi3k
 pi3k&erk&mtor&akt	->	mtorc1
+  
 mek1	->	erk
 gab1_bras_py	->	ras_gap
 !shp2_ph&gab1_ps&pi3k&jak2_p	->	gab1_bras_py
