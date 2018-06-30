@@ -1,10 +1,12 @@
 #![feature(plugin)]
 #![plugin(peg_syntax_ext)]
-extern crate clap;
+#[macro_use]
+extern crate structopt;
 extern crate clingo;
 extern crate termion;
-use clap::{App, Arg};
 use std::collections::HashSet;
+use std::path::PathBuf;
+use structopt::StructOpt;
 
 mod nssif_parser;
 mod profile_parser;
@@ -12,62 +14,62 @@ mod query;
 use query::CheckResult::Inconsistent;
 use query::SETTING;
 
+/// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
+/// (including uncertain observations).
+/// Iggy discovers inconsistencies in networks or data, applies minimal repairs, and
+/// predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
+/// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "Iggy")]
+struct Opt {
+    /// Influence graph in NSSIF format
+    #[structopt(short = "n", long = "network", parse(from_os_str))]
+    networkfile: PathBuf,
+
+    /// Observations in bioquali format
+    #[structopt(short = "o", long = "observations", parse(from_os_str))]
+    observationfile: PathBuf,
+
+    /// Disable forward propagation constraints
+    #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
+    fwd_propagation_off: bool,
+
+    /// Disable foundedness constraints
+    #[structopt(long = "founded_constraints_off", conflicts_with = "depmat")]
+    founded_constraints_off: bool,
+
+    /// Every change must be explained by an elementary path from an input
+    #[structopt(long = "elempath")]
+    elempath: bool,
+
+    /// Combine multiple states, a change must be explained by an elementary path from an input
+    #[structopt(long = "depmat")]
+    depmat: bool,
+
+    /// Declare nodes with indegree 0 as inputs
+    #[structopt(short = "a", long = "autoinputs")]
+    autoinputs: bool,
+
+    /// Compute scenfit of the data, default is mcos
+    #[structopt(long = "scenfit")]
+    scenfit: bool,
+
+    /// Show N labelings to print, default is OFF, 0=all
+    #[structopt(short = "l", long = "show_labelings")]
+    show_labelings: Option<u32>,
+
+    /// Show predictions
+    #[structopt(short = "p", long = "show_predictions")]
+    show_predictions: bool,
+}
+
 fn main() {
     use std::fs::File;
-    let matches = App::new("Iggy")
-                          .version("0.1.0")
-                          .author("Sven Thiele <sthiele78@gmail.com>")
-                          .about("Iggy confronts interaction graph models with observations of (signed) changes between two measured states
-(including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal repairs, and
-predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
-node) and weak predictions (e.g., the value of a node increases or remains unchanged).")
-                          .arg(Arg::with_name("networkfile")
-                               .short("n")
-                               .long("network")
-                               .value_name("FILE")
-                               .help("Influence graph in NSSIF format")
-                               .required(true))
-                          .arg(Arg::with_name("observationfile")
-                               .short("o")
-                               .long("observations")
-                               .value_name("FILE")
-                               .help("Observations in bioquali format")
-                               .required(true))
-                          .arg(Arg::with_name("fwd_propagation_off")
-                               .long("fwd_propagation_off")
-                               .conflicts_with("depmat")
-                               .help("Disable forward propagation constraints"))
-                          .arg(Arg::with_name("founded_constraints_off")
-                               .long("founded_constraints_off")
-                               .conflicts_with("depmat")
-                               .help("Disable foundedness constraints"))
-                          .arg(Arg::with_name("elempath")
-                               .long("elempath")
-                               .help("Every change must be explained by an elementary path from an input"))
-                          .arg(Arg::with_name("depmat")
-                               .long("depmat")
-                               .help("Combine multiple states, a change must be explained by an elementary path from an input"))
-                          .arg(Arg::with_name("mics")
-                               .long("mics")
-                               .help("Compute minimal inconsistent cores"))
-                          .arg(Arg::with_name("autoinputs")
-                               .short("a")
-                               .long("autoinputs")
-                               .help("Declare nodes with indegree 0 as inputs"))
-                          .arg(Arg::with_name("scenfit")
-                               .long("scenfit")
-                               .help("Compute scenfit of the data, default is mcos"))
-                          .arg(Arg::with_name("show_labelings")
-                               .long("show_labelings")
-                               .value_name("N")
-                               .help("Show N labelings to print, default is OFF, 0=all"))
-                          .arg(Arg::with_name("show_predictions")
-                               .long("show_predictions")
-                               .help("Show predictions"))
-                          .get_matches();
+    let opt = Opt::from_args();
 
     println!("_____________________________________________________________________\n");
-    let setting = if matches.is_present("depmat") {
+    let setting = if opt.depmat {
         println!(" + DepMat combines multiple states.");
         println!(" + An elementary path from an input must exist to explain changes.");
         SETTING {
@@ -80,19 +82,19 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
         println!(" + All observed changes must be explained by an predecessor.");
         SETTING {
             os: true,
-            ep: if matches.is_present("elempath") {
+            ep: if opt.elempath {
                 println!(" + An elementary path from an input must exist to explain changes.");
                 true
             } else {
                 false
             },
-            fp: if matches.is_present("fwd_propagation_off") {
+            fp: if opt.fwd_propagation_off {
                 false
             } else {
                 println!(" + 0-change must be explained.");
                 true
             },
-            fc: if matches.is_present("founded_constraints_off") {
+            fc: if opt.founded_constraints_off {
                 false
             } else {
                 println!(" + All observed changes must be explained by an input.");
@@ -102,8 +104,8 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
     };
     println!("_____________________________________________________________________\n");
 
-    let filename = matches.value_of("networkfile").unwrap();
-    println!("Reading network model from {}.", filename);
+    let filename = opt.networkfile;
+    println!("Reading network model from {:?}.", filename);
     let f = File::open(filename).unwrap();
     let graph = nssif_parser::read(&f);
 
@@ -117,8 +119,8 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
     println!("  Inhibitions = {}", graph.n_edges.len());
     //     println!("          Dual = {}", len(unspecified))
 
-    let filename = matches.value_of("observationfile").unwrap();
-    println!("\nReading observations from {}.", filename);
+    let filename = opt.observationfile;
+    println!("\nReading observations from {:?}.", filename);
     let f = File::open(filename).unwrap();
     let profile = profile_parser::read(&f);
 
@@ -156,14 +158,14 @@ node) and weak predictions (e.g., the value of a node increases or remains uncha
     println!("  observed not in model : {}", not_in_model.count());
 
     let new_inputs;
-    if matches.is_present("autoinputs") {
+    if opt.autoinputs {
         print!("\nComputing input nodes ...");
         new_inputs = query::guess_inputs(&graph);
         println!(" done.");
         println!("  new inputs : {}", new_inputs.len());
     }
 
-    if matches.is_present("scenfit") {
+    if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
         let scenfit = query::get_scenfit(&graph, &profile, &setting);
         println!("done.")

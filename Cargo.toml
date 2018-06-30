@@ -7,5 +7,5 @@ description = "Influence graph analysis, consistency check, diagnosis, repair an
 [dependencies]
 clingo = "0.3.0"
 termion = "1"
-clap ="*"
+structopt = "0.2"
 peg-syntax-ext = "0.5.0"
