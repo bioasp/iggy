@@ -2,7 +2,7 @@ Installation
 ------------
 
 
-You can install iggy by running::
+You can install iggy by running:
 
 	$ pip install --user iggy
 
@@ -14,11 +14,11 @@ and on MacOS the scripts are under ``/Users/YOURUSERNAME/Library/Python/3.5/bin`
 Usage
 -----
 
-Typical usage is::
+Typical usage is:
 
 	$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions
 
-For more options you can ask for help as follows::
+For more options you can ask for help as follows:
 
 	$ iggy.py -h 		
 	usage: iggy.py [-h] [--no_fwd_propagation] [--no_founded_constraints]
@@ -58,11 +58,11 @@ For more options you can ask for help as follows::
 
 
 The second script contained is opt_graph.py
-Typical usage is::
+Typical usage is:
 
 	$ opt_graph.py network.sif observations_dir/ --show_repairs 10
 
-For more options you can ask for help as follows::
+For more options you can ask for help as follows:
 
 	$ opt_graph.py -h 	
 	usage: opt_graph.py [-h] [--no_fwd_propagation] [--no_founded_constraints]
