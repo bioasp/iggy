@@ -13,7 +13,7 @@ edge(X,Y) :- obs_elabel(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 
-
+input(E,V) :- autoinput(V), exp(E).
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
 1 {vlabel(E,V,1), vlabel(E,V,-1), vlabel(E,V,0)} :- vertex(V), exp(E).
@@ -61,9 +61,9 @@ forbidden(E,V, 1) :- ismax(E,V).
 #hide.
 %#show vlabel/3.
 % #show err/1.
+% #show input/1.
 %  #show pos_path/3.
 %  #show neg_path/3.
 % #show strange/3.
 % #show infl/3.
 %#show pinfl/3.
-% #show forbidden/3.
