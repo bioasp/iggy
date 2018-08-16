@@ -18,13 +18,17 @@
 
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
   name             = 'iggy',
   version          = '1.4.2',
   url              = 'http://bioasp.github.io/iggy/',
   license          = 'GPLv3+',
   description      = 'A tool for consistency based analysis of influence graphs and observed systems behavior.',
-  long_description = open('README.rst').read(),
+  long_description = long_description,
+  long_description_content_type="text/markdown",
   author           = 'Sven Thiele',
   author_email     = 'sthiele78@gmail.com',
   packages         = ['__iggy__'],
