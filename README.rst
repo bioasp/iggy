@@ -95,7 +95,7 @@ For more options you can ask for help as follows::
 	  --show_repairs SHOW_REPAIRS
 				number of repairs to show, default is OFF, 0=all
 	  --repair_mode REPAIR_MODE
-				choose repair mode: 1 = add edges (default), 2 = add +
+				choose repair mode: 1 = remove edges (default), 2 = add +
 				remove edges (opt-graph), 3 = flip edges
 
 
