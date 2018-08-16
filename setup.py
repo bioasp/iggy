@@ -17,10 +17,10 @@
 # along with iggy.  If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup
-                         
+
 setup(
   name             = 'iggy',
-  version          = '1.4.1',
+  version          = '1.4.2',
   url              = 'http://bioasp.github.io/iggy/',
   license          = 'GPLv3+',
   description      = 'A tool for consistency based analysis of influence graphs and observed systems behavior.',
