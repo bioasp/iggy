@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
   parser.add_argument('--repair_mode', type=int, default=1,
     help='choose repair mode:\n'
-         ' 1 = add edges (default),\n'
+         ' 1 = remove edges (default),\n'
          ' 2 = add + remove edges (opt-graph),\n'
          ' 3 = flip edges')
 
