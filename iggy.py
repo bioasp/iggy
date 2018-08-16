@@ -91,7 +91,7 @@ if __name__ == '__main__':
     EP = True
     FP = True
     FC = True
-    
+
   else :
     print(' + All observed changes must be explained by an predecessor.')
     OS = True
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     utils.clean_up()
     exit()
 
-  # gather some stats on the observations  
+  # gather some stats on the observations
   plus     = set()
   zero     = set()
   minus    = set()
@@ -179,6 +179,7 @@ if __name__ == '__main__':
     net    = TermSet(net.union(inputs))
     print('done.')
     print("\nNumber of inputs =", len(inputs))
+    utils.print_autoinputs(inputs)
 
   net_with_data = TermSet(net.union(mu))
 
@@ -231,7 +232,7 @@ if __name__ == '__main__':
     mcos = query.get_mcos(net_with_data, OS, FP, FC, EP)
     print('done.')
     if mcos == 0 : print("\nThe network and data are consistent: mcos = 0.")
-    else: 
+    else:
       print("\nThe network and data are inconsistent: mcos = ",str(mcos),'.',sep='')
 
       if args.mics:

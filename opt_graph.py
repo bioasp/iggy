@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
   parser.add_argument('--depmat',
     help="combines multiple states, a change must be explained by an elementary path from an input.",
-    action="store_true")    
+    action="store_true")
 
 
   parser.add_argument('--autoinputs',
@@ -141,6 +141,8 @@ if __name__ == '__main__':
     net    = TermSet(net.union(inputs))
     print('done.')
     print('\nNumber of inputs =', len(inputs))
+    utils.print_autoinputs(inputs)
+
 
   net_with_data = TermSet(net.union(MU))
 

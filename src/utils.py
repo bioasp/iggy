@@ -46,7 +46,7 @@ def print_predictions(predictions) :
   for p in pred_plus      :
     print('  ',p,end='')
     for i in range(maxsize - len(p)) : print(' ', end='')
-    print(' = +') 
+    print(' = +')
   for p in pred_minus     :
     print('  ',p,end='')
     for i in range(maxsize - len(p)) : print(' ', end='')
@@ -58,7 +58,7 @@ def print_predictions(predictions) :
   for p in pred_not_plus  :
     print('  ',p,end='')
     for i in range(maxsize - len(p)) : print(' ', end='')
-    print(' = NOT +') 
+    print(' = NOT +')
   for p in pred_not_minus :
     print('  ',p,end='')
     for i in range(maxsize - len(p)) : print(' ', end='')
@@ -105,10 +105,15 @@ def print_labeling(labelings) :
     print('  ',l,end='')
     for i in range(maxsize - len(l)) : print(' ', end='')
     print(' = 0')
-  
+
   print(' \n   labeled + =', len(label_plus),
              ' labeled - =', len(label_minus),
              ' labeled 0 =', len(label_zero))
+
+def print_autoinputs(autoinputs) :
+  for l in autoinputs:
+    if l.pred() == "autoinput" :
+      print(l.arg(0))
 
 
 def print_repairs(repairs) :
