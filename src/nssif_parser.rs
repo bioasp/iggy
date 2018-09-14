@@ -116,36 +116,4 @@ pub struct Expression {
     ident: String,
 }
 
-peg! nssif(
-    r#"
-  use super::Statement;
-  use super::Expression;
-  use super::SNode::List;
-  use super::SNode::Single;
-  
-  // grammar rules here
-  whitespace = #quiet<[ \t]+>
-
-//   pub statements -> Vec<Statement>
-//    = s:statement '\n' r:statements {let mut a = r.clone(); a.push(s); a }
-//    / s:statement { vec![s] }
-  
-  pub statement -> Statement
-   = whitespace* s:exprlist whitespace+ '->' whitespace+ t:ident {
-   if s.len() == 1 { let expr = s.clone().pop().unwrap(); Statement{ start : Single(expr) ,target : t.to_string() } } 
-   else { Statement{ start : List(s),target : t.to_string() } } 
-   }
-  
-  pub ident -> &'input str
-   = $([a-z][a-zA-Z0-9_:\-\[\]/]*)
-     
-  pub expr -> Expression
-   = '!' whitespace* s:ident { Expression{negated: true,ident :s.to_string()} }
-   / s:ident { Expression{negated: false,ident :s.to_string()}}
-   
-  pub exprlist -> Vec<Expression>
-   = l:expr whitespace* '&' whitespace* r:exprlist { let mut a = r.clone(); a.push(l); a}
-   / s:expr { vec![s]}
-   
-"#
-);
+mod nssif { include!(concat!(env!("OUT_DIR"), "/nssif_grammar.rs"));}

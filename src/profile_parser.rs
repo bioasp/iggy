@@ -113,32 +113,5 @@ pub enum PStatement {
     Max(String),
 }
 
-peg! profile(
-    r#"
-  use super::PStatement;    
-  use super::PStatement::Input;
-  use super::PStatement::Plus;
-  use super::PStatement::Minus;
-  use super::PStatement::Zero;
-  use super::PStatement::NotPlus;
-  use super::PStatement::NotMinus; 
-  use super::PStatement::Min; 
-  use super::PStatement::Max;   
-  
-  // grammar rules here
-  whitespace = #quiet<[ \t]+>
-  
-  pub statement -> PStatement
-   = s:ident whitespace+ '=' whitespace+ 'input' { Input(s.to_string()) }
-   / s:ident whitespace+ '=' whitespace+ '+' { Plus(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ '-' { Minus(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ '0' { Zero(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ 'notPlus' { NotPlus(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ 'notMinus' { NotMinus(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ 'MIN' { Min(s.to_string())}
-   / s:ident whitespace+ '=' whitespace+ 'MAX' { Max(s.to_string())}
-  
-  pub ident -> &'input str
-   = $([a-z][a-zA-Z0-9_:\-\[\]/]*)
-"#
-);
+
+mod profile { include!(concat!(env!("OUT_DIR"), "/profile_grammar.rs"));}

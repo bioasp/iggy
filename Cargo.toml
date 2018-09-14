@@ -3,9 +3,12 @@ name = "iggy"
 version = "0.1.0"
 authors = ["Sven Thiele <sthiele78@gmail.com>"]
 description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
+build = "build.rs"
 
 [dependencies]
 clingo = "0.3.0"
 termion = "1"
 structopt = "0.2"
-peg-syntax-ext = "0.5.0"
+
+[build-dependencies]
+peg = { version = "0.5" }
