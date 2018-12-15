@@ -177,11 +177,7 @@ err(flip(E,X,1)) :- obs_vlabel(E,X, 0), not vlabel(E,X, 0).
 err(flip(E,X,2)) :- obs_vlabel(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
 err(flip(E,X,2)) :- obs_vlabel(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
 
-pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2 : err(flip(E,X,V)) }.
-scenfit(S) :-  S = #sum {1 : err(flip(E,X,V)) }.
-#show err/1.
-#show scenfit/1.
-";
+pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2 : err(flip(E,X,V)) }.";
 
 pub const PRG_KEEP_INPUTS: &'static str = "% keep observed input variation
 forbidden(E,V,T) :- input(E,V), obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
@@ -190,4 +186,18 @@ forbidden(E,V,T) :- input(E,V), obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 forbidden(E,V, 1) :- input(E,V), obs_vlabel(E,V,notPlus).
 forbidden(E,V,-1) :- input(E,V), obs_vlabel(E,V,notMinus).";
 
-// pub const PRG_SCENFIT = PRG_ERROR_MEASURE+ PRG_MIN_WEIGHTED_ERROR+ PRG_KEEP_INPUTS;
+pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
+pub const PRG_SHOW_LABELS: &'static str = "#show vlabel/3.";
+
+pub const PRG_ADD_INFLUENCES: &'static str = "% repair model
+% define possible repair operations
+0 { rep(new_influence(E,gen(X),-1)); rep(new_influence(E,gen(X),1)) } 1 :- vertex(gen(X)), exp(E), not input(E,gen(X)).";
+pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "#minimize{ rep(new_influence(E,X,S))  @ 1 }.
+#show rep/1.
+";
+pub const PRG_KEEP_OBSERVATIONS: &'static str = "% keep observed variations
+forbidden(E,V,T) :- obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
+
+% A weak vertex variation has been observed
+forbidden(E,V, 1) :- vertex(V), obs_vlabel(E,V,notPlus).
+forbidden(E,V,-1) :- vertex(V), obs_vlabel(E,V,notMinus).";

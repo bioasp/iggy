@@ -116,4 +116,6 @@ pub struct Expression {
     ident: String,
 }
 
-mod nssif { include!(concat!(env!("OUT_DIR"), "/nssif_grammar.rs"));}
+mod nssif {
+    include!(concat!(env!("OUT_DIR"), "/nssif_grammar.rs"));
+}

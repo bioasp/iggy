@@ -113,5 +113,6 @@ pub enum PStatement {
     Max(String),
 }
 
-
-mod profile { include!(concat!(env!("OUT_DIR"), "/profile_grammar.rs"));}
+mod profile {
+    include!(concat!(env!("OUT_DIR"), "/profile_grammar.rs"));
+}

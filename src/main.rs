@@ -1,9 +1,3 @@
-#![feature(plugin)]
-#![plugin(peg_syntax_ext)]
-#[macro_use]
-extern crate structopt;
-extern crate clingo;
-extern crate termion;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -11,8 +5,8 @@ use structopt::StructOpt;
 mod nssif_parser;
 mod profile_parser;
 mod query;
-use query::CheckResult::Inconsistent;
-use query::SETTING;
+use crate::query::CheckResult::Inconsistent;
+use crate::query::SETTING;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -46,6 +40,10 @@ struct Opt {
     /// Combine multiple states, a change must be explained by an elementary path from an input
     #[structopt(long = "depmat")]
     depmat: bool,
+
+    /// Compute minimal inconsistent cores
+    #[structopt(long = "mics")]
+    mics: bool,
 
     /// Declare nodes with indegree 0 as inputs
     #[structopt(short = "a", long = "autoinputs")]
@@ -157,20 +155,126 @@ fn main() {
     println!("  Max                   : {}", profile.max.len());
     println!("  observed not in model : {}", not_in_model.count());
 
-    let new_inputs;
-    if opt.autoinputs {
-        print!("\nComputing input nodes ...");
-        new_inputs = query::guess_inputs(&graph);
-        println!(" done.");
-        println!("  new inputs : {}", new_inputs.len());
-    }
-
+    let new_inputs = {
+        if opt.autoinputs {
+            print!("\nComputing input nodes ...");
+            let new_inputs = query::guess_inputs(&graph);
+            println!(" done.");
+            println!("  new inputs : {}", new_inputs.len());
+            new_inputs.join(" ")
+        } else {
+            "".to_string()
+        }
+    };
     if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
-        let scenfit = query::get_scenfit(&graph, &profile, &setting);
-        println!("done.")
+        let scenfit = query::get_scenfit(&graph, &profile, &new_inputs, &setting);
+        println!("done.");
+
+        if scenfit == 0 {
+            println!("\nThe network and data are consistent: scenfit = 0.");
+        } else {
+            println!(
+                "\nThe network and data are inconsistent: scenfit = {}.",
+                scenfit
+            );
+
+            if opt.mics {
+                print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
+                //                 mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
+                println!("done.");
+                let count = 1;
+                //                 let oldmic = 0;
+                //                 for mic in mics {
+                //                     if oldmic != mic {
+                //                         print!("mic {}:",count);
+                //                         utils.print_mic(mic.to_list(),net.to_list(),mu.to_list())
+                //                         count += 1
+                //                         oldmic = mic
+                //                     }
+                //                 }
+            }
+            if let Some(number) = opt.show_labelings {
+                if number >= 0 {
+                    print!("\nCompute scenfit labelings ... ");
+                    let labelings = query::get_scenfit_labelings(
+                        &graph,
+                        &profile,
+                        &new_inputs,
+                        number,
+                        &setting,
+                    );
+                    //                     print!("done.");
+                    //                     let count = 0;
+                    //                     for l in labelings {
+                    //                         count+=1
+                    //                         print!("\nLabeling {}",count);
+                    //                         utils.print_labeling(l)
+                    //                         print!("\n   Repairs:");
+                    //                         utils.print_repairs(l)
+                    //                     }
+                }
+            }
+            if opt.show_predictions {
+                print!("\nCompute predictions under scenfit ... ");
+                //                 predictions = query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting);
+                println!("done.");
+                print!("\nPredictions:");
+                //                 utils.print_predictions(predictions)
+            }
+        }
     } else {
         print!("\nComputing mcos of network and data ... ");
-        println!("done.")
+        //         let mcos = 0;
+        let mcos = query::get_mcos(&graph, &profile, &new_inputs, &setting);
+        println!("done.");
+        if mcos == 0 {
+            println!("\nThe network and data are consistent: mcos = 0.");
+        } else {
+            println!("\nThe network and data are inconsistent: mcos = {}.", mcos);
+
+            if opt.mics {
+                print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
+                //                 let mics =
+                //                     query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
+                //                 println!("done.");
+                //                 let count = 1;
+                //                 let oldmic = 0;
+                //                 for mic in mics {
+                //                     if oldmic != mic {
+                //                         print!("mic {}", count);
+                //                         utils.print_mic(mic.to_list(), net.to_list(), mu.to_list());
+                //                         count += 1;
+                //                         oldmic = mic;
+                //                     }
+                //                 }
+            }
+
+            if let Some(number) = opt.show_labelings {
+                if number >= 0 {
+                    print!("\nCompute mcos labelings ... ");
+                    //                     let labelings =
+                    //                         query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
+                    //                     print!("done.");
+                    //                     let count = 0;
+                    //                     for l in labelings {
+                    //                         count += 1;
+                    //                         print!("\nLabeling {}", count);
+                    //                         utils.print_labeling(l);
+                    //                         print!("\n   Repairs:");
+                    //                         utils.print_repairs(l);
+                    //                     }
+                }
+            }
+
+            if opt.show_predictions {
+                print!("\nCompute predictions under mcos ... ");
+                //                 let predictions =
+                //                     query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting);
+                //                 println!("done.");
+                //                 print!("\nPredictions:");
+                //                 utils.print_predictions(predictions);
+            }
+        }
     }
 }
