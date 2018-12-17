@@ -204,15 +204,26 @@ fn main() {
                         number,
                         &setting,
                     );
-                    //                     print!("done.");
+                    print!("done.");
                     //                     let count = 0;
-                    //                     for l in labelings {
-                    //                         count+=1
-                    //                         print!("\nLabeling {}",count);
-                    //                         utils.print_labeling(l)
-                    //                         print!("\n   Repairs:");
-                    //                         utils.print_repairs(l)
-                    //                     }
+                    for model in labelings {
+                        println!("model {:?} :", model);
+//                         println!("model {} :", model.number().unwrap());
+//                         let st = clingo::ShowType::SHOWN;
+//                         let atoms = model
+//                             .symbols(&st)
+//                             .expect("Failed to retrieve symbols in the model.");
+//                         for atom in atoms {
+//                             println!("{}", atom.to_string().unwrap());
+//                         }
+//                         println!("optimal : {}", model.optimality_proven().unwrap());
+//                         println!("cost : {:?}", model.cost().unwrap());
+//                                             count+=1
+//                                             print!("\nLabeling {}",count);
+//                                             utils.print_labeling(l)
+//                                             print!("\n   Repairs:");
+//                                             utils.print_repairs(l)
+                    }
                 }
             }
             if opt.show_predictions {
@@ -253,9 +264,9 @@ fn main() {
             if let Some(number) = opt.show_labelings {
                 if number >= 0 {
                     print!("\nCompute mcos labelings ... ");
-                    //                     let labelings =
-                    //                         query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
-                    //                     print!("done.");
+                    let labelings =
+                        query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
+                    print!("done.");
                     //                     let count = 0;
                     //                     for l in labelings {
                     //                         count += 1;

@@ -1,4 +1,5 @@
-pub const PRG_CONTRADICTORY_OBS: &'static str = "% two contradictory observations
+pub const PRG_CONTRADICTORY_OBS: &'static str = "
+% two contradictory observations
 contradiction(E,X,r1) :- obs_vlabel(E,X,1), obs_vlabel(E,X,0).
 contradiction(E,X,r2) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,0).
 contradiction(E,X,r3) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,1).
@@ -11,7 +12,8 @@ contradiction(E,X,r7) :- obs_vlabel(E,X,1), ismax(E,X).
 #show contradiction/3.
 ";
 
-pub const PRG_GUESS_INPUTS: &'static str = "edge(X,Y) :- obs_elabel(X,Y,S).
+pub const PRG_GUESS_INPUTS: &'static str = "
+edge(X,Y) :- obs_elabel(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 % declare inputs
@@ -19,7 +21,8 @@ input(V) :- vertex(V), not edge(U,V) : edge(U,V), U != V.
 #show input/1.
 ";
 
-pub const PRG_SIGN_CONS: &'static str = "% input facts
+pub const PRG_SIGN_CONS: &'static str = "
+% input facts
 % obs_vlabel(Experiment, Vertex , Sign)
 % edge(X,Y)
 % obs_elabel(X,Y,Sign).
@@ -73,14 +76,16 @@ forbidden(E,V,-1) :- ismin(E,V).
 forbidden(E,V, 1) :- ismax(E,V).
 ";
 
-pub const PRG_BWD_PROP: &'static str = "% measured variations must be explained by  predecessor
+pub const PRG_BWD_PROP: &'static str = "
+% measured variations must be explained by  predecessor
 forbidden(E,V, 1) :- exp(E), vertex(V), not infl(E,V, 1), not input(E,V).
 forbidden(E,V,-1) :- exp(E), vertex(V), not infl(E,V,-1), not input(E,V).
 ";
 
 pub const PRG_ONE_STATE: &'static str = "forbidden(E,V,S) :- vlabel(E,V,T), sign(S), S!=T.";
 
-pub const PRG_FWD_PROP: &'static str = "% propagate forward
+pub const PRG_FWD_PROP: &'static str = "
+% propagate forward
 vlabel(E,V, 0) :- exp(E), vertex(V), not forbidden(E,V, 0).
 vlabel(E,V, 1) :- infl(E,V, 1), not forbidden(E,V, 1).
 vlabel(E,V,-1) :- infl(E,V,-1), not forbidden(E,V,-1).
@@ -98,7 +103,8 @@ forbidden(E,or(V), 0) :- prinfl(E,or(V), 1), not neg_path(E,or(V)), not input(E,
 forbidden(E,or(V), 0) :- prinfl(E,or(V),-1), not pos_path(E,or(V)), not input(E,or(V)), not ismin(E,or(V)).
 ";
 
-pub const PRG_FOUNDEDNESS: &'static str = "% founded rules
+pub const PRG_FOUNDEDNESS: &'static str = "
+% founded rules
 founded(E,X,-1) :- input(E,X).
 founded(E,X, 1) :- input(E,X).
 founded(E,X,-1) :- founded(E,Y,-1), elabel(Y,X, 1).
@@ -146,7 +152,6 @@ pos_path(E,V) :- pos_path(E,V,P).
 neg_path(E,V) :- neg_path(E,V,P).
 
 
-
 % pure influences
 prinfl(E,V, 1) :- elabel(U,V, 1),
                   pos_path(E,V,P),1==@member(U,P),
@@ -165,8 +170,8 @@ forbidden(E,V, 1) :- exp(E), vertex(V), not pos_path(E,V), not input(E,V).
 forbidden(E,V,-1) :- exp(E), vertex(V), not neg_path(E,V), not input(E,V).
 ";
 
-pub const PRG_ERROR_MEASURE: &'static str =
-    "err(flip(E,X,1)) :- obs_vlabel(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
+pub const PRG_ERROR_MEASURE: &'static str = "
+err(flip(E,X,1)) :- obs_vlabel(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
 err(flip(E,X,2)) :- obs_vlabel(E,X, 1), not vlabel(E,X, 1), not vlabel(E,X,0), vlabel(E,X,-1).
 
 err(flip(E,X,1)) :- obs_vlabel(E,X,-1), not vlabel(E,X,-1),     vlabel(E,X,0).
@@ -177,9 +182,10 @@ err(flip(E,X,1)) :- obs_vlabel(E,X, 0), not vlabel(E,X, 0).
 err(flip(E,X,2)) :- obs_vlabel(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
 err(flip(E,X,2)) :- obs_vlabel(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
 
-pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2 : err(flip(E,X,V)) }.";
+pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2,(E,X,V) : err(flip(E,X,V)) }.";
 
-pub const PRG_KEEP_INPUTS: &'static str = "% keep observed input variation
+pub const PRG_KEEP_INPUTS: &'static str = "
+% keep observed input variation
 forbidden(E,V,T) :- input(E,V), obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 
 % A weak input
@@ -188,13 +194,15 @@ forbidden(E,V,-1) :- input(E,V), obs_vlabel(E,V,notMinus).";
 
 pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel/3.";
+pub const PRG_SHOW_REPAIRS: &'static str = "#show rep/1.";
 
-pub const PRG_ADD_INFLUENCES: &'static str = "% repair model
+pub const PRG_ADD_INFLUENCES: &'static str = "
+% repair model
 % define possible repair operations
-0 { rep(new_influence(E,gen(X),-1)); rep(new_influence(E,gen(X),1)) } 1 :- vertex(gen(X)), exp(E), not input(E,gen(X)).";
-pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "#minimize{ rep(new_influence(E,X,S))  @ 1 }.
-#show rep/1.
+rep(new_influence(E,or(X),1)) :- not not rep(new_influence(E,or(X),1)), not rep(new_influence(E,or(X),-1)), vertex(or(X)), exp(E), not input(E,or(X)).
+rep(new_influence(E,or(X),-1)) :- not not rep(new_influence(E,or(X),-1)), not rep(new_influence(E,or(X),1)), vertex(or(X)), exp(E), not input(E,or(X)).
 ";
+pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "#minimize{ 1,(E,X,S):rep(new_influence(E,or(X),S))}.";
 pub const PRG_KEEP_OBSERVATIONS: &'static str = "% keep observed variations
 forbidden(E,V,T) :- obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 

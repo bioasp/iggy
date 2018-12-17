@@ -353,16 +353,14 @@ pub fn get_scenfit_labelings(
     inputs: &str,
     number: u32,
     setting: &SETTING,
-) -> i64 {
+) -> Vec<clingo::Model> {
     // returns the scenfit of data and model described by the
 
     // create a control object and pass command line arguments
-    let scenfit = get_scenfit(graph, profile, inputs, setting);
     let options = vec![
         format!("{}", number),
         "--opt-strategy=5".to_string(),
-        //         "--opt-mode=optN".to_string(),
-        format!("--opt-mode=enum,{}", scenfit),
+        "--opt-mode=optN".to_string(),
         "--project".to_string(),
     ];
 
@@ -426,38 +424,40 @@ pub fn get_scenfit_labelings(
         .solve(&SolveMode::YIELD, &[])
         .expect("Failed retrieving solve handle.");
 
+    let mut v = Vec::new();
     loop {
         handle.resume().expect("Failed resume on solve handle.");
         match handle.model() {
             Ok(Some(model)) => {
-                //                 if model.optimality_proven().unwrap() {
-                let st = ShowType::SHOWN;
-                let atoms = model
-                    .symbols(&st)
-                    .expect("Failed to retrieve symbols in the model.");
-                for atom in atoms {
-                    println!("atom: {}", atom.to_string().unwrap());
-                }
-                println!("number : {}", model.number().unwrap());
-                println!("optimal : {}", model.optimality_proven().unwrap());
-                println!("cost : {:?}", model.cost().unwrap());
+                if model.optimality_proven().unwrap() {
+                   println!("1:{:?}",model);
+                   println!("number : {}", model.number().unwrap());
+                   let model2 = model.clone();
+                   println!("2:{:?}",model2);
+                   println!("number : {}", model2.number().unwrap());
+                   v.push(model.clone());
+//                     let st = ShowType::SHOWN;
+//                     let atoms = model
+//                         .symbols(&st)
+//                         .expect("Failed to retrieve symbols in the model.");
+//                     for atom in atoms {
+//                         println!("{}", atom.to_string().unwrap());
+//                     }
+//                     println!("number : {}", model.number().unwrap());
+//                     println!("optimal : {}", model.optimality_proven().unwrap());
+//                     println!("cost : {:?}", model.cost().unwrap());
 
-                return model.cost().unwrap()[0];
-                //                 }
+                    //                 return model.cost().unwrap()[0];
+                }
             }
             Ok(None) => {
-                panic!("Error: no model found");
+                return v;
             }
             Err(e) => {
-                //                 continue;
                 panic!("Error: {}", e);
             }
         }
     }
-
-    // close the solve handle
-    //     handle.close().expect("Failed to close solve handle.");
-    //     0
 }
 
 pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) -> i64 {
@@ -474,39 +474,51 @@ pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
 
     ctl.add("base", &[], &graph.to_string())
         .expect("Failed to add graph logic program.");
+    //     println!("{}",&graph.to_string());
     ctl.add("base", &[], &profile.to_string(&"x1"))
         .expect("Failed to add profile logic program.");
+    //     println!("{}",&profile.to_string(&"x1"));
     ctl.add("base", &[], &inputs)
         .expect("Failed to add inputs logic program.");
+    //     println!("{}",&inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)
         .expect("Failed to add PRG_SIGN_CONS.");
+    //     println!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)
         .expect("Failed to add PRG_BWD_PROP.");
+    //     println!("{}",PRG_BWD_PROP);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)
             .expect("Failed to add PRG_ONE_STATE.");
+        //     println!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)
             .expect("Failed to add PRG_FWD_PROP.");
+        //     println!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)
             .expect("Failed to add PRG_FOUNDEDNESS.");
+        //     println!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)
             .expect("Failed to add PRG_ELEM_PATH.");
+        //     println!("{}",PRG_ELEM_PATH);
     }
 
     {
         ctl.add("base", &[], PRG_ADD_INFLUENCES)
             .expect("Failed to add PRG_ADD_INFLUENCES.");
+        //     println!("{}",PRG_ADD_INFLUENCES);
         ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)
             .expect("Failed to add PRG_MIN_ADDED_INFLUENCES.");
+        //     println!("{}",PRG_MIN_ADDED_INFLUENCES);
         ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)
             .expect("Failed to add PRG_KEEP_OBSERVATIONS.");
+        //     println!("{}",PRG_KEEP_OBSERVATIONS);
     }
 
     // declare extern function handler
@@ -542,8 +554,109 @@ pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
             }
         }
     }
+}
 
-    // close the solve handle
-    //     handle.close().expect("Failed to close solve handle.");
-    //     0
+pub fn get_mcos_labelings(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    number: u32,
+    setting: &SETTING,
+) -> Vec<clingo::Model> {
+    // returns the mcos of data and model described by the
+
+    // create a control object and pass command line arguments
+    let options = vec![
+        format!("{}", number),
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--project".to_string(),
+    ];
+
+    let mut ctl = Control::new(options).expect("Failed creating clingo_control.");
+
+    ctl.add("base", &[], &graph.to_string())
+        .expect("Failed to add a logic program.");
+    ctl.add("base", &[], &profile.to_string(&"x1"))
+        .expect("Failed to add a logic program.");
+    ctl.add("base", &[], &inputs)
+        .expect("Failed to add a logic program.");
+    ctl.add("base", &[], PRG_SIGN_CONS)
+        .expect("Failed to add a logic program.");
+    ctl.add("base", &[], PRG_BWD_PROP)
+        .expect("Failed to add a logic program.");
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)
+            .expect("Failed to add a logic program.");
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)
+            .expect("Failed to add a logic program.");
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)
+            .expect("Failed to add a logic program.");
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)
+            .expect("Failed to add a logic program.");
+    }
+
+    {
+        ctl.add("base", &[], PRG_ADD_INFLUENCES)
+            .expect("Failed to add PRG_ADD_INFLUENCES.");
+        ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)
+            .expect("Failed to add PRG_MIN_ADDED_INFLUENCES.");
+        ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)
+            .expect("Failed to add PRG_KEEP_OBSERVATIONS.");
+    }
+    ctl.add("base", &[], PRG_SHOW_REPAIRS)
+        .expect("Failed to add a logic program.");
+    ctl.add("base", &[], PRG_SHOW_LABELS)
+        .expect("Failed to add a logic program.");
+
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[]).unwrap();
+    let parts = vec![part];
+
+    ctl.ground_with_event_handler(&parts, &mut efh)
+        .unwrap_or_else(|e| {
+            panic!("Failed to ground a logic program. {:?}", e);
+        });
+
+    // solve
+    let mut handle = ctl
+        .solve(&SolveMode::YIELD, &[])
+        .expect("Failed retrieving solve handle.");
+    let mut v = Vec::new();
+    loop {
+        handle.resume().expect("Failed resume on solve handle.");
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven().unwrap() {
+                    v.push(model.clone());
+//                     let st = ShowType::SHOWN;
+//                     let atoms = model
+//                         .symbols(&st)
+//                         .expect("Failed to retrieve symbols in the model.");
+//                     for atom in atoms {
+//                         println!("{}", atom.to_string().unwrap());
+//                     }
+//                     println!("number : {}", model.number().unwrap());
+//                     println!("optimal : {}", model.optimality_proven().unwrap());
+//                     println!("cost : {:?}", model.cost().unwrap());
+                }
+            }
+            Ok(None) => {
+                return v;
+            }
+            Err(e) => {
+                panic!("Error: {}", e);
+            }
+        }
+    }
 }
