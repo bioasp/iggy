@@ -202,7 +202,8 @@ pub const PRG_ADD_INFLUENCES: &'static str = "
 rep(new_influence(E,or(X),1)) :- not not rep(new_influence(E,or(X),1)), not rep(new_influence(E,or(X),-1)), vertex(or(X)), exp(E), not input(E,or(X)).
 rep(new_influence(E,or(X),-1)) :- not not rep(new_influence(E,or(X),-1)), not rep(new_influence(E,or(X),1)), vertex(or(X)), exp(E), not input(E,or(X)).
 ";
-pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "#minimize{ 1,(E,X,S):rep(new_influence(E,or(X),S))}.";
+pub const PRG_MIN_ADDED_INFLUENCES: &'static str =
+    "#minimize{ 1,(E,X,S):rep(new_influence(E,or(X),S))}.";
 pub const PRG_KEEP_OBSERVATIONS: &'static str = "% keep observed variations
 forbidden(E,V,T) :- obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 

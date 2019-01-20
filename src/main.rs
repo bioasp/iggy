@@ -122,7 +122,7 @@ fn main() {
     let f = File::open(filename).unwrap();
     let profile = profile_parser::read(&f);
 
-    if let Inconsistent(reason) = query::check_observations(&profile) {
+    if let Inconsistent(reason) = query::check_observations(&profile).unwrap() {
         println!("The following observations are contradictory. Please correct them!");
         print!("{}", reason);
         return;
@@ -143,8 +143,8 @@ fn main() {
     let not_in_model = observed.difference(&graph.or_nodes);
 
     println!("\nObservations statistics");
-    println!("  unobserved species : {}", unobserved.count());
-    println!("observed nodes       : {}", observed.len());
+    println!(" unobserved species    : {}", unobserved.count());
+    println!(" observed nodes        : {}", observed.len());
     println!("  inputs                : {}", profile.input.len());
     println!("  +                     : {}", profile.plus.len());
     println!("  -                     : {}", profile.minus.len());
@@ -158,7 +158,7 @@ fn main() {
     let new_inputs = {
         if opt.autoinputs {
             print!("\nComputing input nodes ...");
-            let new_inputs = query::guess_inputs(&graph);
+            let new_inputs = query::guess_inputs(&graph).unwrap();
             println!(" done.");
             println!("  new inputs : {}", new_inputs.len());
             new_inputs.join(" ")
@@ -168,7 +168,7 @@ fn main() {
     };
     if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
-        let scenfit = query::get_scenfit(&graph, &profile, &new_inputs, &setting);
+        let scenfit = query::get_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
 
         if scenfit == 0 {
@@ -208,21 +208,21 @@ fn main() {
                     //                     let count = 0;
                     for model in labelings {
                         println!("model {:?} :", model);
-//                         println!("model {} :", model.number().unwrap());
-//                         let st = clingo::ShowType::SHOWN;
-//                         let atoms = model
-//                             .symbols(&st)
-//                             .expect("Failed to retrieve symbols in the model.");
-//                         for atom in atoms {
-//                             println!("{}", atom.to_string().unwrap());
-//                         }
-//                         println!("optimal : {}", model.optimality_proven().unwrap());
-//                         println!("cost : {:?}", model.cost().unwrap());
-//                                             count+=1
-//                                             print!("\nLabeling {}",count);
-//                                             utils.print_labeling(l)
-//                                             print!("\n   Repairs:");
-//                                             utils.print_repairs(l)
+                        //                         println!("model {} :", model.number().unwrap());
+                        //                         let st = clingo::ShowType::SHOWN;
+                        //                         let atoms = model
+                        //                             .symbols(&st)
+                        //                             .expect("Failed to retrieve symbols in the model.");
+                        //                         for atom in atoms {
+                        //                             println!("{}", atom.to_string().unwrap());
+                        //                         }
+                        //                         println!("optimal : {}", model.optimality_proven().unwrap());
+                        //                         println!("cost : {:?}", model.cost().unwrap());
+                        //                                             count+=1
+                        //                                             print!("\nLabeling {}",count);
+                        //                                             utils.print_labeling(l)
+                        //                                             print!("\n   Repairs:");
+                        //                                             utils.print_repairs(l)
                     }
                 }
             }
@@ -237,7 +237,7 @@ fn main() {
     } else {
         print!("\nComputing mcos of network and data ... ");
         //         let mcos = 0;
-        let mcos = query::get_mcos(&graph, &profile, &new_inputs, &setting);
+        let mcos = query::get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
         if mcos == 0 {
             println!("\nThe network and data are consistent: mcos = 0.");
