@@ -200,7 +200,6 @@ impl ExternalFunctionHandler for MyEFH {
                     let arg1 = arguments[0];
                     match arg1.symbol_type() {
                         Ok(SymbolType::String) => {
-//                                 println!("new list {}:{}",arg1.string().unwrap(),string);
                                 Ok(vec![Symbol::create_string(&format!("{}:{}",arg1.string().unwrap(),string)).unwrap()])
                             }
                         _    => {
@@ -241,14 +240,13 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
+/// returns the scenfit of data and model
 pub fn get_scenfit(
     graph: &Graph,
     profile: &Profile,
     inputs: &str,
     setting: &SETTING,
 ) -> Result<i64, Error> {
-    // returns the scenfit of data and model described by the
-
     // create a control object and pass command line arguments
     let options = vec![
         "0".to_string(),
@@ -313,15 +311,18 @@ pub fn get_scenfit(
     //     0
 }
 
+/// returns a vector of scenfit labelings of data and model
+///
+/// # Arguments:
+///
+/// + number - maximal number of labelings
 pub fn get_scenfit_labelings(
     graph: &Graph,
     profile: &Profile,
     inputs: &str,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<Vec<String>>, Error> {
-    // returns the scenfit of data and model described by the
-
+) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
     // create a control object and pass command line arguments
     let options = vec![
         format!("{}", number),
@@ -376,24 +377,7 @@ pub fn get_scenfit_labelings(
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
-                    println!("1:{:?}", model);
-                    println!("number : {}", model.number().unwrap());
-                    let model2 = model.clone();
-                    println!("2:{:?}", model2);
-                    println!("number : {}", model2.number().unwrap());
-                    v.push(model_to_string(model));
-                    //                     let st = ShowType::SHOWN;
-                    //                     let atoms = model
-                    //                         .symbols(&st)
-                    //                         .expect("Failed to retrieve symbols in the model.");
-                    //                     for atom in atoms {
-                    //                         println!("{}", atom.to_string().unwrap());
-                    //                     }
-                    //                     println!("number : {}", model.number().unwrap());
-                    //                     println!("optimal : {}", model.optimality_proven().unwrap());
-                    //                     println!("cost : {:?}", model.cost().unwrap());
-
-                    //                 return model.cost().unwrap()[0];
+                    v.push(model_to_string(model)?);
                 }
             }
             Ok(None) => {
@@ -403,13 +387,42 @@ pub fn get_scenfit_labelings(
         }
     }
 }
-fn model_to_string(model: &Model) -> Vec<String> {
-    unimplemented!();
+fn model_to_string(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+    let st = ShowType::SHOWN;
+    let symbols = model.symbols(st)?;
+    let mut vlabels = vec![];
+    let mut err = vec![];
+    for symbol in symbols {
+        match symbol.name()? {
+            "vlabel" => {
+                let id = symbol.arguments()?[1];
+                // only return or nodes
+                if id.name()? == "or" {
+                    let sign = symbol.arguments()?[2];
+                    vlabels.push((id.arguments()?[0], sign));
+                }
+            }
+            "err" => {
+                err.push(symbol.to_string()?);
+            }
+            "rep" => {
+                err.push(symbol.to_string()?);
+            }
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
+            }
+        }
+    }
+    Ok((vlabels, err))
 }
 
-pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) -> Result<i64,Error> {
-    // returns the mcos of data and model described by the
-
+/// returns the mcos of data and model
+pub fn get_mcos(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+) -> Result<i64, Error> {
     // create a control object and pass command line arguments
     let options = vec![
         "0".to_string(),
@@ -438,10 +451,9 @@ pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
         ctl.add("base", &[], PRG_ELEM_PATH)?;
     }
 
-        ctl.add("base", &[], PRG_ADD_INFLUENCES)?;
-        ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
-        ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
-    
+    ctl.add("base", &[], PRG_ADD_INFLUENCES)?;
+    ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
+    ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
 
     // declare extern function handler
     let mut efh = MyEFH;
@@ -453,8 +465,7 @@ pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
     ctl.ground_with_event_handler(&parts, &mut efh)?;
 
     // solve
-    let mut handle = ctl
-        .solve(SolveMode::YIELD, &[])?;
+    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
 
     loop {
         handle.resume()?;
@@ -467,21 +478,21 @@ pub fn get_mcos(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
             Ok(None) => {
                 panic!("Error: no model found!");
             }
-            Err(e) => { Err(e)?;
+            Err(e) => {
+                Err(e)?;
             }
         }
     }
 }
 
+/// returns the mcos of data and model
 pub fn get_mcos_labelings(
     graph: &Graph,
     profile: &Profile,
     inputs: &str,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<Vec<String>>, Error> {
-    // returns the mcos of data and model described by the
-
+) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
     // create a control object and pass command line arguments
     let options = vec![
         format!("{}", number),
@@ -535,17 +546,7 @@ pub fn get_mcos_labelings(
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
-                    v.push(model_to_string(model));
-                    //                     let st = ShowType::SHOWN;
-                    //                     let atoms = model
-                    //                         .symbols(&st)
-                    //                         .expect("Failed to retrieve symbols in the model.");
-                    //                     for atom in atoms {
-                    //                         println!("{}", atom.to_string().unwrap());
-                    //                     }
-                    //                     println!("number : {}", model.number().unwrap());
-                    //                     println!("optimal : {}", model.optimality_proven().unwrap());
-                    //                     println!("cost : {:?}", model.cost().unwrap());
+                    v.push(model_to_string(model)?);
                 }
             }
             Ok(None) => {

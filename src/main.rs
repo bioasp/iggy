@@ -115,7 +115,7 @@ fn main() {
     );
     println!("  Activations = {}", graph.p_edges.len());
     println!("  Inhibitions = {}", graph.n_edges.len());
-    //     println!("          Dual = {}", len(unspecified))
+    // println!("          Dual = {}", len(unspecified))
 
     let filename = opt.observationfile;
     println!("\nReading observations from {:?}.", filename);
@@ -197,32 +197,32 @@ fn main() {
             if let Some(number) = opt.show_labelings {
                 if number >= 0 {
                     print!("\nCompute scenfit labelings ... ");
-                    let labelings = query::get_scenfit_labelings(
+                    let models = query::get_scenfit_labelings(
                         &graph,
                         &profile,
                         &new_inputs,
                         number,
                         &setting,
-                    );
-                    print!("done.");
-                    //                     let count = 0;
-                    for model in labelings {
-                        println!("model {:?} :", model);
-                        //                         println!("model {} :", model.number().unwrap());
-                        //                         let st = clingo::ShowType::SHOWN;
-                        //                         let atoms = model
-                        //                             .symbols(&st)
-                        //                             .expect("Failed to retrieve symbols in the model.");
-                        //                         for atom in atoms {
-                        //                             println!("{}", atom.to_string().unwrap());
-                        //                         }
-                        //                         println!("optimal : {}", model.optimality_proven().unwrap());
-                        //                         println!("cost : {:?}", model.cost().unwrap());
-                        //                                             count+=1
-                        //                                             print!("\nLabeling {}",count);
-                        //                                             utils.print_labeling(l)
-                        //                                             print!("\n   Repairs:");
-                        //                                             utils.print_repairs(l)
+                    )
+                    .unwrap();
+                    println!("done.");
+                    let mut count = 1;
+                    for (labels, repairs) in models {
+                        print!("Labeling {}:", count);
+                        count += 1;
+                        for (node, sign) in labels {
+                            println!(
+                                " {} = {}",
+                                node.to_string().unwrap(),
+                                sign.to_string().unwrap()
+                            );
+                        }
+                        println!();
+                        println!(" Repairs: ");
+                        for fix in repairs {
+                            println!("  {}", fix);
+                        }
+                        println!();
                     }
                 }
             }
@@ -264,17 +264,28 @@ fn main() {
             if let Some(number) = opt.show_labelings {
                 if number >= 0 {
                     print!("\nCompute mcos labelings ... ");
-                    let labelings =
-                        query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
-                    print!("done.");
-                    //                     let count = 0;
-                    //                     for l in labelings {
-                    //                         count += 1;
-                    //                         print!("\nLabeling {}", count);
-                    //                         utils.print_labeling(l);
-                    //                         print!("\n   Repairs:");
-                    //                         utils.print_repairs(l);
-                    //                     }
+                    let models =
+                        query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting)
+                            .unwrap();
+                    println!("done.");
+                    let mut count = 1;
+                    for (labels, repairs) in models {
+                        println!("Labeling {}:", count);
+                        count += 1;
+                        for (node, sign) in labels {
+                            println!(
+                                " {} = {}",
+                                node.to_string().unwrap(),
+                                sign.to_string().unwrap()
+                            );
+                        }
+                        println!();
+                        println!(" Repairs: ");
+                        for fix in repairs {
+                            println!("  {}", fix);
+                        }
+                        println!();
+                    }
                 }
             }
 
