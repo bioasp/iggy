@@ -3,7 +3,11 @@ name = "iggy"
 version = "0.1.0"
 authors = ["Sven Thiele <sthiele78@gmail.com>"]
 description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
+readme = "README.md"
+documentation = "bioasp.github.io/iggy"
+repository = "https://github.com/bioasp/iggy"
 build = "build.rs"
+publish = false
 edition = "2018"
 
 [dependencies]

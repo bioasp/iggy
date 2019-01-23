@@ -2,11 +2,11 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-mod nssif_parser;
-mod profile_parser;
-mod query;
-use crate::query::CheckResult::Inconsistent;
-use crate::query::SETTING;
+use iggy::query as query;
+use iggy::query::CheckResult::Inconsistent;
+use iggy::query::SETTING;
+use iggy::nssif_parser;
+use iggy::profile_parser;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
