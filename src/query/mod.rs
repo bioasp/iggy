@@ -72,8 +72,7 @@ pub fn check_observations(profile: &Profile) -> Result<CheckResult, Error> {
                     .unwrap()
                     .to_string()
                     .unwrap();
-                //TODO remove trimming with next clingo version
-                match x.trim_matches(char::from(0)).as_ref() {
+                match x.as_ref() {
                     "r1" => {
                         r += &format!(
                             "Simultaneous 0 and + behavior in node {} is contradictory.\n",
@@ -377,7 +376,7 @@ pub fn get_scenfit_labelings(
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
-                    v.push(model_to_string(model)?);
+                    v.push(extract_labels_repairs(model)?);
                 }
             }
             Ok(None) => {
@@ -387,7 +386,10 @@ pub fn get_scenfit_labelings(
         }
     }
 }
-fn model_to_string(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+
+/// Given a model this function returns a vector of pairs (node,label)
+/// and a vector of repair operations needed to make the labeling consistent
+fn extract_labels_repairs(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
     let st = ShowType::SHOWN;
     let symbols = model.symbols(st)?;
     let mut vlabels = vec![];
@@ -546,7 +548,7 @@ pub fn get_mcos_labelings(
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
-                    v.push(model_to_string(model)?);
+                    v.push(extract_labels_repairs(model)?);
                 }
             }
             Ok(None) => {
@@ -555,4 +557,115 @@ pub fn get_mcos_labelings(
             Err(e) => Err(e)?,
         }
     }
+}
+
+
+
+/// Given a model this function returns a vector of pairs (node,label)
+fn extract_predictions(model: &Model) -> Result<Vec<(Symbol, Symbol)>, Error> {
+    let st = ShowType::SHOWN;
+    let symbols = model.symbols(st)?;
+    let mut vlabels = vec![];
+    for symbol in symbols {
+        match symbol.name()? {
+            "pred" => {
+                let id = symbol.arguments()?[1];
+                // only return or nodes
+                if id.name()? == "or" {
+                    let sign = symbol.arguments()?[2];
+                    vlabels.push((id.arguments()?[0], sign));
+                }
+            }
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
+            }
+        }
+    }
+    Ok(vlabels)
+}
+
+pub fn get_predictions_under_mcos(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+) -> Result<Vec<(Symbol, Symbol)>,Error> {
+unimplemented!();
+}
+pub fn get_predictions_under_scenfit(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+) -> Result<Vec<(Symbol, Symbol)>,Error> {
+    // create a control object and pass command line arguments
+    // let options = vec!["--opt-strategy=5".to_string()];
+    let options = vec![
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--enum-mode=cautious".to_string(),
+        // format!("--opt-bound={}",opt)
+    ];
+    let mut ctl = Control::new(options)?;
+
+    ctl.add("base", &[], &graph.to_string())?;
+    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    ctl.add("base", &[], &inputs)?;
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    // solution = ctl.solve(prg,collapseTerms=True,collapseAtoms=False)
+    // opt      = solution[0].score[0]
+
+    if setting.os {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+    } else {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+    }
+
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    ctl.ground_with_event_handler(&parts, &mut efh)?;
+
+    // solve
+    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
+
+    let mut v = vec![];
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven()? {
+                    v = extract_predictions(model)?;
+                }
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
+    Ok(v)
 }

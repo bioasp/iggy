@@ -210,13 +210,7 @@ fn main() {
                     for (labels, repairs) in models {
                         print!("Labeling {}:", count);
                         count += 1;
-                        for (node, sign) in labels {
-                            println!(
-                                " {} = {}",
-                                node.to_string().unwrap(),
-                                sign.to_string().unwrap()
-                            );
-                        }
+                        print_labels(labels);
                         println!();
                         println!(" Repairs: ");
                         for fix in repairs {
@@ -228,10 +222,10 @@ fn main() {
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
-                //                 predictions = query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting);
+                let predictions = query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
                 println!("done.");
                 print!("\nPredictions:");
-                //                 utils.print_predictions(predictions)
+                print_predictions(predictions);
             }
         }
     } else {
@@ -272,13 +266,7 @@ fn main() {
                     for (labels, repairs) in models {
                         println!("Labeling {}:", count);
                         count += 1;
-                        for (node, sign) in labels {
-                            println!(
-                                " {} = {}",
-                                node.to_string().unwrap(),
-                                sign.to_string().unwrap()
-                            );
-                        }
+                        print_labels(labels);
                         println!();
                         println!(" Repairs: ");
                         for fix in repairs {
@@ -291,12 +279,100 @@ fn main() {
 
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
-                //                 let predictions =
-                //                     query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting);
-                //                 println!("done.");
-                //                 print!("\nPredictions:");
-                //                 utils.print_predictions(predictions);
+                let predictions = query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
+                println!("done.");
+                println!("\nPredictions:");
+                print_predictions(predictions);
             }
         }
     }
+}
+
+fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
+  for (node, sign) in labels {
+                            println!(
+                                " {} = {}",
+                                node.to_string().unwrap(),
+                                sign.to_string().unwrap()
+                            );
+                        }
+}
+fn print_predictions(predictions: Vec<(clingo::Symbol, clingo::Symbol)>) {
+
+    let mut pred_plus      = vec![];
+    let mut pred_minus     = vec![];
+    let mut pred_zero      = vec![];
+    let mut pred_not_plus  = vec![];
+    let mut pred_not_minus = vec![];
+    let mut pred_change    = vec![];
+    for (node,sign) in &predictions {
+      match sign.to_string().unwrap().as_ref() {
+        "1" => pred_plus.push(node),
+        "-1" => pred_minus.push(node),
+        "0" => pred_zero.push(node),
+        "notPlus" => pred_not_plus.push(node),
+        "notMinus" => pred_not_minus.push(node),
+        "change" => pred_change.push(node),
+        x       => panic!("Unknown Change: {}",x),
+      }
+    }
+    let labels = predictions;
+//   predictions = sorted(predictions, key=lambda p: str(p.arg(0)))
+//   exp            = ''
+//   pred_plus      = set()
+//   pred_minus     = set()
+//   pred_zero      = set()
+//   pred_not_plus  = set()
+//   pred_not_minus = set()
+//   pred_change    = set()
+//   maxsize = 0
+//   for p in predictions:
+//     if p.pred() == "pred" :
+//       if p.arg(2) == "1"        : pred_plus.add(p.arg(1))
+//       if p.arg(2) == "-1"       : pred_minus.add(p.arg(1))
+//       if p.arg(2) == "0"        : pred_zero.add(p.arg(1))
+//       if p.arg(2) == "notPlus"  : pred_not_plus.add(p.arg(1))
+//       if p.arg(2) == "notMinus" : pred_not_minus.add(p.arg(1))
+//       if p.arg(2) == "change"   : pred_change.add(p.arg(1))
+//       if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
+//
+//   pred_not_plus.difference_update(pred_minus)
+//   pred_not_plus.difference_update(pred_zero)
+//   pred_not_minus.difference_update(pred_plus)
+//   pred_not_minus.difference_update(pred_zero)
+//   pred_change.difference_update(pred_minus)
+//   pred_change.difference_update(pred_plus)
+//   for p in pred_plus      :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = +')
+//   for p in pred_minus     :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = -')
+//   for p in pred_zero      :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = 0')
+//   for p in pred_not_plus  :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = NOT +')
+//   for p in pred_not_minus :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = NOT -')
+//   for p in pred_change    :
+//     print('  ',p,end='')
+//     for i in range(maxsize - len(p)) : print(' ', end='')
+//     print(' = CHANGE')
+//
+//   println!();
+//   println!("        predicted + = {}", len(pred_plus))
+//   println!("        predicted - = {}", len(pred_minus))
+//   println!("        predicted 0 = {}", len(pred_zero))
+//   println!("    predicted NOT + = {}", len(pred_not_plus))
+//   println!("    predicted NOT - = {}", len(pred_not_minus))
+//   println!("   predicted CHANGE = {}", len(pred_change))
+  print_labels(labels);
 }

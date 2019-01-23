@@ -122,8 +122,8 @@ pub const PRG_ELEM_PATH: &'static str = "
 % new inputs through repair
 input(E,or(\"unknownup\"))    :- rep(new_influence(E,X,S)).
 vlabel(E,or(\"unknownup\"),1) :- rep(new_influence(E,X,S)).
-elabel(or(\"unknownup\"), X, 1)   :- rep(new_influence(E,X,1)).     
-elabel(or(\"unknownup\"), X,-1)   :- rep(new_influence(E,X,-1)).     
+elabel(or(\"unknownup\"), X, 1)   :- rep(new_influence(E,X,1)).
+elabel(or(\"unknownup\"), X,-1)   :- rep(new_influence(E,X,-1)).
 
 % in a network exists under Condition E a positive path to X
 
@@ -131,20 +131,20 @@ pos_path(E,X,@str(X)) :- input(E,X), vlabel(E,X, 1), not ismax(E,X).
 
 neg_path(E,X,@str(X)) :- input(E,X), vlabel(E,X,-1), not ismin(E,X).
 
-pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismax(E,X), 
+pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismax(E,X),
                                elabel(Y,X, 1), not input(E,X), X!=Y,
-	                       0==@member(X,P).     
+	                       0==@member(X,P).
 
-                          
-neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismin(E,X), 
+
+neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not ismin(E,X),
                                elabel(Y,X,-1), not input(E,X), X!=Y,
 	                       0==@member(X,P).
 
-pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismax(E,X), 
+pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismax(E,X),
                                elabel(Y,X,-1), not input(E,X), X!=Y,
-	                       0==@member(X,P).     
-                       
-neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismin(E,X), 
+	                       0==@member(X,P).
+
+neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not ismin(E,X),
                                elabel(Y,X, 1), not input(E,X), X!=Y,
 	                       0==@member(X,P).
 
@@ -210,3 +210,44 @@ forbidden(E,V,T) :- obs_vlabel(E,V,S), sign(S), sign(T), S!=T.
 % A weak vertex variation has been observed
 forbidden(E,V, 1) :- vertex(V), obs_vlabel(E,V,notPlus).
 forbidden(E,V,-1) :- vertex(V), obs_vlabel(E,V,notMinus).";
+
+pub const PRG_SHOW_PREDICTIONS: &'static str = "
+pred(E,X, 1) :- vlabel(E,X, 1).
+pred(E,X,-1) :- vlabel(E,X,-1).
+pred(E,X, 0) :- vlabel(E,X, 0).
+
+% further rules for predicting signs
+
+pred(E,V,notPlus) :- vlabel(E,V, 0).
+pred(E,V,notPlus) :- vlabel(E,V,-1).
+
+pred(E,V,notMinus):- vlabel(E,V, 0).
+pred(E,V,notMinus):- vlabel(E,V, 1).
+
+pred(E,V,change) :- vlabel(E,V, 1).
+pred(E,V,change) :- vlabel(E,V,-1).
+
+
+#show pred/3.
+
+%new_pred(E,V,1) :- pred(E,V,1), not obs_vlabel(E,V,1).
+%new_pred(E,V,0) :- pred(E,V,0), not obs_vlabel(E,V,0).
+%new_pred(E,V,-1) :- pred(E,V,-1), not obs_vlabel(E,V,-1).
+
+%new_pred(E,V,notPlus) :- pred(E,V,notPlus), not obs_vlabel(E,V,notPlus), not obs_vlabel(E,V,-1), not obs_vlabel(E,V,0).
+%new_pred(E,V,notMinus) :- pred(E,V,notMinus), not obs_vlabel(E,V,notMinus), not obs_vlabel(E,V,1), not obs_vlabel(E,V,0).
+%new_pred(E,V,change) :- pred(E,V,change), not obs_vlabel(E,V,1), not obs_vlabel(E,V,-1).
+
+
+%#show new_pred/3.";
+
+pub const PRG_SHOW_PREDICTIONS_DM: &'static str = "
+pred(E,X, 1) :- vlabel(E,X, 1), not vlabel(E,X,0), not vlabel(E,X,-1).
+pred(E,X,-1) :- vlabel(E,X,-1), not vlabel(E,X,0), not vlabel(E,X, 1).
+pred(E,X, 0) :- vlabel(E,X, 0), not vlabel(E,X,1), not vlabel(E,X,-1).
+
+pred(E,X,notPlus)  :- vlabel(E,X, 0), vlabel(E,X,-1), not vlabel(E,X, 1).
+pred(E,X,notMinus) :- vlabel(E,X, 0), vlabel(E,X, 1), not vlabel(E,X,-1).
+pred(E,X,change)   :- vlabel(E,X,-1), vlabel(E,X, 1), not vlabel(E,X, 0).
+
+#show pred/3.";
