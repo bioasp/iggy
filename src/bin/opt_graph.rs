@@ -5,6 +5,4 @@ use structopt::StructOpt;
 /// two measured states.
 /// Opt-graph computes networks fitting the observation data by removing (or adding) a minimal
 /// number of edges in the given network
-fn main() {
-
-}
+fn main() {}

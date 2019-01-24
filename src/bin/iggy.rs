@@ -2,11 +2,11 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use iggy::query as query;
-use iggy::query::CheckResult::Inconsistent;
-use iggy::query::SETTING;
 use iggy::nssif_parser;
 use iggy::profile_parser;
+use iggy::query;
+use iggy::query::CheckResult::Inconsistent;
+use iggy::query::SETTING;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -143,8 +143,8 @@ fn main() {
     let not_in_model = observed.difference(&graph.or_nodes);
 
     println!("\nObservations statistics");
-    println!(" unobserved species    : {}", unobserved.count());
-    println!(" observed nodes        : {}", observed.len());
+    println!(" unobserved species   : {}", unobserved.count());
+    println!(" observed nodes       : {}", observed.len());
     println!("  inputs                : {}", profile.input.len());
     println!("  +                     : {}", profile.plus.len());
     println!("  -                     : {}", profile.minus.len());
@@ -208,7 +208,7 @@ fn main() {
                     println!("done.");
                     let mut count = 1;
                     for (labels, repairs) in models {
-                        print!("Labeling {}:", count);
+                        println!("Labeling {}:", count);
                         count += 1;
                         print_labels(labels);
                         println!();
@@ -222,9 +222,11 @@ fn main() {
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
-                let predictions = query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
+                let predictions =
+                    query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)
+                        .unwrap();
                 println!("done.");
-                print!("\nPredictions:");
+                println!("\nPredictions:");
                 print_predictions(predictions);
             }
         }
@@ -279,7 +281,9 @@ fn main() {
 
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
-                let predictions = query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
+                let predictions =
+                    query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)
+                        .unwrap();
                 println!("done.");
                 println!("\nPredictions:");
                 print_predictions(predictions);
@@ -289,90 +293,87 @@ fn main() {
 }
 
 fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
-  for (node, sign) in labels {
-                            println!(
-                                " {} = {}",
-                                node.to_string().unwrap(),
-                                sign.to_string().unwrap()
-                            );
-                        }
+    for (node, sign) in labels {
+        let sign = match sign.to_string().unwrap().as_ref() {
+            "1" => "+",
+            "-1" => "-",
+            "0" => "0",
+            "notPlus" => "notPlus",
+            "notMinus" => "notMinus",
+            "change" => "CHANGE",
+            x => {
+                panic!("Unknown Change: {}", x);
+            }
+        };
+
+        println!(" {} = {}", node.to_string().unwrap(), sign);
+    }
 }
 fn print_predictions(predictions: Vec<(clingo::Symbol, clingo::Symbol)>) {
-
-    let mut pred_plus      = vec![];
-    let mut pred_minus     = vec![];
-    let mut pred_zero      = vec![];
-    let mut pred_not_plus  = vec![];
-    let mut pred_not_minus = vec![];
-    let mut pred_change    = vec![];
-    for (node,sign) in &predictions {
-      match sign.to_string().unwrap().as_ref() {
-        "1" => pred_plus.push(node),
-        "-1" => pred_minus.push(node),
-        "0" => pred_zero.push(node),
-        "notPlus" => pred_not_plus.push(node),
-        "notMinus" => pred_not_minus.push(node),
-        "change" => pred_change.push(node),
-        x       => panic!("Unknown Change: {}",x),
-      }
+    let mut pred_plus = HashSet::new();
+    let mut pred_minus = HashSet::new();
+    let mut pred_zero = HashSet::new();
+    let mut pred_not_plus = HashSet::new();
+    let mut pred_not_minus = HashSet::new();
+    let mut pred_change = HashSet::new();
+    for (node, sign) in &predictions {
+        match sign.to_string().unwrap().as_ref() {
+            "1" => {
+                pred_plus.insert(node);
+            }
+            "-1" => {
+                pred_minus.insert(node);
+            }
+            "0" => {
+                pred_zero.insert(node);
+            }
+            "notPlus" => {
+                pred_not_plus.insert(node);
+            }
+            "notMinus" => {
+                pred_not_minus.insert(node);
+            }
+            "change" => {
+                pred_change.insert(node);
+            }
+            x => {
+                panic!("Unknown Change: {}", x);
+            }
+        }
     }
-    let labels = predictions;
-//   predictions = sorted(predictions, key=lambda p: str(p.arg(0)))
-//   exp            = ''
-//   pred_plus      = set()
-//   pred_minus     = set()
-//   pred_zero      = set()
-//   pred_not_plus  = set()
-//   pred_not_minus = set()
-//   pred_change    = set()
-//   maxsize = 0
-//   for p in predictions:
-//     if p.pred() == "pred" :
-//       if p.arg(2) == "1"        : pred_plus.add(p.arg(1))
-//       if p.arg(2) == "-1"       : pred_minus.add(p.arg(1))
-//       if p.arg(2) == "0"        : pred_zero.add(p.arg(1))
-//       if p.arg(2) == "notPlus"  : pred_not_plus.add(p.arg(1))
-//       if p.arg(2) == "notMinus" : pred_not_minus.add(p.arg(1))
-//       if p.arg(2) == "change"   : pred_change.add(p.arg(1))
-//       if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
-//
-//   pred_not_plus.difference_update(pred_minus)
-//   pred_not_plus.difference_update(pred_zero)
-//   pred_not_minus.difference_update(pred_plus)
-//   pred_not_minus.difference_update(pred_zero)
-//   pred_change.difference_update(pred_minus)
-//   pred_change.difference_update(pred_plus)
-//   for p in pred_plus      :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = +')
-//   for p in pred_minus     :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = -')
-//   for p in pred_zero      :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = 0')
-//   for p in pred_not_plus  :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = NOT +')
-//   for p in pred_not_minus :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = NOT -')
-//   for p in pred_change    :
-//     print('  ',p,end='')
-//     for i in range(maxsize - len(p)) : print(' ', end='')
-//     print(' = CHANGE')
-//
-//   println!();
-//   println!("        predicted + = {}", len(pred_plus))
-//   println!("        predicted - = {}", len(pred_minus))
-//   println!("        predicted 0 = {}", len(pred_zero))
-//   println!("    predicted NOT + = {}", len(pred_not_plus))
-//   println!("    predicted NOT - = {}", len(pred_not_minus))
-//   println!("   predicted CHANGE = {}", len(pred_change))
-  print_labels(labels);
+    // if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
+    for p in &pred_plus {
+        println!(" {} = +", p.to_string().unwrap());
+    }
+    for p in &pred_minus {
+        println!(" {} = -", p.to_string().unwrap());
+    }
+    for p in &pred_zero {
+        println!(" {} = 0", p.to_string().unwrap());
+    }
+
+    let a: HashSet<_> = pred_not_plus.difference(&pred_minus).cloned().collect();
+    let b: Vec<_> = a.difference(&pred_zero).collect();
+    let c: HashSet<_> = pred_not_minus.difference(&pred_plus).cloned().collect();
+    let d: Vec<_> = c.difference(&pred_zero).collect();
+    let e: HashSet<_> = pred_change.difference(&pred_minus).cloned().collect();
+    let f: Vec<_> = e.difference(&pred_plus).collect();
+
+    for p in &b {
+        println!(" {} = notPlus", p.to_string().unwrap());
+    }
+    for p in &d {
+        println!(" {} = notMinus", p.to_string().unwrap());
+    }
+    for p in &f {
+        println!(" {} = CHANGE", p.to_string().unwrap());
+    }
+
+    println!();
+    println!(" predicted +        = {}", pred_plus.len());
+    println!(" predicted -        = {}", pred_minus.len());
+    println!(" predicted 0        = {}", pred_zero.len());
+    println!(" predicted notPlus  = {}", b.len());
+    println!(" predicted notMinus = {}", d.len());
+    println!(" predicted CHANGE   = {}", f.len());
 }

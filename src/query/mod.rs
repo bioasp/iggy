@@ -559,8 +559,6 @@ pub fn get_mcos_labelings(
     }
 }
 
-
-
 /// Given a model this function returns a vector of pairs (node,label)
 fn extract_predictions(model: &Model) -> Result<Vec<(Symbol, Symbol)>, Error> {
     let st = ShowType::SHOWN;
@@ -590,7 +588,75 @@ pub fn get_predictions_under_mcos(
     inputs: &str,
     setting: &SETTING,
 ) -> Result<Vec<(Symbol, Symbol)>,Error> {
-unimplemented!();
+    // create a control object and pass command line arguments
+    // let options = vec!["--opt-strategy=5".to_string()];
+    let options = vec![
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--enum-mode=cautious".to_string(),
+        // format!("--opt-bound={}",opt)
+    ];
+    let mut ctl = Control::new(options)?;
+
+    ctl.add("base", &[], &graph.to_string())?;
+    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    ctl.add("base", &[], &inputs)?;
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
+
+    ctl.add("base", &[], PRG_ADD_INFLUENCES)?;
+    ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
+    ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
+
+    // solution = ctl.solve(prg,collapseTerms=True,collapseAtoms=False)
+    // opt      = solution[0].score[0]
+
+    if setting.os {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+    } else {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+    }
+
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    ctl.ground_with_event_handler(&parts, &mut efh)?;
+
+    // solve
+    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
+
+    let mut v = vec![];
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven()? {
+                    v = extract_predictions(model)?;
+                }
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
 }
 pub fn get_predictions_under_scenfit(
     graph: &Graph,
@@ -667,5 +733,4 @@ pub fn get_predictions_under_scenfit(
             Err(e) => Err(e)?,
         }
     }
-    Ok(v)
 }
