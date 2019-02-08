@@ -1,6 +1,7 @@
 use crate::nssif_parser::Graph;
 use crate::profile_parser::Profile;
 use clingo::*;
+
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
 use crate::query::encodings::*;
@@ -558,28 +559,91 @@ pub fn get_mcos_labelings(
         }
     }
 }
+pub struct Predictions {
+    pub increase: Vec<String>,
+    pub decrease: Vec<String>,
+    pub no_change: Vec<String>,
+    pub no_increase: Vec<String>,
+    pub no_decrease: Vec<String>,
+    pub change: Vec<String>,
+}
 
 /// Given a model this function returns a vector of pairs (node,label)
-fn extract_predictions(model: &Model) -> Result<Vec<(Symbol, Symbol)>, Error> {
-    let st = ShowType::SHOWN;
-    let symbols = model.symbols(st)?;
-    let mut vlabels = vec![];
+fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
+
+    let mut increase = Vec::new();
+    let mut decrease = Vec::new();
+    let mut no_change = Vec::new();
+    let mut no_increase = Vec::new();
+    let mut no_decrease = Vec::new();
+    let mut change = Vec::new();
+
     for symbol in symbols {
         match symbol.name()? {
             "pred" => {
                 let id = symbol.arguments()?[1];
                 // only return or nodes
                 if id.name()? == "or" {
-                    let sign = symbol.arguments()?[2];
-                    vlabels.push((id.arguments()?[0], sign));
+                    match symbol.arguments()?[2].to_string()?.as_ref() {
+                        "1" => {
+                                        increase.push(id.arguments()?[0].to_string()?);
+                                    }
+                        "-1" => {
+                                        decrease.push(id.arguments()?[0].to_string()?);
+                                    }
+                        "0" => {
+                                        no_change.push(id.arguments()?[0].to_string()?);
+                                    }
+                        "notPlus" => {
+                                        no_increase.push(id.arguments()?[0].to_string()?);
+                                    }
+                        "notMinus" => {
+                                        no_decrease.push(id.arguments()?[0].to_string()?);
+                                    }
+                        "change" => {
+                                        change.push(id.arguments()?[0].to_string()?);
+                                    }
+                        x => {
+                            panic!("Unexpected predicted behavior: {}", x);
+                        }
+                    }
                 }
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
+                panic!("Unexpected predicate: {}", symbol.to_string()?);
             }
         }
     }
-    Ok(vlabels)
+    for i in &increase {
+        let index = no_decrease.iter().position(|x| *x == *i).unwrap();
+        no_decrease.remove(index);
+
+        let index = change.iter().position(|x| *x == *i).unwrap();
+        change.remove(index);
+    }
+    for i in &decrease {
+        let index = no_increase.iter().position(|x| *x == *i).unwrap();
+        no_increase.remove(index);
+
+        let index = change.iter().position(|x| *x == *i).unwrap();
+        change.remove(index);
+    }
+    for i in &no_change {
+        let index = no_increase.iter().position(|x| *x == *i).unwrap();
+        no_increase.remove(index);
+
+        let index = no_decrease.iter().position(|x| *x == *i).unwrap();
+        no_decrease.remove(index);
+    }
+
+    Ok(Predictions {
+        increase: increase,
+        decrease: decrease,
+        no_change: no_change,
+        no_increase: no_increase,
+        no_decrease: no_decrease,
+        change: change,
+    })
 }
 
 pub fn get_predictions_under_mcos(
@@ -587,7 +651,7 @@ pub fn get_predictions_under_mcos(
     profile: &Profile,
     inputs: &str,
     setting: &SETTING,
-) -> Result<Vec<(Symbol, Symbol)>,Error> {
+) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
     // let options = vec!["--opt-strategy=5".to_string()];
     let options = vec![
@@ -642,28 +706,16 @@ pub fn get_predictions_under_mcos(
     // solve
     let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
 
-    let mut v = vec![];
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    v = extract_predictions(model)?;
-                }
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
+    let model = cautious_consequences_optimal_models(&mut handle)?;
+    Ok(extract_predictions(&model)?)
 }
+
 pub fn get_predictions_under_scenfit(
     graph: &Graph,
     profile: &Profile,
     inputs: &str,
     setting: &SETTING,
-) -> Result<Vec<(Symbol, Symbol)>,Error> {
+) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
     // let options = vec!["--opt-strategy=5".to_string()];
     let options = vec![
@@ -718,19 +770,23 @@ pub fn get_predictions_under_scenfit(
     // solve
     let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
 
-    let mut v = vec![];
+    let model = cautious_consequences_optimal_models(&mut handle)?;
+    Ok(extract_predictions(&model)?)
+}
+
+fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>,Error> {
+    let mut symbols = vec![];
     loop {
         handle.resume()?;
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
-                    v = extract_predictions(model)?;
+                    symbols = model.symbols(ShowType::SHOWN)?;
                 }
             }
-            Ok(None) => {
-                return Ok(v);
-            }
+            Ok(None) => break,
             Err(e) => Err(e)?,
         }
     }
+    Ok(symbols)
 }

@@ -7,6 +7,7 @@ use iggy::profile_parser;
 use iggy::query;
 use iggy::query::CheckResult::Inconsistent;
 use iggy::query::SETTING;
+use iggy::query::Predictions;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -227,7 +228,7 @@ fn main() {
                         .unwrap();
                 println!("done.");
                 println!("\nPredictions:");
-                print_predictions(predictions);
+                print_predictions(&predictions);
             }
         }
     } else {
@@ -286,7 +287,7 @@ fn main() {
                         .unwrap();
                 println!("done.");
                 println!("\nPredictions:");
-                print_predictions(predictions);
+                print_predictions(&predictions);
             }
         }
     }
@@ -309,71 +310,33 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
         println!(" {} = {}", node.to_string().unwrap(), sign);
     }
 }
-fn print_predictions(predictions: Vec<(clingo::Symbol, clingo::Symbol)>) {
-    let mut pred_plus = HashSet::new();
-    let mut pred_minus = HashSet::new();
-    let mut pred_zero = HashSet::new();
-    let mut pred_not_plus = HashSet::new();
-    let mut pred_not_minus = HashSet::new();
-    let mut pred_change = HashSet::new();
-    for (node, sign) in &predictions {
-        match sign.to_string().unwrap().as_ref() {
-            "1" => {
-                pred_plus.insert(node);
-            }
-            "-1" => {
-                pred_minus.insert(node);
-            }
-            "0" => {
-                pred_zero.insert(node);
-            }
-            "notPlus" => {
-                pred_not_plus.insert(node);
-            }
-            "notMinus" => {
-                pred_not_minus.insert(node);
-            }
-            "change" => {
-                pred_change.insert(node);
-            }
-            x => {
-                panic!("Unknown Change: {}", x);
-            }
-        }
-    }
+fn print_predictions(predictions: &Predictions) {
+
     // if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
-    for p in &pred_plus {
-        println!(" {} = +", p.to_string().unwrap());
+    for node in &predictions.increase {
+        println!(" {} = +", node);
     }
-    for p in &pred_minus {
-        println!(" {} = -", p.to_string().unwrap());
+    for node in &predictions.decrease {
+        println!(" {} = -", node);
     }
-    for p in &pred_zero {
-        println!(" {} = 0", p.to_string().unwrap());
+    for node in &predictions.no_change {
+        println!(" {} = 0", node);
     }
-
-    let a: HashSet<_> = pred_not_plus.difference(&pred_minus).cloned().collect();
-    let b: Vec<_> = a.difference(&pred_zero).collect();
-    let c: HashSet<_> = pred_not_minus.difference(&pred_plus).cloned().collect();
-    let d: Vec<_> = c.difference(&pred_zero).collect();
-    let e: HashSet<_> = pred_change.difference(&pred_minus).cloned().collect();
-    let f: Vec<_> = e.difference(&pred_plus).collect();
-
-    for p in &b {
-        println!(" {} = notPlus", p.to_string().unwrap());
+    for node in &predictions.no_increase {
+        println!(" {} = notPlus", node);
     }
-    for p in &d {
-        println!(" {} = notMinus", p.to_string().unwrap());
+    for node in &predictions.no_decrease {
+        println!(" {} = notMinus", node);
     }
-    for p in &f {
-        println!(" {} = CHANGE", p.to_string().unwrap());
+    for node in &predictions.change {
+        println!(" {} = CHANGE", node);
     }
 
     println!();
-    println!(" predicted +        = {}", pred_plus.len());
-    println!(" predicted -        = {}", pred_minus.len());
-    println!(" predicted 0        = {}", pred_zero.len());
-    println!(" predicted notPlus  = {}", b.len());
-    println!(" predicted notMinus = {}", d.len());
-    println!(" predicted CHANGE   = {}", f.len());
+    println!(" predicted +        = {}", predictions.increase.len());
+    println!(" predicted -        = {}", predictions.decrease.len());
+    println!(" predicted 0        = {}", predictions.no_change.len());
+    println!(" predicted notPlus  = {}", predictions.no_increase.len());
+    println!(" predicted notMinus = {}", predictions.no_decrease.len());
+    println!(" predicted CHANGE   = {}", predictions.change.len());
 }
