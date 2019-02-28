@@ -22,7 +22,6 @@ This module contains the queries which can be asked to the model and data.
 """
 
 import os
-import tempfile
 from pyasp.asp import *
 from pyasp.term import String2TermSet;
 
@@ -82,7 +81,7 @@ mcos    = [add_influence_prg, min_added_influence_prg, keep_obs_prg]
 
 
 def get_scenfit(instance, OS, FP, FC, EP):
-  '''returns the scenfit of data and model described by the 
+  '''returns the scenfit of data and model described by the
   ``TermSet`` object [instance].
   '''
   sem = [sign_cons_prg, bwd_prop_prg]
@@ -113,7 +112,7 @@ def get_scenfit_labelings(instance,nm, OS, FP, FC, EP):
   if FP : sem.append(fwd_prop_prg)
   if FC : sem.append(founded_prg)
   if EP : sem.append(elem_path_prg)
- 
+
   inst     = instance.to_file()
   prg      = sem + scenfit + [inst]
   coptions = '--opt-strategy=5'
@@ -176,7 +175,7 @@ def get_mcos(instance, OS, FP, FC, EP):
   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
   opt      = solution[0].score[0]
 
-  os.unlink(inst) 
+  os.unlink(inst)
   return opt
 
 
@@ -201,7 +200,7 @@ def get_mcos_labelings(instance,nm, OS, FP, FC, EP):
   solver2  = GringoClasp(clasp_options=coptions)
   models   = solver2.run(prg,collapseTerms=True,collapseAtoms=False)
 
-  os.unlink(inst) 
+  os.unlink(inst)
   return models
 
 
@@ -337,7 +336,7 @@ def get_opt_add_remove_edges_greedy(instance):
 
   bscenfit   = models[0].score[0]
   brepscore  = models[0].score[1]
-  
+
   #print('model:   ',models[0])
   #print('bscenfit:   ',bscenfit)
   #print('brepscore:  ',brepscore)
@@ -421,7 +420,7 @@ def get_opt_add_remove_edges_greedy(instance):
                     fedges.append((nedges,n2scenfit,n2repscore))
                     dedges.append(nedges)
 
-    if end : 
+    if end :
       if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
 #        print('LAST tedges append',oedges)
         tedges.append((oedges,oscenfit,orepscore))
@@ -456,7 +455,7 @@ def get_opt_repairs_add_remove_edges_greedy(instance,nm, edges):
   #nscenfit  = models[0].score[0]
   #nrepscore = models[0].score[1]
   #print('scenfit:   ', nscenfit)
-  #print('repscore:  ', nrepscore) 
+  #print('repscore:  ', nrepscore)
 
   os.unlink(f_edges)
   os.unlink(inst)
