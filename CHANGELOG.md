@@ -1,8 +1,6 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Unreleased
-
 ## v1.4.3 - 2019, Mar 1
 use pyasp 1.4.4
 
