@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## v1.4.3 - 2019, Mar 1
+use pyasp 1.4.4
+
 ## v1.4.2 - 2018, Aug 16
 ### Fixed
 - Fix in opt_graph: auto generated inputs are now used for all experiments
