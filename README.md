@@ -1,7 +1,5 @@
 # Installation
 
-
-
 You can install iggy by running:
 
     > pip install --user iggy
@@ -12,7 +10,6 @@ and on MacOS the scripts are under `/Users/YOURUSERNAME/Library/Python/3.5/bin`.
 
 
 # Usage
-
 
 Typical usage is:
 
