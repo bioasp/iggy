@@ -1,0 +1,336 @@
+\documentclass{article}
+
+\usepackage{geometry}
+\geometry{legalpaper, margin=1in}
+
+\usepackage{fancyvrb}
+
+\newcommand\iggy{\texttt{iggy}}
+
+\title{ \iggy  \\
+User Guide \\
+version 1.4.1
+}
+
+\author{Sven Thiele}
+
+\date{}
+
+
+\begin{document}
+
+\maketitle
+
+
+\section{What is \iggy?}
+
+\iggy\ is a tool for consistency based analysis of influence graphs and observed systems behavior.
+For many biological systems knowledge bases are available that describe the interaction of its components 
+ usually in terms of causal networks and influence graphs. 
+In particular signed influence graphs where edges indicate either positive or negative effect of one node upon another.
+Building upon a notion of consistency between biochemical/genetic regulations and high-throughput profiles of cell activity
+\iggy\ implements methods to check the consistency of large-scale data sets and
+ provides explanations for inconsistencies. 
+In practice, this can be used to identify unreliable data or to indicate missing reactions. 
+Further, \iggy\ addresses the problem of repairing networks and corresponding yet often discrepant measurements
+in order to re-establish their mutual consistency and predict unobserved variations even under inconsistency
+ 
+\section{Prerequisites} 
+\iggy\ is a python application that uses the power of answer set solving technology to compute its solution.
+Therefore it depends on the \texttt{PyASP} library, a python wrapper for the solvers from the Potassco Answer Set Solving Collection.
+All dependencies are automatically resolved and installed via \texttt{pip}, the recommended package installer for the Python Package index where the software is hosted.
+The \texttt{PyASP} package detects the running system and installs the matching binaries of the answer set grounder \texttt{gringo} and solver \texttt{clasp}.
+\iggy\ runs on the Linux and Mac OS operating systems Windows is currently {\bf not} supported.
+ 
+ 
+\section{Installation}
+
+\subsection{Installation using \texttt{pip}}
+You can install the \iggy\ package by running:
+
+\begin{Verbatim}[frame=single]
+$ pip install --user iggy
+\end{Verbatim} 
+
+
+On Linux the executable scripts can then be found in \texttt{~/.local/bin}
+
+and on Mac OS the scripts are under \texttt{/Users/YOURUSERNAME/Library/Python/3.5/bin}.
+
+
+\subsection{Installation of \texttt{pip}}
+If \texttt{pip} is not installed one can install \texttt{pip} without admin rights.
+Therefore one has to first download \texttt{getpip.py} via:
+\begin{Verbatim}[frame=single]
+$ wget https://bootstrap.pypa.io/get-pip.py
+\end{Verbatim} 
+and then install pip locally:
+\begin{Verbatim}[frame=single]
+$ python get-pip.py --user
+\end{Verbatim} 
+Now it is possible to use the local pip and proceed with the section \emph{Installation of \texttt{pip}}.
+
+\subsection{Installation without \texttt{pip}}
+Although we do not recommend it, it is possible to install \iggy\ without \texttt{pip}.
+But then one has to take care of the dependencies oneself.
+Therefore one has to first download \texttt{pyasp-1.4.3}.
+
+\begin{Verbatim}[frame=single]
+$ wget https://pypi.python.org/packages/source/p/pyasp/pyasp-1.4.3.tar.gz
+\end{Verbatim}
+Next one has to extract and install \texttt{PyASP}:
+\begin{Verbatim}[frame=single]
+$ gzip -d pyasp-1.4.3.tar.gz
+$ tar -xvf pyasp-1.4.3.tar
+$ cd pyasp-1.4.3
+$ python setup.py install --user
+\end{Verbatim}
+Then one needs to download \texttt{iggy-1.4.1}:
+\begin{Verbatim}[frame=single]
+$ wget https://pypi.python.org/packages/source/i/iggy/iggy-1.4.1.tar.gz
+\end{Verbatim}
+and to extract and install ingranalyze:
+\begin{Verbatim}[frame=single]
+$ gzip -d iggy-1.4.1.tar.gz
+$ tar -xvf iggy-1.4.1.tar
+$ cd iggy-1.4.1
+$ python setup.py install --user
+\end{Verbatim}
+
+On Linux the executable scripts can then be found in \texttt{~/.local/bin}
+
+and on Mac OS the scripts are under \texttt{/Users/YOURUSERNAME/Library/Python/3.5/bin}.
+
+
+
+\section{Usage}
+
+Typical usage is:
+\begin{Verbatim}[frame=single]
+$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions
+\end{Verbatim}
+For more options you can ask for help as follows:
+\begin{Verbatim}[frame=single]
+$ iggy.py -h        
+usage: iggy.py [-h] [--no_fwd_propagation] [--no_founded_constraints]
+               [--elempath] [--depmat] [--mics] [--autoinputs] [--scenfit]
+               [--show_labelings SHOW_LABELINGS] [--show_predictions]
+               networkfile observationfile
+
+Iggy confronts biological networks given as interaction graphs with
+experimental observations given as signs that represent the concentration
+changes between two measured states. Iggy supports the incorporation of
+uncertain measurements, discovers inconsistencies in data or network, applies
+minimal repairs, and predicts the behavior of unmeasured species. In
+particular, it distinguishes strong predictions (e.g. increase of a node
+level) and weak predictions (e.g., node level increases or remains unchanged).
+
+positional arguments:
+  networkfile           influence graph in SIF format
+  observationfile       observations in bioquali format
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --no_fwd_propagation  turn forward propagation OFF, default is ON
+  --no_founded_constraints
+                        turn constraints OFF that every variation must be
+                        founded in an input, default is ON
+  --elempath            a change must be explained by an elementary path from
+                        an input.
+  --depmat              combines multiple states, a change must be explained
+                        by an elementary path from an input.
+  --mics                compute minimal inconsistent cores
+  --autoinputs          compute possible inputs of the network (nodes with
+                        indegree 0)
+  --scenfit             compute scenfit of the data, default is mcos
+  --show_labelings SHOW_LABELINGS
+                        number of labelings to print, default is OFF, 0=all
+  --show_predictions    show predictions
+\end{Verbatim} 
+
+
+\section{Input}
+
+\iggy\ works with two kinds of data. 
+The first is network data representing and influence graph model. 
+The second is the experimental data, representing experimental condition and observed behavior.
+
+
+\subsection{Network data}
+
+The network data is represented as file in simple interaction format \texttt{SIF} as shown below.
+Lines in the \texttt{SIF} file specify a source node, a relationship type (or edge type), and one target node.
+For our influence graph models we have the edge types 
+\texttt{1} for \emph{increases} 
+and \texttt{-1} for \emph{decreases}.
+The first line in the example below therefore states that
+ \texttt{depor} has an \emph{activating} (\texttt{1}) influence on \texttt{shp2\_ph}.
+The last line states that  \texttt{shp2\_ph} has a \emph{inhibiting} (\texttt{-1}) influence on \texttt{plcg}.
+Duplicate entries are ignored. 
+Multiple edges between the same nodes must have different edge types. 
+Other edge types than \texttt{1} and \texttt{-1} will lead to a parsing error.
+
+\begin{Verbatim}[frame=single,numbers=left]
+depor_p       1         shp2_ph
+gab1_mem_p    1         shp2_ph
+shp2_ph       -1        pi3k
+gab1_mem_p    1         pi3k
+pi3k          1         gab1_mem_p
+shp2_ph       -1        plcg
+\end{Verbatim} 
+
+
+\subsection{Experimental data}
+
+The experimental data is given in the file format shown below.
+Nodes which are perturbed in the experimental condition are denoted as \texttt{input}.
+The first line of the example below states that \texttt{depor} has been perturbed in the experiment.
+This means \texttt{depor} has been under the control of the experimentalist 
+ and its behavior must therefore not be explained.
+The behavior of a node can be either \texttt{+}, \texttt{-}, \texttt{0}, \texttt{notPlus}, \texttt{notMinus}.
+Line 2 states that an \emph{increase} (\texttt{+}) was obeserved in \texttt{depor},
+ as it is declared an \texttt{input} this behavior has been caused by the experimentalist.
+Line 3 states that \texttt{stat5ab\_py} has \emph{decreased} (\texttt{-}) and
+line 4 states that \texttt{ras} has \emph{not changed} (\texttt{0}).
+Line 5 states that an \emph{uncertain decrease} (\texttt{notPlus}) has been observed in \texttt{plcg} and
+line 6 states that an \emph{uncertain increase} (\texttt{notMinus}) has been observed in \texttt{mtorc1}.
+Line 7 states that \texttt{akt} is initially on the minimum level, this means it cannot further decrease, and
+line 8 states that \texttt{gab1} is initially on the maximum level, this means it cannot further increase.
+
+\begin{Verbatim}[frame=single,numbers=left]
+depor         = input 
+depor         = +
+stat5ab_py    = -
+ras           = 0
+plcg          = notPlus
+mtorc1        = notMinus
+akt           = MIN
+gab1          = MAX
+\end{Verbatim}  
+
+
+\section{Output}
+
+\iggy\ presents the results of its analysis as text output. 
+The output of \iggy\ can be redirected into a file using the \texttt{>} operator.
+For example to write the results shown below into the file \texttt{myfile.txt} type:
+
+\begin{Verbatim}[frame=single]
+$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions > myfile.txt
+\end{Verbatim}
+
+In the following we will dissect the output generated by \iggy.
+The first 3 lines of the output state the constraints that have been used to analyze network and data.
+For our example it is the default setting with the following constraints.
+For a deeper understanding of these constraints see~\cite{sthiele15}.
+
+\begin{Verbatim}[frame=single,numbers=left]
+ all observed changes must be explained by an predecessor
+ no-change observations must be explained
+ all observed changes must be explained by an input
+\end{Verbatim}
+
+Next follow some statistics on the input data. 
+Line 4-5 tells us that the influence graph model given as \texttt{network.sif} 
+consists of \texttt{96} nodes, 
+with \texttt{116} edges with activating influence 
+and \texttt{16} edges with inhibiting influence
+and \texttt{0} edges with \texttt{Dual} or ambiguous influence.
+%
+Line 9 tells that the experimental data given as \texttt{observation.obs} in itself is \texttt{consistent},
+which means it does not contain contradictory observations.
+Line 11 tells that the experimental conditions consists of \texttt{14} perturbations marked as \texttt{input} nodes, 
+that \texttt{12} nodes were observed as increased \texttt{+}, 
+\texttt{10} nodes \emph{decreased} (\texttt{-}),
+\texttt{20} nodes did \emph{not change} (\texttt{0}),
+\texttt{5} nodes were observed with an \emph{uncertain decrease} (\texttt{notPlus}),
+\texttt{4} nodes were observed with an \emph{uncertain increase} (\texttt{notMinus}),
+\texttt{74} nodes were \texttt{unobserved} and the experimental data contained \texttt{0} observations of things that are not in the given influence graph model.
+
+\begin{Verbatim}[frame=single,numbers=left,firstnumber=4] 
+Reading network network.sif ... done.
+   Nodes: 96  Activations: 116  Inhibitions: 16  Dual: 0
+
+Reading observations observation.obs ... done.
+
+Checking observations observation.obs ... done.
+   Observations are consistent.
+   inputs: 14  observed +: 12  observed -: 10  observed 0: 20  observed notPlus: 5  
+   observed notMinus: 4 unobserved: 74  not in model: 0
+\end{Verbatim}
+
+Then follow the results of the consistency analysis.
+Line 14 tells us that network and data are inconsistent 
+and that the size of a \emph{minimal correction set} (\texttt{mcos}) is \texttt{1}.
+This means that at least \texttt{1} influence needs to be added to restore consistency.
+For a deeper understanding of mcos see~\cite{samaga13a}.
+Further the output contains at most \texttt{10} consistent labeling including correction set. 
+This is because we choose to set the flag \texttt{--show\_labelings 10}.
+In our example we have only \texttt{2} possible labelings. 
+Each labeling represents a consistent behavior of the model (given mcos the corrections).
+\texttt{Labeling 1},
+tells it is possible that 
+\texttt{STAT3\_n} and \texttt{PAK1} \emph{increase} (\texttt{+}),
+\texttt{IGF1\_act} does \emph{not change} (\texttt{0}) and that
+\texttt{KS6A5/KS6A4} and \texttt{TNR1A/TNR1B} \emph{decrease} (\texttt{-}).
+Line 26 tells us that this is a consistent behavior if \texttt{MTOR} would receive a positive influence, 
+which is currently not included in the model.
+\texttt{Labeling 2}, represents an alternative behavior,
+ here  \texttt{PAK1} and \texttt{KS6A5/KS6A4} do \emph{not change} (\texttt{0}).
+Please note that in this example both labelings are consistent under the same correction set.
+In another example more than one minimal correction set could exists.
+
+\begin{Verbatim}[frame=single,numbers=left,firstnumber=13]  
+Computing mcos of network and data ... done.
+   The network and data are inconsistent: mcos = 1.
+  
+Compute mcos labelings ... done.
+Labeling 1:
+   gen("STAT3_n") = +
+   gen("PAK1") = +
+   gen("IGF1_act") = 0
+   gen("KS6A5/KS6A4") = -
+   gen("TNR1A/TNR1B") = -
+
+   labeled +: 2  labeled -: 2  labeled 0: 1 
+
+   new_influence("observation.obs",gen("MTOR"),1)
+   
+Labeling 2:
+   gen("STAT3_n") = +
+   gen("PAK1") = 0
+   gen("IGF1_act") = 0
+   gen("KS6A5/KS6A4") = 0
+   gen("TNR1A/TNR1B") = -
+
+   labeled +: 1  labeled -: 1  labeled 0: 3 
+   
+   new_influence("observation.obs",gen("MTOR"),1)
+\end{Verbatim}
+
+Finally the prediction results are listed.
+A prediction is a statement that hold under all labeling under all minimal repairs. 
+For a formal definition of predictions see~\cite{sthiele15}.
+Here the predictions say that 
+\texttt{STAT3\_n} \emph{always increases} (\texttt{+}),
+\texttt{PAK1} \emph{never decreases} (\texttt{NOT -}),
+\texttt{IGF1\_act} always stays \emph{unchanged} (\texttt{0}),
+\texttt{KS6A5/KS6A4} \emph{never increases} (\texttt{NOT +}), and that
+\texttt{TNR1A/TNR1B} \emph{always decreases} (\texttt{-}).
+
+\begin{Verbatim}[frame=single,numbers=left,firstnumber=38]  
+Compute predictions under mcos ... done.
+   gen("STAT3_n") = +
+   gen("PAK1") = NOT -
+   gen("IGF1_act") = 0
+   gen("KS6A5/KS6A4") = NOT +
+   gen("TNR1A/TNR1B") = -
+ 
+   predicted +: 1  predicted -: 1  predicted 0: 1  predicted NOT +: 1  
+   predicted NOT -: 1  predicted CHANGE: 0
+\end{Verbatim}  
+
+\bibliographystyle{plain}
+\bibliography{local} 
+ 
+\end{document}
