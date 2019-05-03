@@ -246,15 +246,15 @@ pub fn get_minimal_inconsistent_cores(
     profile: &Profile,
     inputs: &str,
     setting: &SETTING,
-// FESPC
-) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
-
+    // FESPC
+) -> Result<Vec<Vec<Symbol>>, Error> {
     // create a control object and pass command line arguments
     let options = vec![
         "0".to_string(),
-        "--dom-mod=6".to_string(),
+        //        "--dom-mod=6".to_string(),
+        "--dom-mod=5,16".to_string(),
         "--heu=Domain".to_string(),
-        "--enum-mode=record".to_string(),
+        "--enum-mode=domRec".to_string(),
     ];
 
     let mut ctl = Control::new(options)?;
@@ -444,33 +444,26 @@ pub fn get_scenfit_labelings(
 }
 
 /// Given a model this function returns a vector of mics
-fn extract_mics(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+fn extract_mics(model: &Model) -> Result<Vec<Symbol>, Error> {
     let st = ShowType::SHOWN;
     let symbols = model.symbols(st)?;
-    let mut vlabels = vec![];
-    let mut err = vec![];
+    let mut mics = vec![];
     for symbol in symbols {
         match symbol.name()? {
-            "vlabel" => {
-                let id = symbol.arguments()?[1];
+            "active" => {
+                let id = symbol.arguments()?[0];
                 // only return or nodes
                 if id.name()? == "or" {
-                    let sign = symbol.arguments()?[2];
-                    vlabels.push((id.arguments()?[0], sign));
+                    //                    let sign = symbol.arguments()?[0];
+                    mics.push(id);
                 }
-            }
-            "err" => {
-                err.push(symbol.to_string()?);
-            }
-            "rep" => {
-                err.push(symbol.to_string()?);
             }
             _ => {
                 panic!("unmatched symbol: {}", symbol.to_string()?);
             }
         }
     }
-    Ok((vlabels, err))
+    Ok(mics)
 }
 
 /// Given a model this function returns a vector of pairs (node,label)
@@ -655,7 +648,6 @@ pub struct Predictions {
 
 /// Given a model this function returns a vector of pairs (node,label)
 fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
-
     let mut increase = Vec::new();
     let mut decrease = Vec::new();
     let mut no_change = Vec::new();
@@ -671,23 +663,23 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
                 if id.name()? == "or" {
                     match symbol.arguments()?[2].to_string()?.as_ref() {
                         "1" => {
-                                        increase.push(id.arguments()?[0].to_string()?);
-                                    }
+                            increase.push(id.arguments()?[0].to_string()?);
+                        }
                         "-1" => {
-                                        decrease.push(id.arguments()?[0].to_string()?);
-                                    }
+                            decrease.push(id.arguments()?[0].to_string()?);
+                        }
                         "0" => {
-                                        no_change.push(id.arguments()?[0].to_string()?);
-                                    }
+                            no_change.push(id.arguments()?[0].to_string()?);
+                        }
                         "notPlus" => {
-                                        no_increase.push(id.arguments()?[0].to_string()?);
-                                    }
+                            no_increase.push(id.arguments()?[0].to_string()?);
+                        }
                         "notMinus" => {
-                                        no_decrease.push(id.arguments()?[0].to_string()?);
-                                    }
+                            no_decrease.push(id.arguments()?[0].to_string()?);
+                        }
                         "change" => {
-                                        change.push(id.arguments()?[0].to_string()?);
-                                    }
+                            change.push(id.arguments()?[0].to_string()?);
+                        }
                         x => {
                             panic!("Unexpected predicted behavior: {}", x);
                         }
@@ -859,7 +851,7 @@ pub fn get_predictions_under_scenfit(
     Ok(extract_predictions(&model)?)
 }
 
-fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>,Error> {
+fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>, Error> {
     let mut symbols = vec![];
     loop {
         handle.resume()?;

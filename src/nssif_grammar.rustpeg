@@ -8,16 +8,20 @@ whitespace = #quiet<[ \t]+>
 
 pub statement -> Statement
  = whitespace* s:exprlist whitespace+ '->' whitespace+ t:ident {
- if s.len() == 1 { let expr = s.clone().pop().unwrap(); Statement{ start : Single(expr) ,target : t.to_string() } } 
- else { Statement{ start : List(s),target : t.to_string() } } 
+ if s.len() == 1 { 
+     let expr = s.clone().pop().unwrap();
+     Statement{ start : Single(expr) ,target : t.to_string() } 
+ } 
+ else {
+     Statement{ start : List(s),target : t.to_string() } } 
  }
 
 pub ident -> &'input str
- = $([a-z][a-zA-Z0-9_:\-\[\]/]*)
+ = $([a-zA-Z0-9_:\-\[\]/]*)
    
 pub expr -> Expression
- = '!' whitespace* s:ident { Expression{negated: true,ident :s.to_string()} }
- / s:ident { Expression{negated: false,ident :s.to_string()}}
+ = '!' whitespace* s:ident { Expression{negated: true,ident : s.to_string()} }
+ / s:ident { Expression{negated: false,ident: s.to_string()}}
  
 pub exprlist -> Vec<Expression>
  = l:expr whitespace* '&' whitespace* r:exprlist { let mut a = r.clone(); a.push(l); a}

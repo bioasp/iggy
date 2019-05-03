@@ -252,7 +252,6 @@ pred(E,X,change)   :- vlabel(E,X,-1), vlabel(E,X, 1), not vlabel(E,X, 0).
 
 #show pred/3.";
 
-
 pub const PRG_MICS: &'static str = "
 edge(X,Y) :- obs_elabel(X,Y,S).
 vertex(X) :- edge(X,Y).
@@ -291,11 +290,11 @@ reach(V,W) :- edge(U,V), not trivial(V), reach(U,W), vertex(W), not obs_vlabel(U
 
 singleton | nonsingleton.
 
-active(V) : trivial(V)  :-    singleton.
+active(V) :-    singleton, trivial(V).
 active(V) | inactive(V) :- nonsingleton, vertex(V), not trivial(V), not input(V).
 
-:- active(V;W), not trivial(V;W), not reach(V,W).
-:- active(V),   not trivial(V),   not obs_vlabel(V,S) : sign(S), not active(W) : edge(V,W).
+:- active(V), active(W), not trivial(V;W), not reach(V,W).
+:- active(V),   not trivial(V),   not obs_vlabel(V,S); sign(S), not active(W); edge(V,W).
 
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -350,13 +349,6 @@ elabel(U,V,-1) :- bot, edge(U,V),               not trivial(V), not input(V), no
 :- not bot.
 
 
-#hide.
-#show active/1.
-
-
-_heuristic(active(X),false,1) :- vertex(X).
-
-#show _heuristic/3.
+#heuristic active(X). [1,false]
 #show  active/1.
 ";
-

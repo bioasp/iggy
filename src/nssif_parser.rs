@@ -38,12 +38,12 @@ impl Graph {
         }
     }
     fn add(&mut self, stm: Statement) {
-        let targetnode = format!("or({})", stm.target);
-        self.or_nodes.insert(stm.target);
+        let targetnode = format!("or(\"{}\")", stm.target);
+        self.or_nodes.insert(targetnode.clone());
         match stm.start {
             SNode::Single(expr) => {
-                let startnode = format!("or({})", expr.ident);
-                self.or_nodes.insert(expr.ident); //startnode.clone());
+                let startnode = format!("or(\"{}\")", expr.ident);
+                self.or_nodes.insert(startnode.clone()); //startnode.clone());
                 if expr.negated {
                     self.n_edges.push((startnode, targetnode));
                 } else {
@@ -68,14 +68,14 @@ impl Graph {
                 self.p_edges.push((andnode.clone(), targetnode.clone()));
 
                 for node in pos {
-                    let startnode = format!("or({})", node);
-                    self.or_nodes.insert(node);
+                    let startnode = format!("or(\"{}\")", node);
+                    self.or_nodes.insert(startnode.clone());
                     self.p_edges.push((startnode.clone(), andnode.clone()));
                 }
                 for node in neg {
-                    let startnode = format!("or({})", node);
-                    self.or_nodes.insert(node);
-                    self.n_edges.push((startnode.clone(), andnode.clone()));
+                    let startnode = format!("or(\"{}\")", node);
+                    self.or_nodes.insert(startnode.clone());
+                    self.n_edges.push((startnode, andnode.clone()));
                 }
             }
         }
@@ -84,7 +84,7 @@ impl Graph {
     pub fn to_string(&self) -> String {
         let mut res = String::new();
         for node in &self.or_nodes {
-            res = res + "vertex(or(" + node + ")).\n"
+            res = res + "vertex(" + node + ").\n"
         }
         for node in &self.and_nodes {
             res = res + "vertex(" + node + ").\n"

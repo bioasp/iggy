@@ -22,4 +22,4 @@ pub statement -> PStatement
  / s:ident whitespace+ '=' whitespace+ 'MAX' { Max(s.to_string())}
 
 pub ident -> &'input str
- = $([a-z][a-zA-Z0-9_:\-\[\]/]*)
+ = $([a-zA-Z0-9_:\-\[\]/]*)

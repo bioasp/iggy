@@ -18,28 +18,28 @@ impl Profile {
     pub fn to_string(&self, name: &str) -> String {
         let mut res = String::new();
         for s in &self.plus {
-            res = res + "obs_vlabel(" + name + ",or(" + &s + "),1). ";
+            res = res + "obs_vlabel(" + name + ",or(\"" + &s + "\"),1). ";
         }
         for s in &self.input {
-            res = res + "input(" + name + ",or(" + &s + ")). ";
+            res = res + "input(" + name + ",or(\"" + &s + "\")). ";
         }
         for s in &self.minus {
-            res = res + "obs_vlabel(" + name + ",or(" + &s + "),-1). ";
+            res = res + "obs_vlabel(" + name + ",or(\"" + &s + "\"),-1). ";
         }
         for s in &self.zero {
-            res = res + "obs_vlabel(" + name + ",or(" + &s + "),0). ";
+            res = res + "obs_vlabel(" + name + ",or(\"" + &s + "\"),0). ";
         }
         for s in &self.notplus {
-            res = res + "obs_vlabel(" + name + ",or(" + &s + "),notPlus). ";
+            res = res + "obs_vlabel(" + name + ",or(\"" + &s + "\"),notPlus). ";
         }
         for s in &self.notminus {
-            res = res + "obs_vlabel(" + name + ",or(" + &s + "),notMinus). ";
+            res = res + "obs_vlabel(" + name + ",or(\"" + &s + "\"),notMinus). ";
         }
         for s in &self.min {
-            res = res + "ismin(" + name + ",or(" + &s + ")). ";
+            res = res + "ismin(" + name + ",or(\"" + &s + "\")). ";
         }
         for s in &self.max {
-            res = res + "ismax(" + name + ",or(" + &s + ")). ";
+            res = res + "ismax(" + name + ",or(\"" + &s + "\")). ";
         }
         res
     }
