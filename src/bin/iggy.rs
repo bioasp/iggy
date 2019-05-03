@@ -1,13 +1,18 @@
 use std::collections::HashSet;
+use std::fs::File;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 use iggy::nssif_parser;
+use iggy::nssif_parser::Graph;
+
 use iggy::profile_parser;
+use iggy::profile_parser::Profile;
 use iggy::query;
 use iggy::query::CheckResult::Inconsistent;
-use iggy::query::SETTING;
 use iggy::query::Predictions;
+use iggy::query::SETTING;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -64,52 +69,15 @@ struct Opt {
 }
 
 fn main() {
-    use std::fs::File;
     let opt = Opt::from_args();
+    let setting = get_setting(&opt);
 
-    println!("_____________________________________________________________________\n");
-    let setting = if opt.depmat {
-        println!(" + DepMat combines multiple states.");
-        println!(" + An elementary path from an input must exist to explain changes.");
-        SETTING {
-            os: false,
-            ep: true,
-            fp: true,
-            fc: true,
-        }
-    } else {
-        println!(" + All observed changes must be explained by an predecessor.");
-        SETTING {
-            os: true,
-            ep: if opt.elempath {
-                println!(" + An elementary path from an input must exist to explain changes.");
-                true
-            } else {
-                false
-            },
-            fp: if opt.fwd_propagation_off {
-                false
-            } else {
-                println!(" + 0-change must be explained.");
-                true
-            },
-            fc: if opt.founded_constraints_off {
-                false
-            } else {
-                println!(" + All observed changes must be explained by an input.");
-                true
-            },
-        }
-    };
-    println!("_____________________________________________________________________\n");
-
-    let filename = opt.networkfile;
-    println!("Reading network model from {:?}.", filename);
-    let f = File::open(filename).unwrap();
+    println!("Reading network model from {:?}.", opt.networkfile);
+    let f = File::open(opt.networkfile).unwrap();
     let graph = nssif_parser::read(&f);
 
     println!("\nNetwork statistics");
-    println!("              OR nodes (species): {}", graph.or_nodes.len());
+    println!("  OR nodes (species): {}", graph.or_nodes.len());
     println!(
         "  AND nodes (complex regulation): {}",
         graph.and_nodes.len()
@@ -118,9 +86,8 @@ fn main() {
     println!("  Inhibitions = {}", graph.n_edges.len());
     // println!("          Dual = {}", len(unspecified))
 
-    let filename = opt.observationfile;
-    println!("\nReading observations from {:?}.", filename);
-    let f = File::open(filename).unwrap();
+    println!("\nReading observations from {:?}.", opt.observationfile);
+    let f = File::open(opt.observationfile).unwrap();
     let profile = profile_parser::read(&f);
 
     if let Inconsistent(reason) = query::check_observations(&profile).unwrap() {
@@ -167,6 +134,7 @@ fn main() {
             "".to_string()
         }
     };
+
     if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
         let scenfit = query::get_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
@@ -181,44 +149,26 @@ fn main() {
             );
 
             if opt.mics {
-                print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-                let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
-                println!("done.");
-                let mut count = 1;
-                let mut oldmic = vec![];
-                for mic in mics {
-                    if oldmic != mic {
-                        print!("mic {}:",count);
-                        print!("{:?}",mic);
-//                        utils.print_mic(mic.to_list(),net.to_list(),mu.to_list())
-                        count += 1;
-                        oldmic = mic;
-                    }
-                }
+                compute_mics(&graph, &profile, &new_inputs, &setting);
             }
             if let Some(number) = opt.show_labelings {
-                    print!("\nCompute scenfit labelings ... ");
-                    let models = query::get_scenfit_labelings(
-                        &graph,
-                        &profile,
-                        &new_inputs,
-                        number,
-                        &setting,
-                    )
-                    .unwrap();
-                    println!("done.");
-                    let mut count = 1;
-                    for (labels, repairs) in models {
-                        println!("Labeling {}:", count);
-                        count += 1;
-                        print_labels(labels);
-                        println!();
-                        println!(" Repairs: ");
-                        for fix in repairs {
-                            println!("  {}", fix);
-                        }
-                        println!();
+                print!("\nCompute scenfit labelings ... ");
+                let models =
+                    query::get_scenfit_labelings(&graph, &profile, &new_inputs, number, &setting)
+                        .unwrap();
+                println!("done.");
+                let mut count = 1;
+                for (labels, repairs) in models {
+                    println!("Labeling {}:", count);
+                    count += 1;
+                    print_labels(labels);
+                    println!();
+                    println!(" Repairs: ");
+                    for fix in repairs {
+                        println!("  {}", fix);
                     }
+                    println!();
+                }
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
@@ -240,40 +190,27 @@ fn main() {
             println!("\nThe network and data are inconsistent: mcos = {}.", mcos);
 
             if opt.mics {
-                print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-                let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
-                println!("done.");
-                let mut count = 1;
-                let mut oldmic = vec![];
-                for mic in mics {
-                    if oldmic != mic {
-                        print!("mic {}", count);
-//                        utils.print_mic(mic.to_list(), net.to_list(), mu.to_list());
-                        print!("{:?}",mic);
-                        count += 1;
-                        oldmic = mic;
-                    }
-                }
+                compute_mics(&graph, &profile, &new_inputs, &setting);
             }
 
             if let Some(number) = opt.show_labelings {
-                    print!("\nCompute mcos labelings ... ");
-                    let models =
-                        query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting)
-                            .unwrap();
-                    println!("done.");
-                    let mut count = 1;
-                    for (labels, repairs) in models {
-                        println!("Labeling {}:", count);
-                        count += 1;
-                        print_labels(labels);
-                        println!();
-                        println!(" Repairs: ");
-                        for fix in repairs {
-                            println!("  {}", fix);
-                        }
-                        println!();
+                print!("\nCompute mcos labelings ... ");
+                let models =
+                    query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting)
+                        .unwrap();
+                println!("done.");
+                let mut count = 1;
+                for (labels, repairs) in models {
+                    println!("Labeling {}:", count);
+                    count += 1;
+                    print_labels(labels);
+                    println!();
+                    println!(" Repairs: ");
+                    for fix in repairs {
+                        println!("  {}", fix);
                     }
+                    println!();
+                }
             }
 
             if opt.show_predictions {
@@ -285,6 +222,68 @@ fn main() {
                 println!("\nPredictions:");
                 print_predictions(&predictions);
             }
+        }
+    }
+}
+
+fn get_setting(opt: &Opt) -> SETTING {
+    println!("_____________________________________________________________________\n");
+    let setting = if opt.depmat {
+        println!(" + DepMat combines multiple states.");
+        println!(" + An elementary path from an input must exist to explain changes.");
+        SETTING {
+            os: false,
+            ep: true,
+            fp: true,
+            fc: true,
+        }
+    } else {
+        println!(" + All observed changes must be explained by an predecessor.");
+        SETTING {
+            os: true,
+            ep: if opt.elempath {
+                println!(" + An elementary path from an input must exist to explain changes.");
+                true
+            } else {
+                false
+            },
+            fp: if opt.fwd_propagation_off {
+                false
+            } else {
+                println!(" + 0-change must be explained.");
+                true
+            },
+            fc: if opt.founded_constraints_off {
+                false
+            } else {
+                println!(" + All observed changes must be explained by an input.");
+                true
+            },
+        }
+    };
+    println!("_____________________________________________________________________\n");
+    setting
+}
+
+fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) {
+    print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
+    io::stdout().flush().ok().expect("Could not flush stdout");
+    let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting);
+    println!("done.");
+
+    let mut count = 1;
+    let mut oldmic = vec![];
+    for mic in mics {
+        if oldmic != mic {
+            print!("mic {}", count);
+            for e in mic.clone() {
+                for f in e {
+                    print!("{}", f.to_string().unwrap());
+                }
+            }
+            println!();
+            count += 1;
+            oldmic = mic;
         }
     }
 }
@@ -306,8 +305,8 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
         println!(" {} = {}", node.to_string().unwrap(), sign);
     }
 }
-fn print_predictions(predictions: &Predictions) {
 
+fn print_predictions(predictions: &Predictions) {
     // if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
     for node in &predictions.increase {
         println!(" {} = +", node);

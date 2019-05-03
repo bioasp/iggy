@@ -12,14 +12,14 @@ use super::PStatement::Max;
 whitespace = #quiet<[ \t]+>
 
 pub statement -> PStatement
- = s:ident whitespace+ '=' whitespace+ 'input' { Input(s.to_string()) }
- / s:ident whitespace+ '=' whitespace+ '+' { Plus(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ '-' { Minus(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ '0' { Zero(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ 'notPlus' { NotPlus(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ 'notMinus' { NotMinus(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ 'MIN' { Min(s.to_string())}
- / s:ident whitespace+ '=' whitespace+ 'MAX' { Max(s.to_string())}
+ = s:ident whitespace+ '=' whitespace+ 'input' { Input(format!("\"{}\"",s.to_string())) }
+ / s:ident whitespace+ '=' whitespace+ '+' { Plus(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ '-' { Minus(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ '0' { Zero(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ 'notPlus' { NotPlus(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ 'notMinus' { NotMinus(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ 'MIN' { Min(format!("\"{}\"",s.to_string()))}
+ / s:ident whitespace+ '=' whitespace+ 'MAX' { Max(format!("\"{}\"",s.to_string()))}
 
 pub ident -> &'input str
- = $([a-z][a-zA-Z0-9_:\-\[\]/]*)
+ = $([a-zA-Z0-9_:\-\[\]/]*)
