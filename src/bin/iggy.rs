@@ -307,6 +307,68 @@ fn compute_mcos_labelings(
     }
 }
 
+fn get_setting(opt: &Opt) -> SETTING {
+    println!("_____________________________________________________________________\n");
+    let setting = if opt.depmat {
+        println!(" + DepMat combines multiple states.");
+        println!(" + An elementary path from an input must exist to explain changes.");
+        SETTING {
+            os: false,
+            ep: true,
+            fp: true,
+            fc: true,
+        }
+    } else {
+        println!(" + All observed changes must be explained by an predecessor.");
+        SETTING {
+            os: true,
+            ep: if opt.elempath {
+                println!(" + An elementary path from an input must exist to explain changes.");
+                true
+            } else {
+                false
+            },
+            fp: if opt.fwd_propagation_off {
+                false
+            } else {
+                println!(" + 0-change must be explained.");
+                true
+            },
+            fc: if opt.founded_constraints_off {
+                false
+            } else {
+                println!(" + All observed changes must be explained by an input.");
+                true
+            },
+        }
+    };
+    println!("_____________________________________________________________________\n");
+    setting
+}
+
+fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) {
+    print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
+    io::stdout().flush().ok().expect("Could not flush stdout");
+    let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting);
+    println!("done.");
+
+    let mut count = 1;
+    let mut oldmic = vec![];
+    for mic in mics {
+        if oldmic != mic {
+            print!("mic {}", count);
+            for e in mic.clone() {
+                for f in e {
+                    print!("{}", f.to_string().unwrap());
+                }
+            }
+            println!();
+            count += 1;
+            oldmic = mic;
+        }
+    }
+}
+
 fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
     for (node, sign) in labels {
         let sign = match sign.to_string().unwrap().as_ref() {
