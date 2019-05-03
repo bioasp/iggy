@@ -240,6 +240,61 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
+/// return the minimal inconsistent cores
+pub fn get_minimal_inconsistent_cores(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+// FESPC
+) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
+
+    // create a control object and pass command line arguments
+    let options = vec![
+        "0".to_string(),
+        "--dom-mod=6".to_string(),
+        "--heu=Domain".to_string(),
+        "--enum-mode=record".to_string(),
+    ];
+
+    let mut ctl = Control::new(options)?;
+
+    ctl.add("base", &[], &graph.to_string())?;
+    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    ctl.add("base", &[], &inputs)?;
+    ctl.add("base", &[], PRG_MICS)?;
+
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    ctl.ground_with_event_handler(&parts, &mut efh)?;
+
+    // solve
+    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
+
+    let mut v = Vec::new();
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                v.push(extract_mics(model)?);
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
+}
+
 /// returns the scenfit of data and model
 pub fn get_scenfit(
     graph: &Graph,
@@ -386,6 +441,36 @@ pub fn get_scenfit_labelings(
             Err(e) => Err(e)?,
         }
     }
+}
+
+/// Given a model this function returns a vector of mics
+fn extract_mics(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+    let st = ShowType::SHOWN;
+    let symbols = model.symbols(st)?;
+    let mut vlabels = vec![];
+    let mut err = vec![];
+    for symbol in symbols {
+        match symbol.name()? {
+            "vlabel" => {
+                let id = symbol.arguments()?[1];
+                // only return or nodes
+                if id.name()? == "or" {
+                    let sign = symbol.arguments()?[2];
+                    vlabels.push((id.arguments()?[0], sign));
+                }
+            }
+            "err" => {
+                err.push(symbol.to_string()?);
+            }
+            "rep" => {
+                err.push(symbol.to_string()?);
+            }
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
+            }
+        }
+    }
+    Ok((vlabels, err))
 }
 
 /// Given a model this function returns a vector of pairs (node,label)

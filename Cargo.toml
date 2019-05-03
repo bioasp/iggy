@@ -6,7 +6,7 @@ description = "Influence graph analysis, consistency check, diagnosis, repair an
 readme = "README.md"
 documentation = "bioasp.github.io/iggy"
 repository = "https://github.com/bioasp/iggy"
-build = "build.rs"
+# build = "build.rs"
 publish = false
 edition = "2018"
 

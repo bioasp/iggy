@@ -182,21 +182,21 @@ fn main() {
 
             if opt.mics {
                 print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-                //                 mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
+                let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
                 println!("done.");
-                let count = 1;
-                //                 let oldmic = 0;
-                //                 for mic in mics {
-                //                     if oldmic != mic {
-                //                         print!("mic {}:",count);
-                //                         utils.print_mic(mic.to_list(),net.to_list(),mu.to_list())
-                //                         count += 1
-                //                         oldmic = mic
-                //                     }
-                //                 }
+                let mut count = 1;
+                let mut oldmic = vec![];
+                for mic in mics {
+                    if oldmic != mic {
+                        print!("mic {}:",count);
+                        print!("{:?}",mic);
+//                        utils.print_mic(mic.to_list(),net.to_list(),mu.to_list())
+                        count += 1;
+                        oldmic = mic;
+                    }
+                }
             }
             if let Some(number) = opt.show_labelings {
-                if number >= 0 {
                     print!("\nCompute scenfit labelings ... ");
                     let models = query::get_scenfit_labelings(
                         &graph,
@@ -219,7 +219,6 @@ fn main() {
                         }
                         println!();
                     }
-                }
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
@@ -233,7 +232,6 @@ fn main() {
         }
     } else {
         print!("\nComputing mcos of network and data ... ");
-        //         let mcos = 0;
         let mcos = query::get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
         if mcos == 0 {
@@ -243,23 +241,22 @@ fn main() {
 
             if opt.mics {
                 print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-                //                 let mics =
-                //                     query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
-                //                 println!("done.");
-                //                 let count = 1;
-                //                 let oldmic = 0;
-                //                 for mic in mics {
-                //                     if oldmic != mic {
-                //                         print!("mic {}", count);
-                //                         utils.print_mic(mic.to_list(), net.to_list(), mu.to_list());
-                //                         count += 1;
-                //                         oldmic = mic;
-                //                     }
-                //                 }
+                let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting);
+                println!("done.");
+                let mut count = 1;
+                let mut oldmic = vec![];
+                for mic in mics {
+                    if oldmic != mic {
+                        print!("mic {}", count);
+//                        utils.print_mic(mic.to_list(), net.to_list(), mu.to_list());
+                        print!("{:?}",mic);
+                        count += 1;
+                        oldmic = mic;
+                    }
+                }
             }
 
             if let Some(number) = opt.show_labelings {
-                if number >= 0 {
                     print!("\nCompute mcos labelings ... ");
                     let models =
                         query::get_mcos_labelings(&graph, &profile, &new_inputs, number, &setting)
@@ -277,7 +274,6 @@ fn main() {
                         }
                         println!();
                     }
-                }
             }
 
             if opt.show_predictions {
