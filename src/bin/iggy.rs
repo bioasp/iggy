@@ -112,7 +112,6 @@ fn main() {
                 "\nThe network and data are inconsistent: scenfit = {}.",
                 scenfit
             );
-
             if opt.mics {
                 compute_mics(&graph, &profile, &new_inputs, &setting);
             }
@@ -144,7 +143,6 @@ fn main() {
             if let Some(number) = opt.show_labelings {
                 compute_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
             }
-
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
                 let predictions =
@@ -241,18 +239,16 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
 fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
     io::stdout().flush().ok().expect("Could not flush stdout");
-    let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting);
+    let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
     println!("done.");
 
     let mut count = 1;
     let mut oldmic = vec![];
     for mic in mics {
         if oldmic != mic {
-            print!("mic {}", count);
+            println!("mic {}:", count);
             for e in mic.clone() {
-                for f in e {
-                    print!("{}", f.to_string().unwrap());
-                }
+                print!("{} ", e.to_string().unwrap());
             }
             println!();
             count += 1;
@@ -260,6 +256,7 @@ fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
         }
     }
 }
+
 fn compute_scenfit_labelings(
     graph: &Graph,
     profile: &Profile,
@@ -283,6 +280,7 @@ fn compute_scenfit_labelings(
         println!();
     }
 }
+
 fn compute_mcos_labelings(
     graph: &Graph,
     profile: &Profile,

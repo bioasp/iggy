@@ -246,18 +246,15 @@ pub fn get_minimal_inconsistent_cores(
     profile: &Profile,
     inputs: &str,
     setting: &SETTING,
-    // FESPC
 ) -> Result<Vec<Vec<Symbol>>, Error> {
     // create a control object and pass command line arguments
-    let options = vec![
+    let mut ctl = Control::new(vec![
         "0".to_string(),
         //        "--dom-mod=6".to_string(),
         "--dom-mod=5,16".to_string(),
         "--heu=Domain".to_string(),
         "--enum-mode=domRec".to_string(),
-    ];
-
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
@@ -303,13 +300,11 @@ pub fn get_scenfit(
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
-    let options = vec![
+    let mut ctl = Control::new(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
-    ];
-
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
@@ -379,14 +374,12 @@ pub fn get_scenfit_labelings(
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
     // create a control object and pass command line arguments
-    let options = vec![
+    let mut ctl = Control::new(vec![
         format!("{}", number),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
-    ];
-
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
@@ -454,7 +447,6 @@ fn extract_mics(model: &Model) -> Result<Vec<Symbol>, Error> {
                 let id = symbol.arguments()?[0];
                 // only return or nodes
                 if id.name()? == "or" {
-                    //                    let sign = symbol.arguments()?[0];
                     mics.push(id);
                 }
             }
@@ -505,13 +497,11 @@ pub fn get_mcos(
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
-    let options = vec![
+    let mut ctl = Control::new(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
-    ];
-
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
@@ -575,14 +565,12 @@ pub fn get_mcos_labelings(
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
     // create a control object and pass command line arguments
-    let options = vec![
+    let mut ctl = Control::new(vec![
         format!("{}", number),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
-    ];
-
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
