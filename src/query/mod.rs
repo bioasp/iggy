@@ -53,26 +53,16 @@ pub fn check_observations(profile: &Profile) -> Result<CheckResult, Error> {
 
             for atom in atoms {
                 let node = atom
-                    .arguments()
-                    .unwrap()
+                    .arguments()?
                     .iter()
                     .nth(1)
                     .unwrap()
-                    .arguments()
-                    .unwrap()
+                    .arguments()?
                     .iter()
                     .nth(0)
                     .unwrap()
-                    .to_string()
-                    .unwrap();
-                let x: String = atom
-                    .arguments()
-                    .unwrap()
-                    .iter()
-                    .nth(2)
-                    .unwrap()
-                    .to_string()
-                    .unwrap();
+                    .to_string()?;
+                let x: String = atom.arguments()?.iter().nth(2).unwrap().to_string()?;
                 match x.as_ref() {
                     "r1" => {
                         r += &format!(
@@ -166,7 +156,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Vec<String>, Error> {
     Ok(res)
 }
 
-fn blub(sym: &Symbol) -> Result<String, Error> {
+fn strconc(sym: &Symbol) -> Result<String, Error> {
     match sym.symbol_type() {
         Ok(SymbolType::Function) => {
             let a = sym.arguments()?[0];
@@ -190,12 +180,12 @@ impl ExternalFunctionHandler for MyEFH {
         arguments: &[Symbol],
     ) -> Result<Vec<Symbol>, Error> {
         if name == "str" && arguments.len() == 1 {
-            match blub(&arguments[0]) {
+            match strconc(&arguments[0]) {
                 Ok(string) => Ok(vec![Symbol::create_string(&format!("{}", string)).unwrap()]),
                 Err(e) => Err(e)?,
             }
         } else if name == "strconc" && arguments.len() == 2 {
-            match blub(&arguments[1]) {
+            match strconc(&arguments[1]) {
                 Ok(string) => {
                     let arg1 = arguments[0];
                     match arg1.symbol_type() {
@@ -214,16 +204,14 @@ impl ExternalFunctionHandler for MyEFH {
             match arg.symbol_type() {
                 Ok(SymbolType::String) => {
                     let list = arg.string().unwrap();
-                    match blub(&arguments[0]) {
+                    match strconc(&arguments[0]) {
                         Ok(string) => {
                             let v: Vec<&str> = list.split(":").collect();
                             for e in v {
                                 if e == string {
-                                    // println!("{} in {}", string, list );
                                     return Ok(vec![Symbol::create_number(1)]);
                                 }
                             }
-                            // println!("{} not in {}",string, list);
                             Ok(vec![Symbol::create_number(0)])
                         }
                         Err(e) => Err(e),
@@ -240,6 +228,90 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
+fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    ctl.ground_with_event_handler(&parts, &mut efh)?;
+
+    // solve
+    Ok(ctl.solve(SolveMode::YIELD, &[])?)
+}
+
+fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>, Error> {
+    let mut symbols = vec![];
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven()? {
+                    symbols = model.symbols(ShowType::SHOWN)?;
+                }
+            }
+            Ok(None) => break,
+            Err(e) => Err(e)?,
+        }
+    }
+    Ok(symbols)
+}
+fn all_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
+    let mut v = Vec::new();
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                let symbols = model.symbols(ShowType::SHOWN)?;
+                v.push(symbols);
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
+}
+fn all_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
+    let mut v = Vec::new();
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven()? {
+                    let symbols = model.symbols(ShowType::SHOWN)?;
+                    v.push(symbols);
+                }
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
+}
+
+fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                if model.optimality_proven()? {
+                    return Ok(model.cost()?);
+                }
+            }
+            Ok(None) => {
+                panic!("Error: no model found!");
+            }
+            Err(e) => {
+                Err(e)?;
+            }
+        }
+    }
+}
+
 /// return the minimal inconsistent cores
 pub fn get_minimal_inconsistent_cores(
     graph: &Graph,
@@ -250,7 +322,6 @@ pub fn get_minimal_inconsistent_cores(
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         "0".to_string(),
-        //        "--dom-mod=6".to_string(),
         "--dom-mod=5,16".to_string(),
         "--heu=Domain".to_string(),
         "--enum-mode=domRec".to_string(),
@@ -265,31 +336,11 @@ pub fn get_minimal_inconsistent_cores(
         ctl.add("base", &[], PRG_FWD_PROP)?;
     }
 
-    // declare extern function handler
-    let mut efh = MyEFH;
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
 
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                v.push(extract_mics(model)?);
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
+    let models = all_models(&mut handle)?;
+    models.iter().map(|model| extract_mics(model)).collect()
 }
 
 /// returns the scenfit of data and model
@@ -329,36 +380,9 @@ pub fn get_scenfit(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
-    // declare extern function handler
-    let mut efh = MyEFH;
-
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    return Ok(model.cost()?[0]);
-                }
-            }
-            Ok(None) => {
-                panic!("Error: no model found!");
-            }
-            Err(e) => return Err(e)?,
-        }
-    }
-
-    // close the solve handle
-    //     handle.close().expect("Failed to close solve handle.");
-    //     0
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    Ok(get_optimum(&mut handle)?[0])
 }
 
 /// returns a vector of scenfit labelings of data and model
@@ -407,86 +431,13 @@ pub fn get_scenfit_labelings(
     ctl.add("base", &[], PRG_SHOW_ERRORS)?;
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
-    // declare extern function handler
-    let mut efh = MyEFH;
-
-    // ground the base part
-    let part = Part::new("base", &[]).unwrap();
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    v.push(extract_labels_repairs(model)?);
-                }
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
-}
-
-/// Given a model this function returns a vector of mics
-fn extract_mics(model: &Model) -> Result<Vec<Symbol>, Error> {
-    let st = ShowType::SHOWN;
-    let symbols = model.symbols(st)?;
-    let mut mics = vec![];
-    for symbol in symbols {
-        match symbol.name()? {
-            "active" => {
-                let id = symbol.arguments()?[0];
-                // only return or nodes
-                if id.name()? == "or" {
-                    mics.push(id);
-                }
-            }
-            _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
-            }
-        }
-    }
-    Ok(mics)
-}
-
-/// Given a model this function returns a vector of pairs (node,label)
-/// and a vector of repair operations needed to make the labeling consistent
-fn extract_labels_repairs(model: &Model) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
-    let st = ShowType::SHOWN;
-    let symbols = model.symbols(st)?;
-    let mut vlabels = vec![];
-    let mut err = vec![];
-    for symbol in symbols {
-        match symbol.name()? {
-            "vlabel" => {
-                let id = symbol.arguments()?[1];
-                // only return or nodes
-                if id.name()? == "or" {
-                    let sign = symbol.arguments()?[2];
-                    vlabels.push((id.arguments()?[0], sign));
-                }
-            }
-            "err" => {
-                err.push(symbol.to_string()?);
-            }
-            "rep" => {
-                err.push(symbol.to_string()?);
-            }
-            _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
-            }
-        }
-    }
-    Ok((vlabels, err))
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let models = all_optimal_models(&mut handle)?;
+    models
+        .iter()
+        .map(|model| extract_labels_repairs(model))
+        .collect()
 }
 
 /// returns the mcos of data and model
@@ -526,34 +477,9 @@ pub fn get_mcos(
     ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
     ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
 
-    // declare extern function handler
-    let mut efh = MyEFH;
-
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    return Ok(model.cost()?[0]);
-                }
-            }
-            Ok(None) => {
-                panic!("Error: no model found!");
-            }
-            Err(e) => {
-                Err(e)?;
-            }
-        }
-    }
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    Ok(get_optimum(&mut handle)?[0])
 }
 
 /// returns the mcos of data and model
@@ -598,33 +524,167 @@ pub fn get_mcos_labelings(
     ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
-    // declare extern function handler
-    let mut efh = MyEFH;
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let models = all_optimal_models(&mut handle)?;
+    models
+        .iter()
+        .map(|model| extract_labels_repairs(model))
+        .collect()
+}
+pub fn get_predictions_under_mcos(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+) -> Result<Predictions, Error> {
+    // create a control object and pass command line arguments
+    // let options = vec!["--opt-strategy=5".to_string()];
+    let options = vec![
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--enum-mode=cautious".to_string(),
+        // format!("--opt-bound={}",opt)
+    ];
+    let mut ctl = Control::new(options)?;
 
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
+    ctl.add("base", &[], &graph.to_string())?;
+    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    ctl.add("base", &[], &inputs)?;
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
 
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
 
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    v.push(extract_labels_repairs(model)?);
+    ctl.add("base", &[], PRG_ADD_INFLUENCES)?;
+    ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
+    ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+    } else {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+    }
+
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let model = cautious_consequences_optimal_models(&mut handle)?;
+    Ok(extract_predictions(&model)?)
+}
+
+pub fn get_predictions_under_scenfit(
+    graph: &Graph,
+    profile: &Profile,
+    inputs: &str,
+    setting: &SETTING,
+) -> Result<Predictions, Error> {
+    // create a control object and pass command line arguments
+    // let options = vec!["--opt-strategy=5".to_string()];
+    let options = vec![
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--enum-mode=cautious".to_string(),
+        // format!("--opt-bound={}",opt)
+    ];
+    let mut ctl = Control::new(options)?;
+
+    ctl.add("base", &[], &graph.to_string())?;
+    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    ctl.add("base", &[], &inputs)?;
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+    } else {
+        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+    }
+
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let model = cautious_consequences_optimal_models(&mut handle)?;
+    Ok(extract_predictions(&model)?)
+}
+
+/// Given a model this function returns a vector of mics
+fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
+    let mut mics = vec![];
+    for symbol in symbols {
+        match symbol.name()? {
+            "active" => {
+                let id = symbol.arguments()?[0];
+                // only return or nodes
+                if id.name()? == "or" {
+                    mics.push(id);
                 }
             }
-            Ok(None) => {
-                return Ok(v);
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
             }
-            Err(e) => Err(e)?,
         }
     }
+    Ok(mics)
 }
+
+/// Given a model this function returns a vector of pairs (node,label)
+/// and a vector of repair operations needed to make the labeling consistent
+fn extract_labels_repairs(
+    symbols: &[Symbol],
+) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+    let mut vlabels = vec![];
+    let mut err = vec![];
+    for symbol in symbols {
+        match symbol.name()? {
+            "vlabel" => {
+                let id = symbol.arguments()?[1];
+                // only return or nodes
+                if id.name()? == "or" {
+                    let sign = symbol.arguments()?[2];
+                    vlabels.push((id.arguments()?[0], sign));
+                }
+            }
+            "err" => {
+                err.push(symbol.to_string()?);
+            }
+            "rep" => {
+                err.push(symbol.to_string()?);
+            }
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
+            }
+        }
+    }
+    Ok((vlabels, err))
+}
+
 pub struct Predictions {
     pub increase: Vec<String>,
     pub decrease: Vec<String>,
@@ -709,149 +769,4 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
         no_decrease: no_decrease,
         change: change,
     })
-}
-
-pub fn get_predictions_under_mcos(
-    graph: &Graph,
-    profile: &Profile,
-    inputs: &str,
-    setting: &SETTING,
-) -> Result<Predictions, Error> {
-    // create a control object and pass command line arguments
-    // let options = vec!["--opt-strategy=5".to_string()];
-    let options = vec![
-        "--opt-strategy=5".to_string(),
-        "--opt-mode=optN".to_string(),
-        "--enum-mode=cautious".to_string(),
-        // format!("--opt-bound={}",opt)
-    ];
-    let mut ctl = Control::new(options)?;
-
-    ctl.add("base", &[], &graph.to_string())?;
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs)?;
-    ctl.add("base", &[], PRG_SIGN_CONS)?;
-    ctl.add("base", &[], PRG_BWD_PROP)?;
-
-    if setting.os {
-        ctl.add("base", &[], PRG_ONE_STATE)?;
-    }
-    if setting.fp {
-        ctl.add("base", &[], PRG_FWD_PROP)?;
-    }
-    if setting.fc {
-        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-    }
-    if setting.ep {
-        ctl.add("base", &[], PRG_ELEM_PATH)?;
-    }
-
-    ctl.add("base", &[], PRG_ADD_INFLUENCES)?;
-    ctl.add("base", &[], PRG_MIN_ADDED_INFLUENCES)?;
-    ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
-
-    // solution = ctl.solve(prg,collapseTerms=True,collapseAtoms=False)
-    // opt      = solution[0].score[0]
-
-    if setting.os {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
-    } else {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
-    }
-
-    // declare extern function handler
-    let mut efh = MyEFH;
-
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    let model = cautious_consequences_optimal_models(&mut handle)?;
-    Ok(extract_predictions(&model)?)
-}
-
-pub fn get_predictions_under_scenfit(
-    graph: &Graph,
-    profile: &Profile,
-    inputs: &str,
-    setting: &SETTING,
-) -> Result<Predictions, Error> {
-    // create a control object and pass command line arguments
-    // let options = vec!["--opt-strategy=5".to_string()];
-    let options = vec![
-        "--opt-strategy=5".to_string(),
-        "--opt-mode=optN".to_string(),
-        "--enum-mode=cautious".to_string(),
-        // format!("--opt-bound={}",opt)
-    ];
-    let mut ctl = Control::new(options)?;
-
-    ctl.add("base", &[], &graph.to_string())?;
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs)?;
-    ctl.add("base", &[], PRG_SIGN_CONS)?;
-    ctl.add("base", &[], PRG_BWD_PROP)?;
-
-    if setting.os {
-        ctl.add("base", &[], PRG_ONE_STATE)?;
-    }
-    if setting.fp {
-        ctl.add("base", &[], PRG_FWD_PROP)?;
-    }
-    if setting.fc {
-        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-    }
-    if setting.ep {
-        ctl.add("base", &[], PRG_ELEM_PATH)?;
-    }
-
-    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
-    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
-
-    // solution = ctl.solve(prg,collapseTerms=True,collapseAtoms=False)
-    // opt      = solution[0].score[0]
-
-    if setting.os {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
-    } else {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
-    }
-
-    // declare extern function handler
-    let mut efh = MyEFH;
-
-    // ground the base part
-    let part = Part::new("base", &[])?;
-    let parts = vec![part];
-
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
-
-    // solve
-    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
-
-    let model = cautious_consequences_optimal_models(&mut handle)?;
-    Ok(extract_predictions(&model)?)
-}
-
-fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>, Error> {
-    let mut symbols = vec![];
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    symbols = model.symbols(ShowType::SHOWN)?;
-                }
-            }
-            Ok(None) => break,
-            Err(e) => Err(e)?,
-        }
-    }
-    Ok(symbols)
 }
