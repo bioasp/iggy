@@ -9,10 +9,8 @@ use iggy::nssif_parser::Graph;
 
 use iggy::profile_parser;
 use iggy::profile_parser::Profile;
-use iggy::query;
-use iggy::query::CheckResult::Inconsistent;
-use iggy::query::Predictions;
-use iggy::query::SETTING;
+use iggy::*;
+use iggy::CheckResult::Inconsistent;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -82,27 +80,29 @@ fn main() {
     let profile = profile_parser::read(&f);
     observation_statistics(&profile, &graph);
 
-    if let Inconsistent(reason) = query::check_observations(&profile).unwrap() {
+    if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
         println!("The following observations are contradictory. Please correct them!");
-        print!("{}", reason);
+        for r in reasons {
+            println!("{}", r);
+        }
         return;
     }
 
     let new_inputs = {
         if opt.autoinputs {
             print!("\nComputing input nodes ...");
-            let new_inputs = query::guess_inputs(&graph).unwrap();
+            let new_inputs = guess_inputs(&graph).unwrap();
             println!(" done.");
             println!("  new inputs : {}", new_inputs.len());
-            new_inputs.join(" ")
+            new_inputs
         } else {
-            "".to_string()
+            Inputs::empty()
         }
     };
 
     if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
-        let scenfit = query::get_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
+        let scenfit = get_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
 
         if scenfit == 0 {
@@ -121,7 +121,7 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
                 let predictions =
-                    query::get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)
+                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)
                         .unwrap();
                 println!("done.");
                 println!("\n# Predictions:");
@@ -130,7 +130,7 @@ fn main() {
         }
     } else {
         print!("\nComputing mcos of network and data ... ");
-        let mcos = query::get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
+        let mcos = get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
         if mcos == 0 {
             println!("\nThe network and data are consistent: mcos = 0.");
@@ -146,7 +146,7 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
                 let predictions =
-                    query::get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)
+                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)
                         .unwrap();
                 println!("done.");
                 println!("\n# Predictions:");
@@ -236,10 +236,10 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("  observed not in model : {}", not_in_model.count());
 }
 
-fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTING) {
+fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Inputs, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
     io::stdout().flush().ok().expect("Could not flush stdout");
-    let mics = query::get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
+    let mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
     println!("done.");
 
     let mut count = 1;
@@ -260,12 +260,12 @@ fn compute_mics(graph: &Graph, profile: &Profile, inputs: &str, setting: &SETTIN
 fn compute_scenfit_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &str,
+    inputs: &Inputs,
     number: u32,
     setting: &SETTING,
 ) {
     print!("\nCompute scenfit labelings ... ");
-    let models = query::get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let models = get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
     println!("done.");
     let mut count = 1;
     for (labels, repairs) in models {
@@ -284,12 +284,12 @@ fn compute_scenfit_labelings(
 fn compute_mcos_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &str,
+    inputs: &Inputs,
     number: u32,
     setting: &SETTING,
 ) {
     print!("\nCompute mcos labelings ... ");
-    let models = query::get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
     println!("done.");
     let mut count = 1;
     for (labels, repairs) in models {

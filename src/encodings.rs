@@ -1,15 +1,22 @@
 pub const PRG_CONTRADICTORY_OBS: &'static str = "
 % two contradictory observations
-contradiction(E,X,r1) :- obs_vlabel(E,X,1), obs_vlabel(E,X,0).
-contradiction(E,X,r2) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,0).
-contradiction(E,X,r3) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,1).
-contradiction(E,X,r4) :- obs_vlabel(E,X,notMinus), obs_vlabel(E,X,-1).
-contradiction(E,X,r5) :- obs_vlabel(E,X,notPlus), obs_vlabel(E,X,1).
+contradiction1(E,X) :- obs_vlabel(E,X,1), obs_vlabel(E,X,0).
+contradiction2(E,X) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,0).
+contradiction3(E,X) :- obs_vlabel(E,X,-1), obs_vlabel(E,X,1).
+contradiction4(E,X) :- obs_vlabel(E,X,notMinus), obs_vlabel(E,X,-1).
+contradiction5(E,X) :- obs_vlabel(E,X,notPlus), obs_vlabel(E,X,1).
 
 % contradictions of observed behavior and initial level
-contradiction(E,X,r6) :- obs_vlabel(E,X,-1), ismin(E,X).
-contradiction(E,X,r7) :- obs_vlabel(E,X,1), ismax(E,X).
-#show contradiction/3.
+contradiction6(E,X) :- obs_vlabel(E,X,-1), ismin(E,X).
+contradiction7(E,X) :- obs_vlabel(E,X,1), ismax(E,X).
+
+#show contradiction1/2.
+#show contradiction2/2.
+#show contradiction3/2.
+#show contradiction4/2.
+#show contradiction5/2.
+#show contradiction6/2.
+#show contradiction7/2.
 ";
 
 pub const PRG_GUESS_INPUTS: &'static str = "
