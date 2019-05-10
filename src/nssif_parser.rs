@@ -1,13 +1,14 @@
+use failure::*;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
 
-pub fn read(file: &File) -> Graph {
+pub fn read(file: &File) -> Result<Graph, Error> {
     let file = BufReader::new(file);
     let mut graph = Graph::empty();
     for line in file.lines() {
-        let l1 = line.unwrap();
+        let l1 = line?;
         let l = l1.trim();
         if l.len() != 0 {
             match nssif::statement(&l) {
@@ -18,7 +19,7 @@ pub fn read(file: &File) -> Graph {
             }
         }
     }
-    graph
+    Ok(graph)
 }
 
 #[derive(Debug, Clone)]

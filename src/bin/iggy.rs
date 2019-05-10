@@ -9,8 +9,8 @@ use iggy::nssif_parser::Graph;
 
 use iggy::profile_parser;
 use iggy::profile_parser::Profile;
-use iggy::*;
 use iggy::CheckResult::Inconsistent;
+use iggy::*;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -72,12 +72,12 @@ fn main() {
 
     println!("Reading network model from {:?}.", opt.networkfile);
     let f = File::open(opt.networkfile).unwrap();
-    let graph = nssif_parser::read(&f);
+    let graph = nssif_parser::read(&f).unwrap();
     network_statistics(&graph);
 
     println!("\nReading observations from {:?}.", opt.observationfile);
     let f = File::open(opt.observationfile).unwrap();
-    let profile = profile_parser::read(&f);
+    let profile = profile_parser::read(&f).unwrap();
     observation_statistics(&profile, &graph);
 
     if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
@@ -121,8 +121,7 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
                 let predictions =
-                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)
-                        .unwrap();
+                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
                 println!("done.");
                 println!("\n# Predictions:");
                 print_predictions(&predictions);
@@ -146,8 +145,7 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
                 let predictions =
-                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)
-                        .unwrap();
+                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
                 println!("done.");
                 println!("\n# Predictions:");
                 print_predictions(&predictions);

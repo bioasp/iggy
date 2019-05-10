@@ -220,7 +220,11 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                inputs.push(Input{ node:Node{ name: atom.to_string()?}});
+                inputs.push(Input {
+                    node: Node {
+                        name: atom.to_string()?,
+                    },
+                });
             }
         }
     }
@@ -228,7 +232,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
     // close the solve handle
     handle.close()?;
 
-    Ok(Inputs{inputs:inputs})
+    Ok(Inputs { inputs: inputs })
 }
 
 fn strconc(sym: &Symbol) -> Result<String, Error> {

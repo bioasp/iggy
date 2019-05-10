@@ -1,3 +1,4 @@
+use failure::*;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufRead;
@@ -45,7 +46,7 @@ impl Profile {
     }
 }
 
-pub fn read(file: &File) -> Profile {
+pub fn read(file: &File) -> Result<Profile, Error> {
     let file = BufReader::new(file);
     let mut input = HashSet::new();
     let mut plus = HashSet::new();
@@ -57,7 +58,7 @@ pub fn read(file: &File) -> Profile {
     let mut max = HashSet::new();
 
     for line in file.lines() {
-        let l1 = line.unwrap();
+        let l1 = line?;
         let l = l1.trim();
         if l.len() != 0 {
             match profile::statement(&l) {
@@ -89,7 +90,7 @@ pub fn read(file: &File) -> Profile {
             }
         }
     }
-    Profile {
+    Ok(Profile {
         input: input,
         plus: plus,
         minus: minus,
@@ -98,7 +99,7 @@ pub fn read(file: &File) -> Profile {
         notminus: notminus,
         min: min,
         max: max,
-    }
+    })
 }
 
 #[derive(Debug, Clone)]
