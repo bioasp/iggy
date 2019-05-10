@@ -42,7 +42,7 @@ pub struct Inputs {
 impl fmt::Display for Inputs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for input in &self.inputs {
-            f.write_str(&format!("{}",input))?;
+            f.write_str(&format!("{}", input))?;
         }
         Ok(())
     }
@@ -52,7 +52,7 @@ impl Inputs {
         self.inputs.len()
     }
     pub fn empty() -> Inputs {
-        Inputs{inputs:vec![]}
+        Inputs { inputs: vec![] }
     }
 }
 impl fmt::Display for Input {
@@ -195,7 +195,11 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                inputs.push(Input{ node:Node{ name: atom.to_string()?}});
+                inputs.push(Input {
+                    node: Node {
+                        name: atom.to_string()?,
+                    },
+                });
             }
         }
     }
@@ -203,7 +207,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
     // close the solve handle
     handle.close()?;
 
-    Ok(Inputs{inputs:inputs})
+    Ok(Inputs { inputs: inputs })
 }
 
 fn strconc(sym: &Symbol) -> Result<String, Error> {
