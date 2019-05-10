@@ -36,13 +36,18 @@ pub enum Sign {
 pub struct Input {
     node: Node,
 }
+impl fmt::Display for Input {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "input({}).", self.node)
+    }
+}
 pub struct Inputs {
     inputs: Vec<Input>,
 }
 impl fmt::Display for Inputs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for input in &self.inputs {
-            f.write_str(&format!("{}",input))?;
+            f.write_str(&format!("{}", input))?;
         }
         Ok(())
     }
@@ -52,12 +57,32 @@ impl Inputs {
         self.inputs.len()
     }
     pub fn empty() -> Inputs {
-        Inputs{inputs:vec![]}
+        Inputs { inputs: vec![] }
     }
 }
-impl fmt::Display for Input {
+pub trait TFact {
+    fn name(&self) -> String;
+    fn args(&self) -> Vec<Symbol>;
+}
+pub struct Fact {
+    name: String,
+    args: Vec<String>,
+}
+impl fmt::Display for Fact {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "input({}).", self.node)
+        f.write_str(&format!("{}", self.name))?;
+        Ok(())
+    }
+}
+pub struct Facts<'a> {
+    facts: Vec<&'a TFact>,
+}
+impl<'a> fmt::Display for Facts<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for fact in &self.facts {
+            f.write_str(&format!("{}", fact))?;
+        }
+        Ok(())
     }
 }
 pub struct Node {
