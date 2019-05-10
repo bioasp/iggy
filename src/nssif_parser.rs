@@ -44,7 +44,7 @@ impl Graph {
         match stm.start {
             SNode::Single(expr) => {
                 let startnode = format!("or(\"{}\")", expr.ident);
-                self.or_nodes.insert(startnode.clone()); //startnode.clone());
+                self.or_nodes.insert(startnode.clone());
                 if expr.negated {
                     self.n_edges.push((startnode, targetnode));
                 } else {

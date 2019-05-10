@@ -33,6 +33,16 @@ pub enum Sign {
     NotPlus,
     NotMinus,
 }
+pub trait Fact {
+    fn name(&self) -> String;
+    //fn args(&self) -> Vec<Symbol>;
+}
+impl fmt::Display for Fact {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(&format!("{}", self.name()))?;
+        Ok(())
+    }
+}
 pub struct Input {
     node: Node,
 }
@@ -41,49 +51,29 @@ impl fmt::Display for Input {
         write!(f, "input({}).", self.node)
     }
 }
-pub struct Inputs {
-    inputs: Vec<Input>,
-}
-impl fmt::Display for Inputs {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for input in &self.inputs {
-            f.write_str(&format!("{}", input))?;
-        }
-        Ok(())
+impl Fact for Input {
+    fn name(&self) -> String {
+        format!("{}",self)
     }
 }
-impl Inputs {
-    pub fn len(&self) -> usize {
-        self.inputs.len()
-    }
-    pub fn empty() -> Inputs {
-        Inputs { inputs: vec![] }
-    }
+pub struct Facts {
+    facts: Vec<Box<Fact>>,
 }
-pub trait TFact {
-    fn name(&self) -> String;
-    fn args(&self) -> Vec<Symbol>;
-}
-pub struct Fact {
-    name: String,
-    args: Vec<String>,
-}
-impl fmt::Display for Fact {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&format!("{}", self.name))?;
-        Ok(())
-    }
-}
-pub struct Facts<'a> {
-    facts: Vec<&'a TFact>,
-}
-impl<'a> fmt::Display for Facts<'a> {
+impl fmt::Display for Facts {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for fact in &self.facts {
             f.write_str(&format!("{}", fact))?;
         }
         Ok(())
     }
+}
+impl Facts {
+     pub fn len(&self) -> usize {
+        self.facts.len()
+    }
+    pub fn empty() -> Facts {
+        Facts { facts: vec![] }
+    }   
 }
 pub struct Node {
     name: String,
@@ -196,7 +186,7 @@ pub fn check_observations(profile: &Profile) -> Result<CheckResult, Error> {
     Ok(CheckResult::Consistent)
 }
 
-pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
+pub fn guess_inputs(graph: &Graph) -> Result<Facts, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
 
@@ -214,17 +204,17 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
 
     handle.resume()?;
 
-    let mut inputs = vec![];
+    let mut inputs : Vec<Box<Fact>>= vec![];
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                inputs.push(Input {
+                inputs.push(Box::new(Input {
                     node: Node {
                         name: atom.to_string()?,
                     },
-                });
+                }));
             }
         }
     }
@@ -232,7 +222,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Inputs, Error> {
     // close the solve handle
     handle.close()?;
 
-    Ok(Inputs { inputs: inputs })
+    Ok(Facts { facts: inputs })
 }
 
 fn strconc(sym: &Symbol) -> Result<String, Error> {
@@ -395,7 +385,7 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
 pub fn get_minimal_inconsistent_cores(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Vec<Vec<Symbol>>, Error> {
     // create a control object and pass command line arguments
@@ -426,7 +416,7 @@ pub fn get_minimal_inconsistent_cores(
 pub fn get_scenfit(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
@@ -472,7 +462,7 @@ pub fn get_scenfit(
 pub fn get_scenfit_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
@@ -523,7 +513,7 @@ pub fn get_scenfit_labelings(
 pub fn get_mcos(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
@@ -569,7 +559,7 @@ pub fn get_mcos(
 pub fn get_mcos_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
@@ -618,7 +608,7 @@ pub fn get_mcos_labelings(
 pub fn get_predictions_under_mcos(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
@@ -669,7 +659,7 @@ pub fn get_predictions_under_mcos(
 pub fn get_predictions_under_scenfit(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments

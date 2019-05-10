@@ -96,7 +96,7 @@ fn main() {
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
         } else {
-            Inputs::empty()
+            Facts::empty()
         }
     };
 
@@ -234,7 +234,7 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("  observed not in model : {}", not_in_model.count());
 }
 
-fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Inputs, setting: &SETTING) {
+fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Facts, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
     io::stdout().flush().ok().expect("Could not flush stdout");
     let mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
@@ -258,7 +258,7 @@ fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Inputs, setting: &SET
 fn compute_scenfit_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) {
@@ -282,7 +282,7 @@ fn compute_scenfit_labelings(
 fn compute_mcos_labelings(
     graph: &Graph,
     profile: &Profile,
-    inputs: &Inputs,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) {
