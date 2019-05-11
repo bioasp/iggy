@@ -53,7 +53,7 @@ impl fmt::Display for Input {
 }
 impl Fact for Input {
     fn name(&self) -> String {
-        format!("{}",self)
+        format!("{}", self)
     }
 }
 pub struct Facts {
@@ -68,12 +68,12 @@ impl fmt::Display for Facts {
     }
 }
 impl Facts {
-     pub fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.facts.len()
     }
     pub fn empty() -> Facts {
         Facts { facts: vec![] }
-    }   
+    }
 }
 pub struct Node {
     name: String,
@@ -204,7 +204,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Facts, Error> {
 
     handle.resume()?;
 
-    let mut inputs : Vec<Box<Fact>>= vec![];
+    let mut inputs: Vec<Box<Fact>> = vec![];
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
@@ -295,6 +295,37 @@ impl ExternalFunctionHandler for MyEFH {
             Err(IggyError::new("function not found"))?
         }
     }
+}
+
+fn add_facts(ctl: &mut Control, facts: Facts) {
+    // get the program builder
+    let mut builder = ctl.program_builder().ok();
+
+    // initialize the location
+    let location = Location::new("<rewrite>", "<rewrite>", 0, 0, 0, 0).unwrap();
+
+    let sym = Symbol::create_id("enable", true).unwrap();
+
+    // initilize atom to add
+    let atom = ast::Atom::from_symbol(location, sym);
+    // create atom enable
+    // let lit = ast::Literal::from_atom(atom.location(), ast::Sign::None, atom);
+    let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
+    // add atom enable to the rule body
+    let hlit = ast::HeadLiteral::new(atom.location(), ast::HeadLiteralType::Literal, &lit);
+
+    // initialize the rule
+    let rule = ast::Rule::new(hlit, &[]);
+
+    // initialize the statement
+    let stm = rule.ast_statement(location);
+
+    // add the rewritten statement to the program
+    builder
+        .as_mut()
+        .unwrap()
+        .add(&stm)
+        .expect("Failed to add statement to ProgramBuilder.");
 }
 
 fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
