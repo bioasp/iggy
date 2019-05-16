@@ -35,7 +35,8 @@ pub enum Sign {
 }
 pub trait Fact {
     fn name(&self) -> String;
-    //fn args(&self) -> Vec<Symbol>;
+    fn arguments(&self) -> Vec<Symbol>;
+    fn symbol(&self) -> Result<Symbol,Error>;
 }
 impl fmt::Display for Fact {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -54,6 +55,15 @@ impl fmt::Display for Input {
 impl Fact for Input {
     fn name(&self) -> String {
         format!("{}", self)
+    }
+    fn arguments(&self) -> Vec<Symbol> {
+        let args =vec![];
+        let arg1 = self.node.symbol();
+        args
+    }
+    fn symbol(&self) -> Result<Symbol,Error> {
+        let sym = Symbol::create_function(&self.name(), &self.arguments(), true);
+        sym
     }
 }
 pub struct Facts {
@@ -74,6 +84,9 @@ impl Facts {
     pub fn empty() -> Facts {
         Facts { facts: vec![] }
     }
+    pub fn iter(&self) -> std::slice::Iter<'_, std::boxed::Box<dyn Fact>> {
+        self.facts.iter()
+    }
 }
 pub struct Node {
     name: String,
@@ -81,6 +94,18 @@ pub struct Node {
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.name)
+    }
+}
+impl Fact for Node {
+    fn name(&self) -> String {
+        format!("{}", self)
+    }
+    fn arguments(&self) -> Vec<Symbol> {
+        vec![]
+    }
+    fn symbol(&self) -> Result<Symbol,Error> {
+        let sym = Symbol::create_function(&self.name(), &self.arguments(), true);
+        sym
     }
 }
 pub struct LabeledNode {
@@ -297,35 +322,38 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
-fn add_facts(ctl: &mut Control, facts: Facts) {
+fn add_facts(ctl: &mut Control, facts: &Facts) {
     // get the program builder
     let mut builder = ctl.program_builder().ok();
 
     // initialize the location
     let location = Location::new("<rewrite>", "<rewrite>", 0, 0, 0, 0).unwrap();
 
-    let sym = Symbol::create_id("enable", true).unwrap();
+    for f in facts.iter() {
+        let sym = f.symbol().unwrap();
 
-    // initilize atom to add
-    let atom = ast::Atom::from_symbol(location, sym);
-    // create atom enable
-    // let lit = ast::Literal::from_atom(atom.location(), ast::Sign::None, atom);
-    let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
-    // add atom enable to the rule body
-    let hlit = ast::HeadLiteral::new(atom.location(), ast::HeadLiteralType::Literal, &lit);
+        // initilize atom to add
+        let atom = ast::Atom::from_symbol(location, sym);
+        // create atom enable
+        // let lit = ast::Literal::from_atom(atom.location(), ast::Sign::None, atom);
+        let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
+        // add atom enable to the rule body
+        let hlit = ast::HeadLiteral::new(atom.location(), ast::HeadLiteralType::Literal, &lit);
 
-    // initialize the rule
-    let rule = ast::Rule::new(hlit, &[]);
+        // initialize the rule
+        let rule = ast::Rule::new(hlit, &[]);
 
-    // initialize the statement
-    let stm = rule.ast_statement(location);
+        // initialize the statement
+        let stm = rule.ast_statement(location);
 
-    // add the rewritten statement to the program
-    builder
-        .as_mut()
-        .unwrap()
-        .add(&stm)
-        .expect("Failed to add statement to ProgramBuilder.");
+        // add the rewritten statement to the program
+        builder
+            .as_mut()
+            .unwrap()
+            .add(&stm)
+            .expect("Failed to add statement to ProgramBuilder.");
+
+    } 
 }
 
 fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
@@ -429,7 +457,7 @@ pub fn get_minimal_inconsistent_cores(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_MICS)?;
 
     if setting.fp {
@@ -459,7 +487,7 @@ pub fn get_scenfit(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -507,7 +535,7 @@ pub fn get_scenfit_labelings(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -556,7 +584,7 @@ pub fn get_mcos(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -604,7 +632,7 @@ pub fn get_mcos_labelings(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -654,7 +682,7 @@ pub fn get_predictions_under_mcos(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -705,7 +733,7 @@ pub fn get_predictions_under_scenfit(
 
     ctl.add("base", &[], &graph.to_string())?;
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
-    ctl.add("base", &[], &inputs.to_string())?;
+    add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
