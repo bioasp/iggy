@@ -33,19 +33,18 @@ pub enum Sign {
     NotPlus,
     NotMinus,
 }
+
 pub trait Fact {
-    fn name(&self) -> String;
-    fn arguments(&self) -> Vec<Symbol>;
-    fn symbol(&self) -> Result<Symbol,Error>;
+    fn symbol(&self) -> Result<Symbol, Error>;
 }
-impl fmt::Display for Fact {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&format!("{}", self.name()))?;
-        Ok(())
-    }
-}
+// impl fmt::Display for Fact {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         f.write_str(&format!("{}", self.name()))?;
+//         Ok(())
+//     }
+// }
 pub struct Input {
-    node: Node,
+    node: NodeId,
 }
 impl fmt::Display for Input {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -53,30 +52,23 @@ impl fmt::Display for Input {
     }
 }
 impl Fact for Input {
-    fn name(&self) -> String {
-        format!("{}", self)
-    }
-    fn arguments(&self) -> Vec<Symbol> {
-        let args =vec![];
-        let arg1 = self.node.symbol();
-        args
-    }
-    fn symbol(&self) -> Result<Symbol,Error> {
-        let sym = Symbol::create_function(&self.name(), &self.arguments(), true);
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let id = Symbol::create_function(&self.node, &[], true).unwrap();
+        let sym = Symbol::create_function("input", &[id], true);
         sym
     }
 }
 pub struct Facts {
-    facts: Vec<Box<Fact>>,
+    facts: Vec<Symbol>,
 }
-impl fmt::Display for Facts {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for fact in &self.facts {
-            f.write_str(&format!("{}", fact))?;
-        }
-        Ok(())
-    }
-}
+// impl fmt::Display for Facts {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         for fact in &self.facts {
+//             f.write_str(&format!("{}", fact))?;
+//         }
+//         Ok(())
+//     }
+// }
 impl Facts {
     pub fn len(&self) -> usize {
         self.facts.len()
@@ -84,30 +76,23 @@ impl Facts {
     pub fn empty() -> Facts {
         Facts { facts: vec![] }
     }
-    pub fn iter(&self) -> std::slice::Iter<'_, std::boxed::Box<dyn Fact>> {
+    pub fn iter(&self) -> std::slice::Iter<'_, Symbol> {
         self.facts.iter()
     }
-}
-pub struct Node {
-    name: String,
-}
-impl fmt::Display for Node {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.name)
+    pub fn add_fact(&mut self, fact: &Fact) {
+        self.facts.push(fact.symbol().unwrap());
     }
 }
-impl Fact for Node {
-    fn name(&self) -> String {
-        format!("{}", self)
-    }
-    fn arguments(&self) -> Vec<Symbol> {
-        vec![]
-    }
-    fn symbol(&self) -> Result<Symbol,Error> {
-        let sym = Symbol::create_function(&self.name(), &self.arguments(), true);
-        sym
+struct ReturnFact {
+    fact: Symbol
+}
+impl Fact for ReturnFact {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(self.fact)
     }
 }
+type NodeId = String;
+
 pub struct LabeledNode {
     name: String,
     sign: Sign,
@@ -211,13 +196,13 @@ pub fn check_observations(profile: &Profile) -> Result<CheckResult, Error> {
     Ok(CheckResult::Consistent)
 }
 
-pub fn guess_inputs(graph: &Graph) -> Result<Facts, Error> {
+pub fn guess_inputs(graph: &Facts) -> Result<Facts, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_GUESS_INPUTS)?;
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -229,17 +214,14 @@ pub fn guess_inputs(graph: &Graph) -> Result<Facts, Error> {
 
     handle.resume()?;
 
-    let mut inputs: Vec<Box<Fact>> = vec![];
+    let mut inputs = Facts::empty();
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                inputs.push(Box::new(Input {
-                    node: Node {
-                        name: atom.to_string()?,
-                    },
-                }));
+                print!("{}",atom.to_string()?);
+                inputs.add_fact(&ReturnFact{fact: atom});
             }
         }
     }
@@ -247,7 +229,7 @@ pub fn guess_inputs(graph: &Graph) -> Result<Facts, Error> {
     // close the solve handle
     handle.close()?;
 
-    Ok(Facts { facts: inputs })
+    Ok(inputs)
 }
 
 fn strconc(sym: &Symbol) -> Result<String, Error> {
@@ -329,11 +311,11 @@ fn add_facts(ctl: &mut Control, facts: &Facts) {
     // initialize the location
     let location = Location::new("<rewrite>", "<rewrite>", 0, 0, 0, 0).unwrap();
 
-    for f in facts.iter() {
-        let sym = f.symbol().unwrap();
-
+    for sym in facts.iter() {
+        print!("{}",sym.to_string().unwrap());
+ 
         // initilize atom to add
-        let atom = ast::Atom::from_symbol(location, sym);
+        let atom = ast::Atom::from_symbol(location, *sym);
         // create atom enable
         // let lit = ast::Literal::from_atom(atom.location(), ast::Sign::None, atom);
         let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
@@ -352,8 +334,7 @@ fn add_facts(ctl: &mut Control, facts: &Facts) {
             .unwrap()
             .add(&stm)
             .expect("Failed to add statement to ProgramBuilder.");
-
-    } 
+    }
 }
 
 fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
@@ -442,7 +423,7 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
 
 /// return the minimal inconsistent cores
 pub fn get_minimal_inconsistent_cores(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     setting: &SETTING,
@@ -455,7 +436,7 @@ pub fn get_minimal_inconsistent_cores(
         "--enum-mode=domRec".to_string(),
     ])?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_MICS)?;
@@ -473,7 +454,7 @@ pub fn get_minimal_inconsistent_cores(
 
 /// returns the scenfit of data and model
 pub fn get_scenfit(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     setting: &SETTING,
@@ -485,7 +466,7 @@ pub fn get_scenfit(
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
@@ -519,7 +500,7 @@ pub fn get_scenfit(
 ///
 /// + number - maximal number of labelings
 pub fn get_scenfit_labelings(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     number: u32,
@@ -533,7 +514,7 @@ pub fn get_scenfit_labelings(
         "--project".to_string(),
     ])?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
@@ -570,7 +551,7 @@ pub fn get_scenfit_labelings(
 
 /// returns the mcos of data and model
 pub fn get_mcos(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     setting: &SETTING,
@@ -582,7 +563,7 @@ pub fn get_mcos(
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
@@ -616,7 +597,7 @@ pub fn get_mcos(
 ///
 /// + number - maximal number of labelings
 pub fn get_mcos_labelings(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     number: u32,
@@ -630,7 +611,7 @@ pub fn get_mcos_labelings(
         "--project".to_string(),
     ])?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
@@ -665,7 +646,7 @@ pub fn get_mcos_labelings(
         .collect()
 }
 pub fn get_predictions_under_mcos(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     setting: &SETTING,
@@ -680,7 +661,7 @@ pub fn get_predictions_under_mcos(
     ];
     let mut ctl = Control::new(options)?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
@@ -716,7 +697,7 @@ pub fn get_predictions_under_mcos(
 }
 
 pub fn get_predictions_under_scenfit(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     setting: &SETTING,
@@ -731,7 +712,7 @@ pub fn get_predictions_under_scenfit(
     ];
     let mut ctl = Control::new(options)?;
 
-    ctl.add("base", &[], &graph.to_string())?;
+    add_facts(&mut ctl, graph);
     ctl.add("base", &[], &profile.to_string(&"x1"))?;
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;

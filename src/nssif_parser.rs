@@ -1,3 +1,5 @@
+use crate::{Fact, Facts, NodeId};
+use clingo::*;
 use failure::*;
 use std::collections::HashSet;
 use std::fs::File;
@@ -28,6 +30,38 @@ pub struct Graph {
     pub and_nodes: HashSet<String>,
     pub p_edges: Vec<(String, String)>,
     pub n_edges: Vec<(String, String)>,
+}
+pub struct Vertex {
+    node: NodeId,
+}
+impl Fact for Vertex {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let id = Symbol::create_function(&self.node, &[], true).unwrap();
+        let sym = Symbol::create_function("vertex", &[id], true);
+        sym
+    }
+}
+pub enum EdgeSign {
+    Plus,
+    Minus,
+}
+
+pub struct ObsELabel {
+    start: NodeId,
+    target: NodeId,
+    sign: EdgeSign,
+}
+impl Fact for ObsELabel {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let start = Symbol::create_function(&self.start, &[], true).unwrap();
+        let target = Symbol::create_function(&self.target, &[], true).unwrap();
+        let sign = match &self.sign {
+            EdgeSign::Plus => Symbol::create_number(1),
+            EdgeSign::Minus => Symbol::create_number(-1),
+        };
+        let sym = Symbol::create_function("obs_elabel", &[start, target, sign], true);
+        sym
+    }
 }
 impl Graph {
     pub fn empty() -> Graph {
@@ -82,21 +116,45 @@ impl Graph {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        let mut res = String::new();
+    // pub fn to_string(&self) -> String {
+    //     let mut res = String::new();
+    //     for node in &self.or_nodes {
+    //         res = res + "vertex(" + node + ").\n"
+    //     }
+    //     for node in &self.and_nodes {
+    //         res = res + "vertex(" + node + ").\n"
+    //     }
+    //     for &(ref s, ref t) in &self.p_edges {
+    //         res = res + "obs_elabel(" + s + "," + t + ",1).\n";
+    //     }
+    //     for &(ref s, ref t) in &self.n_edges {
+    //         res = res + "obs_elabel(" + s + "," + t + ",-1).\n";
+    //     }
+    //     res
+    // }
+    pub fn to_facts(&self) -> Facts {
+        let mut facts = Facts::empty();
         for node in &self.or_nodes {
-            res = res + "vertex(" + node + ").\n"
+            facts.add_fact(&Vertex { node: node.clone() });
         }
         for node in &self.and_nodes {
-            res = res + "vertex(" + node + ").\n"
+            facts.add_fact(&Vertex { node: node.clone() });
         }
         for &(ref s, ref t) in &self.p_edges {
-            res = res + "obs_elabel(" + s + "," + t + ",1).\n";
+            facts.add_fact(&ObsELabel {
+                start: s.clone(),
+                target: t.clone(),
+                sign: EdgeSign::Plus,
+            });
         }
         for &(ref s, ref t) in &self.n_edges {
-            res = res + "obs_elabel(" + s + "," + t + ",-1).\n";
+            facts.add_fact(&ObsELabel {
+                start: s.clone(),
+                target: t.clone(),
+                sign: EdgeSign::Minus,
+            });
         }
-        res
+        facts
     }
 }
 

@@ -72,13 +72,14 @@ fn main() {
 
     println!("Reading network model from {:?}.", opt.networkfile);
     let f = File::open(opt.networkfile).unwrap();
-    let graph = nssif_parser::read(&f).unwrap();
-    network_statistics(&graph);
+    let ggraph = nssif_parser::read(&f).unwrap();
+    let graph = ggraph.to_facts();
+    network_statistics(&ggraph);
 
     println!("\nReading observations from {:?}.", opt.observationfile);
     let f = File::open(opt.observationfile).unwrap();
     let profile = profile_parser::read(&f).unwrap();
-    observation_statistics(&profile, &graph);
+    observation_statistics(&profile, &ggraph);
 
     if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
         println!("The following observations are contradictory. Please correct them!");
@@ -234,7 +235,7 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("  observed not in model : {}", not_in_model.count());
 }
 
-fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Facts, setting: &SETTING) {
+fn compute_mics(graph: &Facts, profile: &Profile, inputs: &Facts, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
     io::stdout().flush().ok().expect("Could not flush stdout");
     let mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
@@ -256,7 +257,7 @@ fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Facts, setting: &SETT
 }
 
 fn compute_scenfit_labelings(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     number: u32,
@@ -280,7 +281,7 @@ fn compute_scenfit_labelings(
 }
 
 fn compute_mcos_labelings(
-    graph: &Graph,
+    graph: &Facts,
     profile: &Profile,
     inputs: &Facts,
     number: u32,
