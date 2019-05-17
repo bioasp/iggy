@@ -1,14 +1,11 @@
 pub mod nssif_parser;
 pub mod profile_parser;
-use crate::nssif_parser::Graph;
-use crate::profile_parser::Profile;
 use clingo::*;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
 use crate::encodings::*;
 use failure::*;
-use std::fmt;
 
 pub struct SETTING {
     pub os: bool,
@@ -26,13 +23,6 @@ impl IggyError {
         IggyError { msg }
     }
 }
-pub enum Sign {
-    Plus,
-    Minus,
-    Null,
-    NotPlus,
-    NotMinus,
-}
 
 pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
@@ -43,21 +33,6 @@ pub trait Fact {
 //         Ok(())
 //     }
 // }
-pub struct Input {
-    node: NodeId,
-}
-impl fmt::Display for Input {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "input({}).", self.node)
-    }
-}
-impl Fact for Input {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let id = Symbol::create_function(&self.node, &[], true).unwrap();
-        let sym = Symbol::create_function("input", &[id], true);
-        sym
-    }
-}
 pub struct Facts {
     facts: Vec<Symbol>,
 }
@@ -93,22 +68,22 @@ impl Fact for ReturnFact {
 }
 type NodeId = String;
 
-pub struct LabeledNode {
-    name: String,
-    sign: Sign,
-}
+// pub struct LabeledNode {
+//     name: String,
+//     sign: Sign,
+// }
 pub enum CheckResult {
     Consistent,
     Inconsistent(Vec<String>),
 }
 
-pub fn check_observations(profile: &Profile) -> Result<CheckResult, Error> {
+pub fn check_observations(profile: &Facts) -> Result<CheckResult, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_CONTRADICTORY_OBS)?;
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -312,7 +287,7 @@ fn add_facts(ctl: &mut Control, facts: &Facts) {
     let location = Location::new("<rewrite>", "<rewrite>", 0, 0, 0, 0).unwrap();
 
     for sym in facts.iter() {
-        print!("{}",sym.to_string().unwrap());
+        // print!("{}",sym.to_string().unwrap());
  
         // initilize atom to add
         let atom = ast::Atom::from_symbol(location, *sym);
@@ -424,7 +399,7 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
 /// return the minimal inconsistent cores
 pub fn get_minimal_inconsistent_cores(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Vec<Vec<Symbol>>, Error> {
@@ -437,7 +412,7 @@ pub fn get_minimal_inconsistent_cores(
     ])?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_MICS)?;
 
@@ -455,7 +430,7 @@ pub fn get_minimal_inconsistent_cores(
 /// returns the scenfit of data and model
 pub fn get_scenfit(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     setting: &SETTING,
 ) -> Result<i64, Error> {
@@ -467,7 +442,7 @@ pub fn get_scenfit(
     ])?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -501,7 +476,7 @@ pub fn get_scenfit(
 /// + number - maximal number of labelings
 pub fn get_scenfit_labelings(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     number: u32,
     setting: &SETTING,
@@ -515,7 +490,7 @@ pub fn get_scenfit_labelings(
     ])?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -552,7 +527,7 @@ pub fn get_scenfit_labelings(
 /// returns the mcos of data and model
 pub fn get_mcos(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     setting: &SETTING,
 ) -> Result<i64, Error> {
@@ -564,7 +539,7 @@ pub fn get_mcos(
     ])?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -598,7 +573,7 @@ pub fn get_mcos(
 /// + number - maximal number of labelings
 pub fn get_mcos_labelings(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     number: u32,
     setting: &SETTING,
@@ -612,7 +587,7 @@ pub fn get_mcos_labelings(
     ])?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -647,7 +622,7 @@ pub fn get_mcos_labelings(
 }
 pub fn get_predictions_under_mcos(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
@@ -662,7 +637,7 @@ pub fn get_predictions_under_mcos(
     let mut ctl = Control::new(options)?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -698,7 +673,7 @@ pub fn get_predictions_under_mcos(
 
 pub fn get_predictions_under_scenfit(
     graph: &Facts,
-    profile: &Profile,
+    profile: &Facts,
     inputs: &Facts,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
@@ -713,7 +688,7 @@ pub fn get_predictions_under_scenfit(
     let mut ctl = Control::new(options)?;
 
     add_facts(&mut ctl, graph);
-    ctl.add("base", &[], &profile.to_string(&"x1"))?;
+    add_facts(&mut ctl, profile);
     add_facts(&mut ctl, inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
