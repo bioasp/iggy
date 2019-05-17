@@ -1,7 +1,6 @@
 use crate::{Fact, Facts, NodeId};
 use clingo::*;
 use failure::*;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -26,18 +25,28 @@ pub fn read(file: &File) -> Result<Graph, Error> {
 
 #[derive(Debug, Clone)]
 pub struct Graph {
-    pub or_nodes: HashSet<String>,
-    pub and_nodes: HashSet<String>,
-    pub p_edges: Vec<(String, String)>,
-    pub n_edges: Vec<(String, String)>,
+    or_nodes: Vec<NodeId>,
+    and_nodes: Vec<NodeId>,
+    p_edges: Vec<(NodeId, NodeId)>,
+    n_edges: Vec<(NodeId, NodeId)>,
 }
-pub struct Vertex {
+#[derive(Debug, Clone)]
+struct Vertex {
     node: NodeId,
 }
 impl Fact for Vertex {
     fn symbol(&self) -> Result<Symbol, Error> {
-        let id = Symbol::create_function(&self.node, &[], true).unwrap();
-        let sym = Symbol::create_function("vertex", &[id], true);
+        let node = match &self.node {
+            NodeId::Or(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("or", &[id], true)?
+            }
+            NodeId::And(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("and", &[id], true)?
+            }
+        };
+        let sym = Symbol::create_function("vertex", &[node], true);
         sym
     }
 }
@@ -45,7 +54,6 @@ pub enum EdgeSign {
     Plus,
     Minus,
 }
-
 pub struct ObsELabel {
     start: NodeId,
     target: NodeId,
@@ -53,8 +61,8 @@ pub struct ObsELabel {
 }
 impl Fact for ObsELabel {
     fn symbol(&self) -> Result<Symbol, Error> {
-        let start = Symbol::create_function(&self.start, &[], true).unwrap();
-        let target = Symbol::create_function(&self.target, &[], true).unwrap();
+        let start = self.start.symbol()?;
+        let target = self.target.symbol()?;
         let sign = match &self.sign {
             EdgeSign::Plus => Symbol::create_number(1),
             EdgeSign::Minus => Symbol::create_number(-1),
@@ -66,19 +74,19 @@ impl Fact for ObsELabel {
 impl Graph {
     pub fn empty() -> Graph {
         Graph {
-            or_nodes: HashSet::new(),
-            and_nodes: HashSet::new(),
+            or_nodes: vec![],
+            and_nodes: vec![],
             p_edges: vec![],
             n_edges: vec![],
         }
     }
     fn add(&mut self, stm: Statement) {
-        let targetnode = format!("or(\"{}\")", stm.target);
-        self.or_nodes.insert(targetnode.clone());
+        let targetnode = NodeId::Or(stm.target);
+        self.or_nodes.push(targetnode.clone());
         match stm.start {
             SNode::Single(expr) => {
-                let startnode = format!("or(\"{}\")", expr.ident);
-                self.or_nodes.insert(startnode.clone());
+                let startnode = NodeId::Or(expr.ident);
+                self.or_nodes.push(startnode.clone());
                 if expr.negated {
                     self.n_edges.push((startnode, targetnode));
                 } else {
@@ -98,23 +106,66 @@ impl Graph {
                         pos.push(expr.ident);
                     }
                 }
-                let andnode = format!("and({})", inner);
-                self.and_nodes.insert(andnode.clone());
+                let andnode = NodeId::And(inner);
+                self.and_nodes.push(andnode.clone());
                 self.p_edges.push((andnode.clone(), targetnode.clone()));
 
                 for node in pos {
-                    let startnode = format!("or(\"{}\")", node);
-                    self.or_nodes.insert(startnode.clone());
-                    self.p_edges.push((startnode.clone(), andnode.clone()));
+                    let startnode = NodeId::Or(node);
+                    self.or_nodes.push(startnode.clone());
+                    self.p_edges.push((startnode, andnode.clone()));
                 }
                 for node in neg {
-                    let startnode = format!("or(\"{}\")", node);
-                    self.or_nodes.insert(startnode.clone());
+                    let startnode = NodeId::Or(node);
+                    self.or_nodes.push(startnode.clone());
                     self.n_edges.push((startnode, andnode.clone()));
                 }
             }
         }
     }
+    // fn add(&mut self, stm: Statement) {
+    //     let targetnode = format!("or(\"{}\")", stm.target);
+    //     self.or_nodes.insert(targetnode.clone());
+    //     match stm.start {
+    //         SNode::Single(expr) => {
+    //             let startnode = format!("or(\"{}\")", expr.ident);
+    //             self.or_nodes.insert(startnode.clone());
+    //             if expr.negated {
+    //                 self.n_edges.push((startnode, targetnode));
+    //             } else {
+    //                 self.p_edges.push((startnode, targetnode));
+    //             }
+    //         }
+    //         SNode::List(l) => {
+    //             let mut inner = "".to_string();
+    //             let mut pos = vec![];
+    //             let mut neg = vec![];
+    //             for expr in l {
+    //                 if expr.negated {
+    //                     inner = format!("neg__{}__AND__{}", &expr.ident, inner);
+    //                     neg.push(expr.ident);
+    //                 } else {
+    //                     inner = format!("{}__AND__{}", &expr.ident, inner);
+    //                     pos.push(expr.ident);
+    //                 }
+    //             }
+    //             let andnode = format!("and({})", inner);
+    //             self.and_nodes.insert(andnode.clone());
+    //             self.p_edges.push((andnode.clone(), targetnode.clone()));
+
+    //             for node in pos {
+    //                 let startnode = format!("or(\"{}\")", node);
+    //                 self.or_nodes.insert(startnode.clone());
+    //                 self.p_edges.push((startnode.clone(), andnode.clone()));
+    //             }
+    //             for node in neg {
+    //                 let startnode = format!("or(\"{}\")", node);
+    //                 self.or_nodes.insert(startnode.clone());
+    //                 self.n_edges.push((startnode, andnode.clone()));
+    //             }
+    //         }
+    //     }
+    // }
 
     // pub fn to_string(&self) -> String {
     //     let mut res = String::new();

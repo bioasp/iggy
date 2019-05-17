@@ -197,13 +197,13 @@ fn get_setting(opt: &Opt) -> SETTING {
 
 fn network_statistics(graph: &Graph) {
     println!("\n# Network statistics");
-    println!("  OR nodes (species): {}", graph.or_nodes.len());
-    println!(
-        "  AND nodes (complex regulation): {}",
-        graph.and_nodes.len()
-    );
-    println!("  Activations = {}", graph.p_edges.len());
-    println!("  Inhibitions = {}", graph.n_edges.len());
+    // println!("  OR nodes (species): {}", graph.or_nodes.len());
+    // println!(
+    //     "  AND nodes (complex regulation): {}",
+    //     graph.and_nodes.len()
+    // );
+    // println!("  Activations = {}", graph.p_edges.len());
+    // println!("  Inhibitions = {}", graph.n_edges.len());
     // println!("          Dual = {}", len(unspecified))
 }
 
@@ -219,21 +219,21 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
         acc
     });
 
-    let unobserved = graph.or_nodes.difference(&observed);
-    let not_in_model = observed.difference(&graph.or_nodes);
+    // let unobserved = graph.or_nodes.difference(&observed);
+    // let not_in_model = observed.difference(&graph.or_nodes);
 
-    println!("\n# Observations statistics");
-    println!(" unobserved species   : {}", unobserved.count());
-    println!(" observed nodes       : {}", observed.len());
-    println!("  inputs                : {}", profile.input.len());
-    println!("  +                     : {}", profile.plus.len());
-    println!("  -                     : {}", profile.minus.len());
-    println!("  0                     : {}", profile.zero.len());
-    println!("  notPlus               : {}", profile.notplus.len());
-    println!("  notMinus              : {}", profile.notminus.len());
-    println!("  Min                   : {}", profile.min.len());
-    println!("  Max                   : {}", profile.max.len());
-    println!("  observed not in model : {}", not_in_model.count());
+    // println!("\n# Observations statistics");
+    // println!(" unobserved species   : {}", unobserved.count());
+    // println!(" observed nodes       : {}", observed.len());
+    // println!("  inputs                : {}", profile.input.len());
+    // println!("  +                     : {}", profile.plus.len());
+    // println!("  -                     : {}", profile.minus.len());
+    // println!("  0                     : {}", profile.zero.len());
+    // println!("  notPlus               : {}", profile.notplus.len());
+    // println!("  notMinus              : {}", profile.notminus.len());
+    // println!("  Min                   : {}", profile.min.len());
+    // println!("  Max                   : {}", profile.max.len());
+    // println!("  observed not in model : {}", not_in_model.count());
 }
 
 fn compute_mics(graph: &Facts, profile: &Facts, inputs: &Facts, setting: &SETTING) {

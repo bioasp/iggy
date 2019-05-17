@@ -27,23 +27,9 @@ impl IggyError {
 pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
 }
-// impl fmt::Display for Fact {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         f.write_str(&format!("{}", self.name()))?;
-//         Ok(())
-//     }
-// }
 pub struct Facts {
     facts: Vec<Symbol>,
 }
-// impl fmt::Display for Facts {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         for fact in &self.facts {
-//             f.write_str(&format!("{}", fact))?;
-//         }
-//         Ok(())
-//     }
-// }
 impl Facts {
     pub fn len(&self) -> usize {
         self.facts.len()
@@ -66,12 +52,27 @@ impl Fact for ReturnFact {
         Ok(self.fact)
     }
 }
-type NodeId = String;
 
-// pub struct LabeledNode {
-//     name: String,
-//     sign: Sign,
-// }
+#[derive(Debug, Clone)]
+enum NodeId {
+    Or(String),
+    And(String),
+}
+impl NodeId {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        match &self {
+            NodeId::Or(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("or", &[id], true)
+            }
+            NodeId::And(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("and", &[id], true)
+            }
+        }
+    }
+}
+
 pub enum CheckResult {
     Consistent,
     Inconsistent(Vec<String>),
@@ -195,7 +196,6 @@ pub fn guess_inputs(graph: &Facts) -> Result<Facts, Error> {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                print!("{}", atom.to_string()?);
                 inputs.add_fact(&ReturnFact { fact: atom });
             }
         }
