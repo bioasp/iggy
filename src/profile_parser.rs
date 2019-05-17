@@ -40,7 +40,7 @@ impl<'a> Fact for Input<'a> {
     fn symbol(&self) -> Result<Symbol, Error> {
         let profile = Symbol::create_id(&self.profile, true).unwrap();
         let node = Symbol::create_function(&self.node, &[], true).unwrap();
-        let sym = Symbol::create_function("input", &[profile,node], true);
+        let sym = Symbol::create_function("input", &[profile, node], true);
         sym
     }
 }
@@ -57,8 +57,8 @@ impl<'a> Fact for ObsVLabel<'a> {
             NodeSign::Plus => Symbol::create_number(1),
             NodeSign::Minus => Symbol::create_number(-1),
             NodeSign::Zero => Symbol::create_number(0),
-            NodeSign::NotPlus => Symbol::create_id("notPlus",true).unwrap(),
-            NodeSign::NotMinus => Symbol::create_id("notMinus",true).unwrap(),
+            NodeSign::NotPlus => Symbol::create_id("notPlus", true).unwrap(),
+            NodeSign::NotMinus => Symbol::create_id("notMinus", true).unwrap(),
         };
         let sym = Symbol::create_function("obs_vlabel", &[profile, node, sign], true);
         sym
@@ -120,33 +120,57 @@ impl Profile {
     pub fn to_facts(&self) -> Facts {
         let mut facts = Facts::empty();
         for s in &self.plus {
-            facts.add_fact(&ObsVLabel { profile: &self.id, node: s.clone(),
-                sign: NodeSign::Plus, });
+            facts.add_fact(&ObsVLabel {
+                profile: &self.id,
+                node: s.clone(),
+                sign: NodeSign::Plus,
+            });
         }
         for s in &self.minus {
-            facts.add_fact(&ObsVLabel { profile: &self.id, node: s.clone(),
-                sign: NodeSign::Minus, });
+            facts.add_fact(&ObsVLabel {
+                profile: &self.id,
+                node: s.clone(),
+                sign: NodeSign::Minus,
+            });
         }
         for s in &self.zero {
-            facts.add_fact(&ObsVLabel { profile: &self.id, node: s.clone(),
-                sign: NodeSign::Zero, });
+            facts.add_fact(&ObsVLabel {
+                profile: &self.id,
+                node: s.clone(),
+                sign: NodeSign::Zero,
+            });
         }
         for s in &self.notplus {
-            facts.add_fact(&ObsVLabel { profile: &self.id, node: s.clone(),
-                sign: NodeSign::NotPlus, });
+            facts.add_fact(&ObsVLabel {
+                profile: &self.id,
+                node: s.clone(),
+                sign: NodeSign::NotPlus,
+            });
         }
         for s in &self.notminus {
-            facts.add_fact(&ObsVLabel { profile: &self.id, node: s.clone(),
-                sign: NodeSign::NotMinus, });
+            facts.add_fact(&ObsVLabel {
+                profile: &self.id,
+                node: s.clone(),
+                sign: NodeSign::NotMinus,
+            });
         }
         for s in &self.input {
-            facts.add_fact(&Input { profile: &self.id, node: s.clone()});
-        }        
+            facts.add_fact(&Input {
+                profile: &self.id,
+                node: s.clone(),
+            });
+        }
         for s in &self.min {
-            facts.add_fact(&IsMin { profile: &self.id, node: s.clone()});
+            facts.add_fact(&IsMin {
+                profile: &self.id,
+                node: s.clone(),
+            });
         }
         for s in &self.max {
-            facts.add_fact(&IsMax { profile: &self.id, node: s.clone()});
+            facts.add_fact(&IsMax {
+                profile: &self.id,
+                node: s.clone(),
+            });
         }
         facts
     }

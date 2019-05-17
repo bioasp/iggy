@@ -59,7 +59,7 @@ impl Facts {
     }
 }
 struct ReturnFact {
-    fact: Symbol
+    fact: Symbol,
 }
 impl Fact for ReturnFact {
     fn symbol(&self) -> Result<Symbol, Error> {
@@ -195,8 +195,8 @@ pub fn guess_inputs(graph: &Facts) -> Result<Facts, Error> {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if atoms.len() > 0 {
             for atom in atoms {
-                print!("{}",atom.to_string()?);
-                inputs.add_fact(&ReturnFact{fact: atom});
+                print!("{}", atom.to_string()?);
+                inputs.add_fact(&ReturnFact { fact: atom });
             }
         }
     }
@@ -288,7 +288,7 @@ fn add_facts(ctl: &mut Control, facts: &Facts) {
 
     for sym in facts.iter() {
         // print!("{}",sym.to_string().unwrap());
- 
+
         // initilize atom to add
         let atom = ast::Atom::from_symbol(location, *sym);
         // create atom enable
