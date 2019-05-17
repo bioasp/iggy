@@ -197,34 +197,35 @@ fn get_setting(opt: &Opt) -> SETTING {
 
 fn network_statistics(graph: &Graph) {
     println!("\n# Network statistics");
-    // println!("  OR nodes (species): {}", graph.or_nodes.len());
-    // println!(
-    //     "  AND nodes (complex regulation): {}",
-    //     graph.and_nodes.len()
-    // );
-    // println!("  Activations = {}", graph.p_edges.len());
-    // println!("  Inhibitions = {}", graph.n_edges.len());
+    println!("  OR nodes (species): {}", graph.or_nodes().len());
+    println!(
+        "  AND nodes (complex regulation): {}",
+        graph.and_nodes().len()
+    );
+    println!("  Activations = {}", graph.activations().len());
+    println!("  Inhibitions = {}", graph.inhibitions().len());
     // println!("          Dual = {}", len(unspecified))
 }
 
 fn observation_statistics(profile: &Profile, graph: &Graph) {
+    println!("\n# Observations statistics");
     let p = profile.clone();
     let tmp = [
         p.input, p.plus, p.minus, p.zero, p.notplus, p.notminus, p.min, p.max,
     ];
-    let observed = tmp.iter().fold(HashSet::new(), |mut acc, x| {
+    let mut observed = tmp.iter().fold(vec![], |mut acc, x| {
         for n in x {
-            acc.insert(n.clone());
+            acc.push(n.clone());
         }
         acc
     });
+    observed.dedup();
 
-    // let unobserved = graph.or_nodes.difference(&observed);
+    // let unobserved = graph.or_nodes().difference(&observed);
     // let not_in_model = observed.difference(&graph.or_nodes);
 
-    // println!("\n# Observations statistics");
     // println!(" unobserved species   : {}", unobserved.count());
-    // println!(" observed nodes       : {}", observed.len());
+    println!(" observed nodes       : {}", observed.len());
     // println!("  inputs                : {}", profile.input.len());
     // println!("  +                     : {}", profile.plus.len());
     // println!("  -                     : {}", profile.minus.len());

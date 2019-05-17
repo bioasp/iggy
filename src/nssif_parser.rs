@@ -20,16 +20,13 @@ pub fn read(file: &File) -> Result<Graph, Error> {
             }
         }
     }
+    graph.or_nodes.sort();
+    graph.or_nodes.dedup();
+    graph.and_nodes.sort();
+    graph.or_nodes.dedup();
     Ok(graph)
 }
 
-#[derive(Debug, Clone)]
-pub struct Graph {
-    or_nodes: Vec<NodeId>,
-    and_nodes: Vec<NodeId>,
-    p_edges: Vec<(NodeId, NodeId)>,
-    n_edges: Vec<(NodeId, NodeId)>,
-}
 #[derive(Debug, Clone)]
 struct Vertex {
     node: NodeId,
@@ -71,6 +68,13 @@ impl Fact for ObsELabel {
         sym
     }
 }
+#[derive(Debug, Clone)]
+pub struct Graph {
+    or_nodes: Vec<NodeId>,
+    and_nodes: Vec<NodeId>,
+    p_edges: Vec<(NodeId, NodeId)>,
+    n_edges: Vec<(NodeId, NodeId)>,
+}
 impl Graph {
     pub fn empty() -> Graph {
         Graph {
@@ -80,6 +84,19 @@ impl Graph {
             n_edges: vec![],
         }
     }
+    pub fn or_nodes(&self) -> &[NodeId] {
+        &self.or_nodes
+    }
+    pub fn and_nodes(&self) -> &[NodeId] {
+        &self.and_nodes
+    }
+    pub fn activations(&self) -> &[(NodeId, NodeId)] {
+        &self.p_edges
+    }
+    pub fn inhibitions(&self) -> &[(NodeId, NodeId)] {
+        &self.n_edges
+    }
+
     fn add(&mut self, stm: Statement) {
         let targetnode = NodeId::Or(stm.target);
         self.or_nodes.push(targetnode.clone());
@@ -123,66 +140,7 @@ impl Graph {
             }
         }
     }
-    // fn add(&mut self, stm: Statement) {
-    //     let targetnode = format!("or(\"{}\")", stm.target);
-    //     self.or_nodes.insert(targetnode.clone());
-    //     match stm.start {
-    //         SNode::Single(expr) => {
-    //             let startnode = format!("or(\"{}\")", expr.ident);
-    //             self.or_nodes.insert(startnode.clone());
-    //             if expr.negated {
-    //                 self.n_edges.push((startnode, targetnode));
-    //             } else {
-    //                 self.p_edges.push((startnode, targetnode));
-    //             }
-    //         }
-    //         SNode::List(l) => {
-    //             let mut inner = "".to_string();
-    //             let mut pos = vec![];
-    //             let mut neg = vec![];
-    //             for expr in l {
-    //                 if expr.negated {
-    //                     inner = format!("neg__{}__AND__{}", &expr.ident, inner);
-    //                     neg.push(expr.ident);
-    //                 } else {
-    //                     inner = format!("{}__AND__{}", &expr.ident, inner);
-    //                     pos.push(expr.ident);
-    //                 }
-    //             }
-    //             let andnode = format!("and({})", inner);
-    //             self.and_nodes.insert(andnode.clone());
-    //             self.p_edges.push((andnode.clone(), targetnode.clone()));
 
-    //             for node in pos {
-    //                 let startnode = format!("or(\"{}\")", node);
-    //                 self.or_nodes.insert(startnode.clone());
-    //                 self.p_edges.push((startnode.clone(), andnode.clone()));
-    //             }
-    //             for node in neg {
-    //                 let startnode = format!("or(\"{}\")", node);
-    //                 self.or_nodes.insert(startnode.clone());
-    //                 self.n_edges.push((startnode, andnode.clone()));
-    //             }
-    //         }
-    //     }
-    // }
-
-    // pub fn to_string(&self) -> String {
-    //     let mut res = String::new();
-    //     for node in &self.or_nodes {
-    //         res = res + "vertex(" + node + ").\n"
-    //     }
-    //     for node in &self.and_nodes {
-    //         res = res + "vertex(" + node + ").\n"
-    //     }
-    //     for &(ref s, ref t) in &self.p_edges {
-    //         res = res + "obs_elabel(" + s + "," + t + ",1).\n";
-    //     }
-    //     for &(ref s, ref t) in &self.n_edges {
-    //         res = res + "obs_elabel(" + s + "," + t + ",-1).\n";
-    //     }
-    //     res
-    // }
     pub fn to_facts(&self) -> Facts {
         let mut facts = Facts::empty();
         for node in &self.or_nodes {

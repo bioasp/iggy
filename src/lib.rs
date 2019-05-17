@@ -53,8 +53,8 @@ impl Fact for ReturnFact {
     }
 }
 
-#[derive(Debug, Clone)]
-enum NodeId {
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum NodeId {
     Or(String),
     And(String),
 }
