@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -220,21 +219,43 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
         acc
     });
     observed.dedup();
+    let observed = observed;
 
-    // let unobserved = graph.or_nodes().difference(&observed);
-    // let not_in_model = observed.difference(&graph.or_nodes);
+    // TODO: replace with unobserved.drain_filter
+    let mut unobserved = graph.or_nodes().to_owned();
+    let mut i = 0;
+    while i != unobserved.len() {
+        if observed.contains(&mut unobserved[i]) {
+            let _val = unobserved.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+    let unobserved = unobserved;
 
-    // println!(" unobserved species   : {}", unobserved.count());
+    // TODO: replace with observed.drain_filter
+    let mut not_in_model = observed.clone();
+    let mut i = 0;
+    while i != not_in_model.len() {
+        if graph.or_nodes().contains(&mut not_in_model[i]) {
+            let _val = not_in_model.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+    let not_in_model = not_in_model;
+
+    println!(" unobserved nodes     : {}", unobserved.len());
     println!(" observed nodes       : {}", observed.len());
-    // println!("  inputs                : {}", profile.input.len());
-    // println!("  +                     : {}", profile.plus.len());
-    // println!("  -                     : {}", profile.minus.len());
-    // println!("  0                     : {}", profile.zero.len());
-    // println!("  notPlus               : {}", profile.notplus.len());
-    // println!("  notMinus              : {}", profile.notminus.len());
-    // println!("  Min                   : {}", profile.min.len());
-    // println!("  Max                   : {}", profile.max.len());
-    // println!("  observed not in model : {}", not_in_model.count());
+    println!("  inputs                : {}", profile.input.len());
+    println!("  +                     : {}", profile.plus.len());
+    println!("  -                     : {}", profile.minus.len());
+    println!("  0                     : {}", profile.zero.len());
+    println!("  notPlus               : {}", profile.notplus.len());
+    println!("  notMinus              : {}", profile.notminus.len());
+    println!("  Min                   : {}", profile.min.len());
+    println!("  Max                   : {}", profile.max.len());
+    println!("  observed not in model : {}", not_in_model.len());
 }
 
 fn compute_mics(graph: &Facts, profile: &Facts, inputs: &Facts, setting: &SETTING) {

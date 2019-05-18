@@ -9,14 +9,14 @@ use std::io::BufReader;
 #[derive(Debug, Clone)]
 pub struct Profile {
     id: ProfileId,
-    pub input: HashSet<String>,
-    pub plus: HashSet<String>,
-    pub minus: HashSet<String>,
-    pub zero: HashSet<String>,
-    pub notplus: HashSet<String>,
-    pub notminus: HashSet<String>,
-    pub min: HashSet<String>,
-    pub max: HashSet<String>,
+    pub input: Vec<NodeId>,
+    pub plus: Vec<NodeId>,
+    pub minus: Vec<NodeId>,
+    pub zero: Vec<NodeId>,
+    pub notplus: Vec<NodeId>,
+    pub notminus: Vec<NodeId>,
+    pub min: Vec<NodeId>,
+    pub max: Vec<NodeId>,
 }
 pub enum NodeSign {
     Plus,
@@ -29,7 +29,7 @@ type ProfileId = String;
 
 pub struct Input<'a> {
     profile: &'a ProfileId,
-    node: NodeId,
+    node: &'a NodeId,
 }
 impl<'a> Fact for Input<'a> {
     fn symbol(&self) -> Result<Symbol, Error> {
@@ -41,7 +41,7 @@ impl<'a> Fact for Input<'a> {
 }
 pub struct ObsVLabel<'a> {
     profile: &'a ProfileId,
-    node: NodeId,
+    node: &'a NodeId,
     sign: NodeSign,
 }
 impl<'a> Fact for ObsVLabel<'a> {
@@ -61,7 +61,7 @@ impl<'a> Fact for ObsVLabel<'a> {
 }
 pub struct IsMin<'a> {
     profile: &'a ProfileId,
-    node: NodeId,
+    node: &'a NodeId,
 }
 impl<'a> Fact for IsMin<'a> {
     fn symbol(&self) -> Result<Symbol, Error> {
@@ -73,7 +73,7 @@ impl<'a> Fact for IsMin<'a> {
 }
 pub struct IsMax<'a> {
     profile: &'a ProfileId,
-    node: NodeId,
+    node: &'a NodeId,
 }
 impl<'a> Fact for IsMax<'a> {
     fn symbol(&self) -> Result<Symbol, Error> {
@@ -84,87 +84,59 @@ impl<'a> Fact for IsMax<'a> {
     }
 }
 impl Profile {
-    // pub fn to_string(&self) -> String {
-    //     let mut res = String::new();
-    //     for s in &self.plus {
-    //         res = res + "obs_vlabel(" + &self.id + ",or(\"" + &s + "\"),1). ";
-    //     }
-    //     for s in &self.input {
-    //         res = res + "input(" + &self.id + ",or(\"" + &s + "\")). ";
-    //     }
-    //     for s in &self.minus {
-    //         res = res + "obs_vlabel(" + &self.id + ",or(\"" + &s + "\"),-1). ";
-    //     }
-    //     for s in &self.zero {
-    //         res = res + "obs_vlabel(" + &self.id + ",or(\"" + &s + "\"),0). ";
-    //     }
-    //     for s in &self.notplus {
-    //         res = res + "obs_vlabel(" + &self.id + ",or(\"" + &s + "\"),notPlus). ";
-    //     }
-    //     for s in &self.notminus {
-    //         res = res + "obs_vlabel(" + &self.id + ",or(\"" + &s + "\"),notMinus). ";
-    //     }
-    //     for s in &self.min {
-    //         res = res + "ismin(" + &self.id + ",or(\"" + &s + "\")). ";
-    //     }
-    //     for s in &self.max {
-    //         res = res + "ismax(" + &self.id + ",or(\"" + &s + "\")). ";
-    //     }
-    //     res
-    // }
     pub fn to_facts(&self) -> Facts {
         let mut facts = Facts::empty();
-        for s in &self.plus {
+        for node in &self.plus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
                 sign: NodeSign::Plus,
             });
         }
-        for s in &self.minus {
+        for node in &self.minus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
                 sign: NodeSign::Minus,
             });
         }
-        for s in &self.zero {
+        for node in &self.zero {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
                 sign: NodeSign::Zero,
             });
         }
-        for s in &self.notplus {
+        for node in &self.notplus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
                 sign: NodeSign::NotPlus,
             });
         }
-        for s in &self.notminus {
+        for node in &self.notminus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
                 sign: NodeSign::NotMinus,
             });
         }
-        for s in &self.input {
+        for node in &self.input {
             facts.add_fact(&Input {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
             });
         }
-        for s in &self.min {
+        for node in &self.min {
             facts.add_fact(&IsMin {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
             });
         }
-        for s in &self.max {
+        for node in &self.max {
             facts.add_fact(&IsMax {
                 profile: &self.id,
-                node: NodeId::Or(s.clone()),
+                node: node,
             });
         }
         facts
@@ -173,14 +145,14 @@ impl Profile {
 
 pub fn read(file: &File, id: &str) -> Result<Profile, Error> {
     let file = BufReader::new(file);
-    let mut input = HashSet::new();
-    let mut plus = HashSet::new();
-    let mut minus = HashSet::new();
-    let mut zero = HashSet::new();
-    let mut notplus = HashSet::new();
-    let mut notminus = HashSet::new();
-    let mut min = HashSet::new();
-    let mut max = HashSet::new();
+    let mut input = vec![];
+    let mut plus = vec![];
+    let mut minus = vec![];
+    let mut zero = vec![];
+    let mut notplus = vec![];
+    let mut notminus = vec![];
+    let mut min = vec![];
+    let mut max = vec![];
 
     for line in file.lines() {
         let l1 = line?;
@@ -188,28 +160,28 @@ pub fn read(file: &File, id: &str) -> Result<Profile, Error> {
         if l.len() != 0 {
             match profile::statement(&l) {
                 Ok(PStatement::Input(s)) => {
-                    input.insert(format!("{}", s));
+                    input.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Plus(s)) => {
-                    plus.insert(format!("{}", s));
+                    plus.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Minus(s)) => {
-                    minus.insert(format!("{}", s));
+                    minus.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Zero(s)) => {
-                    zero.insert(format!("{}", s));
+                    zero.push(NodeId::Or(s));
                 }
                 Ok(PStatement::NotPlus(s)) => {
-                    notplus.insert(format!("{}", s));
+                    notplus.push(NodeId::Or(s));
                 }
                 Ok(PStatement::NotMinus(s)) => {
-                    notminus.insert(format!("{}", s));
+                    notminus.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Min(s)) => {
-                    min.insert(format!("{}", s));
+                    min.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Max(s)) => {
-                    max.insert(format!("{}", s));
+                    max.push(NodeId::Or(s));
                 }
                 Err(e) => println!("Parse error: {}", e),
             }

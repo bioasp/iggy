@@ -291,9 +291,10 @@ fn add_facts(ctl: &mut Control, facts: &Facts) {
 
         // initilize atom to add
         let atom = ast::Atom::from_symbol(location, *sym);
-        // create atom enable
-        // let lit = ast::Literal::from_atom(atom.location(), ast::Sign::None, atom);
+
+        // create literal
         let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
+
         // add atom enable to the rule body
         let hlit = ast::HeadLiteral::new(atom.location(), ast::HeadLiteralType::Literal, &lit);
 
