@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -72,13 +71,15 @@ fn main() {
 
     println!("Reading network model from {:?}.", opt.networkfile);
     let f = File::open(opt.networkfile).unwrap();
-    let graph = nssif_parser::read(&f).unwrap();
-    network_statistics(&graph);
+    let ggraph = nssif_parser::read(&f).unwrap();
+    let graph = ggraph.to_facts();
+    network_statistics(&ggraph);
 
     println!("\nReading observations from {:?}.", opt.observationfile);
     let f = File::open(opt.observationfile).unwrap();
-    let profile = profile_parser::read(&f).unwrap();
-    observation_statistics(&profile, &graph);
+    let pprofile = profile_parser::read(&f, "x1").unwrap();
+    let profile = pprofile.to_facts();
+    observation_statistics(&pprofile, &ggraph);
 
     if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
         println!("The following observations are contradictory. Please correct them!");
@@ -96,7 +97,7 @@ fn main() {
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
         } else {
-            Inputs::empty()
+            Facts::empty()
         }
     };
 
@@ -195,33 +196,56 @@ fn get_setting(opt: &Opt) -> SETTING {
 
 fn network_statistics(graph: &Graph) {
     println!("\n# Network statistics");
-    println!("  OR nodes (species): {}", graph.or_nodes.len());
+    println!("  OR nodes (species): {}", graph.or_nodes().len());
     println!(
         "  AND nodes (complex regulation): {}",
-        graph.and_nodes.len()
+        graph.and_nodes().len()
     );
-    println!("  Activations = {}", graph.p_edges.len());
-    println!("  Inhibitions = {}", graph.n_edges.len());
+    println!("  Activations = {}", graph.activations().len());
+    println!("  Inhibitions = {}", graph.inhibitions().len());
     // println!("          Dual = {}", len(unspecified))
 }
 
 fn observation_statistics(profile: &Profile, graph: &Graph) {
+    println!("\n# Observations statistics");
     let p = profile.clone();
     let tmp = [
         p.input, p.plus, p.minus, p.zero, p.notplus, p.notminus, p.min, p.max,
     ];
-    let observed = tmp.iter().fold(HashSet::new(), |mut acc, x| {
+    let mut observed = tmp.iter().fold(vec![], |mut acc, x| {
         for n in x {
-            acc.insert(n.clone());
+            acc.push(n.clone());
         }
         acc
     });
+    observed.dedup();
+    let observed = observed;
 
-    let unobserved = graph.or_nodes.difference(&observed);
-    let not_in_model = observed.difference(&graph.or_nodes);
+    // TODO: replace with unobserved.drain_filter
+    let mut unobserved = graph.or_nodes().to_owned();
+    let mut i = 0;
+    while i != unobserved.len() {
+        if observed.contains(&mut unobserved[i]) {
+            let _val = unobserved.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+    let unobserved = unobserved;
 
-    println!("\n# Observations statistics");
-    println!(" unobserved species   : {}", unobserved.count());
+    // TODO: replace with observed.drain_filter
+    let mut not_in_model = observed.clone();
+    let mut i = 0;
+    while i != not_in_model.len() {
+        if graph.or_nodes().contains(&mut not_in_model[i]) {
+            let _val = not_in_model.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+    let not_in_model = not_in_model;
+
+    println!(" unobserved nodes     : {}", unobserved.len());
     println!(" observed nodes       : {}", observed.len());
     println!("  inputs                : {}", profile.input.len());
     println!("  +                     : {}", profile.plus.len());
@@ -231,10 +255,10 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("  notMinus              : {}", profile.notminus.len());
     println!("  Min                   : {}", profile.min.len());
     println!("  Max                   : {}", profile.max.len());
-    println!("  observed not in model : {}", not_in_model.count());
+    println!("  observed not in model : {}", not_in_model.len());
 }
 
-fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Inputs, setting: &SETTING) {
+fn compute_mics(graph: &Facts, profile: &Facts, inputs: &Facts, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
     io::stdout().flush().ok().expect("Could not flush stdout");
     let mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
@@ -256,9 +280,9 @@ fn compute_mics(graph: &Graph, profile: &Profile, inputs: &Inputs, setting: &SET
 }
 
 fn compute_scenfit_labelings(
-    graph: &Graph,
-    profile: &Profile,
-    inputs: &Inputs,
+    graph: &Facts,
+    profile: &Facts,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) {
@@ -280,9 +304,9 @@ fn compute_scenfit_labelings(
 }
 
 fn compute_mcos_labelings(
-    graph: &Graph,
-    profile: &Profile,
-    inputs: &Inputs,
+    graph: &Facts,
+    profile: &Facts,
+    inputs: &Facts,
     number: u32,
     setting: &SETTING,
 ) {

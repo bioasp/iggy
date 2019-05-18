@@ -1,5 +1,6 @@
+use crate::{Fact, Facts, NodeId};
+use clingo::*;
 use failure::*;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -19,32 +20,90 @@ pub fn read(file: &File) -> Result<Graph, Error> {
             }
         }
     }
+    graph.or_nodes.sort();
+    graph.or_nodes.dedup();
+    graph.and_nodes.sort();
+    graph.or_nodes.dedup();
     Ok(graph)
 }
 
 #[derive(Debug, Clone)]
+struct Vertex {
+    node: NodeId,
+}
+impl Fact for Vertex {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let node = match &self.node {
+            NodeId::Or(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("or", &[id], true)?
+            }
+            NodeId::And(node) => {
+                let id = Symbol::create_string(node).unwrap();
+                Symbol::create_function("and", &[id], true)?
+            }
+        };
+        let sym = Symbol::create_function("vertex", &[node], true);
+        sym
+    }
+}
+pub enum EdgeSign {
+    Plus,
+    Minus,
+}
+pub struct ObsELabel {
+    start: NodeId,
+    target: NodeId,
+    sign: EdgeSign,
+}
+impl Fact for ObsELabel {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let start = self.start.symbol()?;
+        let target = self.target.symbol()?;
+        let sign = match &self.sign {
+            EdgeSign::Plus => Symbol::create_number(1),
+            EdgeSign::Minus => Symbol::create_number(-1),
+        };
+        let sym = Symbol::create_function("obs_elabel", &[start, target, sign], true);
+        sym
+    }
+}
+#[derive(Debug, Clone)]
 pub struct Graph {
-    pub or_nodes: HashSet<String>,
-    pub and_nodes: HashSet<String>,
-    pub p_edges: Vec<(String, String)>,
-    pub n_edges: Vec<(String, String)>,
+    or_nodes: Vec<NodeId>,
+    and_nodes: Vec<NodeId>,
+    p_edges: Vec<(NodeId, NodeId)>,
+    n_edges: Vec<(NodeId, NodeId)>,
 }
 impl Graph {
     pub fn empty() -> Graph {
         Graph {
-            or_nodes: HashSet::new(),
-            and_nodes: HashSet::new(),
+            or_nodes: vec![],
+            and_nodes: vec![],
             p_edges: vec![],
             n_edges: vec![],
         }
     }
+    pub fn or_nodes(&self) -> &[NodeId] {
+        &self.or_nodes
+    }
+    pub fn and_nodes(&self) -> &[NodeId] {
+        &self.and_nodes
+    }
+    pub fn activations(&self) -> &[(NodeId, NodeId)] {
+        &self.p_edges
+    }
+    pub fn inhibitions(&self) -> &[(NodeId, NodeId)] {
+        &self.n_edges
+    }
+
     fn add(&mut self, stm: Statement) {
-        let targetnode = format!("or(\"{}\")", stm.target);
-        self.or_nodes.insert(targetnode.clone());
+        let targetnode = NodeId::Or(stm.target);
+        self.or_nodes.push(targetnode.clone());
         match stm.start {
             SNode::Single(expr) => {
-                let startnode = format!("or(\"{}\")", expr.ident);
-                self.or_nodes.insert(startnode.clone()); //startnode.clone());
+                let startnode = NodeId::Or(expr.ident);
+                self.or_nodes.push(startnode.clone());
                 if expr.negated {
                     self.n_edges.push((startnode, targetnode));
                 } else {
@@ -64,39 +123,47 @@ impl Graph {
                         pos.push(expr.ident);
                     }
                 }
-                let andnode = format!("and({})", inner);
-                self.and_nodes.insert(andnode.clone());
+                let andnode = NodeId::And(inner);
+                self.and_nodes.push(andnode.clone());
                 self.p_edges.push((andnode.clone(), targetnode.clone()));
 
                 for node in pos {
-                    let startnode = format!("or(\"{}\")", node);
-                    self.or_nodes.insert(startnode.clone());
-                    self.p_edges.push((startnode.clone(), andnode.clone()));
+                    let startnode = NodeId::Or(node);
+                    self.or_nodes.push(startnode.clone());
+                    self.p_edges.push((startnode, andnode.clone()));
                 }
                 for node in neg {
-                    let startnode = format!("or(\"{}\")", node);
-                    self.or_nodes.insert(startnode.clone());
+                    let startnode = NodeId::Or(node);
+                    self.or_nodes.push(startnode.clone());
                     self.n_edges.push((startnode, andnode.clone()));
                 }
             }
         }
     }
 
-    pub fn to_string(&self) -> String {
-        let mut res = String::new();
+    pub fn to_facts(&self) -> Facts {
+        let mut facts = Facts::empty();
         for node in &self.or_nodes {
-            res = res + "vertex(" + node + ").\n"
+            facts.add_fact(&Vertex { node: node.clone() });
         }
         for node in &self.and_nodes {
-            res = res + "vertex(" + node + ").\n"
+            facts.add_fact(&Vertex { node: node.clone() });
         }
         for &(ref s, ref t) in &self.p_edges {
-            res = res + "obs_elabel(" + s + "," + t + ",1).\n";
+            facts.add_fact(&ObsELabel {
+                start: s.clone(),
+                target: t.clone(),
+                sign: EdgeSign::Plus,
+            });
         }
         for &(ref s, ref t) in &self.n_edges {
-            res = res + "obs_elabel(" + s + "," + t + ",-1).\n";
+            facts.add_fact(&ObsELabel {
+                start: s.clone(),
+                target: t.clone(),
+                sign: EdgeSign::Minus,
+            });
         }
-        res
+        facts
     }
 }
 
