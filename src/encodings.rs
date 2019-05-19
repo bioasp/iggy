@@ -359,3 +359,12 @@ elabel(U,V,-1) :- bot, edge(U,V),               not trivial(V), not input(V), no
 #heuristic active(X). [1,false]
 #show  active/1.
 ";
+
+pub const PRG_REMOVE_EDGES: &'static str = "
+0{rep(remedge(U,V,S))}1 :- not mandatory(U,V), obs_elabel(U,V,S).
+0{rep(remedge(U,V,1)), rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_elabel(U,V,1), not obs_elabel(U,V,-1).
+";
+
+pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
+#minimize[ not false = 0, rep(remedge(U,V,S))=1 @ 1, rep(addedge(U,V,S))=2 @ 1 , rep(addeddy(V))=2 @ 1].
+";

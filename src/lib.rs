@@ -1,10 +1,11 @@
 pub mod nssif_parser;
+use nssif_parser::Graph;
 pub mod profile_parser;
 use clingo::*;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
-use crate::encodings::*;
+use encodings::*;
 use failure::*;
 
 pub struct SETTING {
@@ -13,6 +14,19 @@ pub struct SETTING {
     pub fp: bool,
     pub fc: bool,
 }
+
+pub fn network_statistics(graph: &Graph) {
+    println!("\n# Network statistics");
+    println!("  OR nodes (species): {}", graph.or_nodes().len());
+    println!(
+        "  AND nodes (complex regulation): {}",
+        graph.and_nodes().len()
+    );
+    println!("  Activations = {}", graph.activations().len());
+    println!("  Inhibitions = {}", graph.inhibitions().len());
+    // println!("          Dual = {}", len(unspecified))
+}
+
 #[derive(Debug, Fail)]
 #[fail(display = "IggyError: {}", msg)]
 pub struct IggyError {
@@ -27,6 +41,8 @@ impl IggyError {
 pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
 }
+
+#[derive(Debug)]
 pub struct Facts {
     facts: Vec<Symbol>,
 }
@@ -42,6 +58,11 @@ impl Facts {
     }
     pub fn add_fact(&mut self, fact: &Fact) {
         self.facts.push(fact.symbol().unwrap());
+    }
+    pub fn union(&mut self, facts: &Facts) {
+        for s in &facts.facts {
+            self.facts.push(s.clone());
+        }
     }
 }
 struct ReturnFact {
@@ -628,14 +649,12 @@ pub fn get_predictions_under_mcos(
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
-    // let options = vec!["--opt-strategy=5".to_string()];
-    let options = vec![
+    let mut ctl = Control::new(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
         // format!("--opt-bound={}",opt)
-    ];
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profile);
@@ -679,14 +698,12 @@ pub fn get_predictions_under_scenfit(
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
-    // let options = vec!["--opt-strategy=5".to_string()];
-    let options = vec![
+    let mut ctl = Control::new(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
         // format!("--opt-bound={}",opt)
-    ];
-    let mut ctl = Control::new(options)?;
+    ])?;
 
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profile);
@@ -721,6 +738,140 @@ pub fn get_predictions_under_scenfit(
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
     let model = cautious_consequences_optimal_models(&mut handle)?;
     Ok(extract_predictions(&model)?)
+}
+/// only apply with elementary path consistency notion
+pub fn get_opt_add_remove_edges_greedy(
+    graph: &Facts,
+    profiles: &Facts,
+    inputs: &Facts,
+    setting: &SETTING,
+) -> Result<(), Error> {
+    // create a control object and pass command line arguments
+    let mut ctl = Control::new(vec![
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--project".to_string(),
+        "--quiet=1".to_string(),
+    ])?;
+
+    add_facts(&mut ctl, graph);
+    add_facts(&mut ctl, profiles);
+    add_facts(&mut ctl, inputs);
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+    ctl.add("base", &[], PRG_FWD_PROP)?;
+    ctl.add("base", &[], PRG_ELEM_PATH)?;
+    ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+    ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    //   bscenfit   = models[0].score[0]
+    //   brepscore  = models[0].score[1]
+
+    //   print('model:   ',models[0])
+    //   print('bscenfit:   ',bscenfit)
+    //   print('brepscore:  ',brepscore)
+
+    //   strt_edges = TermSet()
+    let fedges: Vec<(u32, u32, u32)> = vec![];
+    //   fedges     = [(strt_edges, bscenfit, brepscore)]
+    //   tedges     = []
+    //   dedges     = []
+    //   coptions   = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
+    //   solver     = GringoClasp(clasp_options=coptions)
+
+    while !fedges.is_empty() {
+        //     sys.stdout.flush()
+        //     print ("TODO: ",len(fedges))
+        //     (oedges, oscenfit, orepscore) = fedges.pop()
+
+        //     print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
+        //     print('len(oedges):',len(oedges))
+
+        //     // extend till no better solution can be found
+
+        let end = true; // assume this time it's the end
+                        //     f_oedges  = TermSet(oedges).to_file()
+                        //     prg       = [ inst, f_oedges, remove_edges_prg, best_one_edge_prg,
+                        //                   min_repairs_prg, show_rep_prg
+                        //                 ] + sem + scenfit
+                        //     models    = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+                        //     nscenfit  = models[0].score[0]
+                        //     nrepscore = models[0].score[1]+2*(len(oedges))
+
+        //     print('nscenfit:   ',nscenfit)
+        //     print('nrepscore:  ',nrepscore)
+
+        //     if (nscenfit < oscenfit) or nrepscore < orepscore: # better score or more that 1 scenfit
+        //       print('maybe better solution:')
+        //       print('#models: ',len(models))
+
+        //       for m in models:
+        //         print('MMM   ',models)
+        //         nend = TermSet()
+        //         for a in m :
+        //           if a.pred() == 'rep' :
+        //             if a.arg(0)[0:7]=='addeddy' :
+        //               print('new addeddy to',a.arg(0)[8:-1])
+        //               nend  = String2TermSet('edge_end('+(a.arg(0)[8:-1])+')')
+
+        //               // search starts of the addeddy
+        //               print('search best edge starts')
+        //               f_end  = TermSet(nend).to_file()
+
+        //               prg    = [ inst, f_oedges, remove_edges_prg, f_end, best_edge_start_prg,
+        //                          min_repairs_prg, show_rep_prg
+        //                        ] + sem + scenfit
+        //               starts = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+        //               os.unlink(f_end)
+        //               print(starts)
+        //               for s in starts:
+        //                 n2scenfit  = s.score[0]
+        //                 n2repscore = s.score[1]+2*(len(oedges))
+        //                 print('n2scenfit:   ', n2scenfit)
+        //                 print('n2repscore:  ', n2repscore)
+
+        //                 if (n2scenfit < oscenfit) or n2repscore < orepscore: # better score or more that 1 scenfit
+        //                   print('better solution:')
+        //                   if (n2scenfit<bscenfit):
+        //                     bscenfit  = n2scenfit # update bscenfit
+        //                     brepscore = n2repscore
+        //                   if (n2scenfit == bscenfit) :
+        //                     if (n2repscore<brepscore) : brepscore = n2repscore
+
+        //                   nedge = TermSet()
+        //                   for a in s :
+        //                     if a.pred() == 'rep' :
+        //                       if a.arg(0)[0:7]=='addedge' :
+        //                         print('new edge ',a.arg(0)[8:-1])
+        //                         nedge = String2TermSet('obs_elabel('+(a.arg(0)[8:-1])+')')
+        //                         end   = False
+
+        //                   nedges = oedges.union(nedge)
+        //                   if (nedges,n2scenfit,n2repscore) not in fedges and nedges not in dedges:
+        //                     fedges.append((nedges,n2scenfit,n2repscore))
+        //                     dedges.append(nedges)
+
+        if end {
+            //       if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
+            //         print('LAST tedges append',oedges)
+            //         tedges.append((oedges,oscenfit,orepscore))
+        }
+    }
+    //     os.unlink(f_oedges)
+
+    // take only the results with the best scenfit
+    //   redges=[]
+    //   for (tedges,tscenfit,trepairs) in tedges:
+    //     if tscenfit == bscenfit: redges.append((tedges,trepairs))
+
+    //   os.unlink(inst)
+    //   return (bscenfit,redges)
+    Ok(())
 }
 
 /// Given a model this function returns a vector of mics

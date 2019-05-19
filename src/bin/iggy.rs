@@ -194,18 +194,6 @@ fn get_setting(opt: &Opt) -> SETTING {
     setting
 }
 
-fn network_statistics(graph: &Graph) {
-    println!("\n# Network statistics");
-    println!("  OR nodes (species): {}", graph.or_nodes().len());
-    println!(
-        "  AND nodes (complex regulation): {}",
-        graph.and_nodes().len()
-    );
-    println!("  Activations = {}", graph.activations().len());
-    println!("  Inhibitions = {}", graph.inhibitions().len());
-    // println!("          Dual = {}", len(unspecified))
-}
-
 fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("\n# Observations statistics");
     let p = profile.clone();
