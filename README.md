@@ -32,7 +32,7 @@ For more options you can ask for help as follows:
 	FLAGS:
 	    -a, --autoinputs                 Declare nodes with indegree 0 as inputs
 	        --depmat                     Combine multiple states, a change must be explained by an elementary path from an
-			                             input
+	                                     input
 	        --elempath                   Every change must be explained by an elementary path from an input
 	        --founded_constraints_off    Disable foundedness constraints
 	        --fwd_propagation_off        Disable forward propagation constraints
@@ -79,7 +79,7 @@ For more options you can ask for help as follows:
 	    -n, --network <networkfile>            Influence graph in NSSIF format
 	    -o, --observations <observationdir>    Directory of observations in bioquali format
 	    -m, --repair_mode <repair_mode>        Repair mode: remove = remove edges (default), 
-		                                                    optgraph = add + remove edges,
+	                                                        optgraph = add + remove edges,
 	                                                        flip = flip edges
 	    -r, --show_repairs <show_repairs>      Show N repairs to print, default is OFF, 0=all
 
