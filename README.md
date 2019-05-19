@@ -22,7 +22,7 @@ Typical usage is:
 For more options you can ask for help as follows:
 
 	$ iggy -h
-	Iggy 0.1.0
+	iggy 0.1.0
 	Sven Thiele <sthiele78@gmail.com>
 	Iggy confronts interaction graph models with observations of (signed) changes between two measured states (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
@@ -56,38 +56,32 @@ Typical usage is:
 For more options you can ask for help as follows:
 
 	$ opt_graph -h
-	usage: opt_graph [-h] [--no_fwd_propagation] [--no_founded_constraints]
-			    [--elempath] [--depmat] [--autoinputs]
-			    [--show_repairs SHOW_REPAIRS] [--repair_mode REPAIR_MODE]
-			    networkfile observationfiles
+	opt_graph 0.1.0
+	Sven Thiele <sthiele78@gmail.com>
+	Opt-graph confronts interaction graph models with observations of (signed) changes between two measured states. Opt-
+	graph computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given
+	network
 
-	Opt-graph confronts a biological network given as interaction graphs with sets
-	of experimental observations given as signs that represent the concentration
-	changes between two measured states. Opt-graph computes the networks fitting
-	the observation data by removing (or adding) a minimal number of edges in the
-	given network
+	USAGE:
+		opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
 
-	positional arguments:
-	  networkfile           influence graph in SIF format
-	  observationfiles      directory of observations in bioquali format
+	FLAGS:
+		-a, --autoinputs                 Declare nodes with indegree 0 as inputs
+			--depmat                     Combine multiple states, a change must be explained by an elementary path from an
+										input
+			--elempath                   Every change must be explained by an elementary path from an input
+			--founded_constraints_off    Disable foundedness constraints
+			--fwd_propagation_off        Disable forward propagation constraints
+		-h, --help                       Prints help information
+		-V, --version                    Prints version information
 
-	optional arguments:
-	  -h, --help            show this help message and exit
-	  --no_fwd_propagation  turn forward propagation OFF, default is ON
-	  --no_founded_constraints
-				turn constraints OFF that every variation must be
-				founded in an input, default is ON
-	  --elempath            a change must be explained by an elementary path from
-				an input.
-	  --depmat              combines multiple states, a change must be explained
-				by an elementary path from an input.
-	  --autoinputs          compute possible inputs of the network (nodes with
-				indegree 0)
-	  --show_repairs SHOW_REPAIRS
-				number of repairs to show, default is OFF, 0=all
-	  --repair_mode REPAIR_MODE
-				choose repair mode: 1 = add edges (default), 2 = add +
-				remove edges (opt-graph), 3 = flip edges
+	OPTIONS:
+		-n, --network <networkfile>            Influence graph in NSSIF format
+		-o, --observations <observationdir>    Directory of observations in bioquali format
+		-m, --repair_mode <repair_mode>        Repair mode: remove = remove edges (default), optgraph = add + remove edges,
+											flip = flip edges
+		-r, --show_repairs <show_repairs>      Show N repairs to print, default is OFF, 0=all
+
 
 
 # Samples

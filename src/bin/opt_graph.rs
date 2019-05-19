@@ -13,7 +13,7 @@ use structopt::StructOpt;
 /// number of edges in the given network
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "Iggy")]
+#[structopt(name = "opt_graph")]
 struct Opt {
     /// Influence graph in NSSIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]

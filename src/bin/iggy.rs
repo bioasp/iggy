@@ -18,7 +18,7 @@ use iggy::*;
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "Iggy")]
+#[structopt(name = "iggy")]
 struct Opt {
     /// Influence graph in NSSIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
