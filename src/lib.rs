@@ -769,42 +769,75 @@ pub fn get_opt_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
-    //   bscenfit   = models[0].score[0]
-    //   brepscore  = models[0].score[1]
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    handle.resume()?;
+    let cost = match handle.model() {
+        Ok(Some(model)) => model.cost(),
+        Ok(None) => Err(IggyError::new("No model found!"))?,
+        Err(e) => Err(e)?,
+    };
+    let cost = cost.unwrap();
+    let bscenfit = cost[0];
+    let brepscore = cost[1];
 
-    //   print('model:   ',models[0])
-    //   print('bscenfit:   ',bscenfit)
-    //   print('brepscore:  ',brepscore)
+    // print('model:   ',models[0])
+    // print('bscenfit:   ',bscenfit)
+    // print('brepscore:  ',brepscore)
 
-    //   strt_edges = TermSet()
-    let fedges: Vec<(u32, u32, u32)> = vec![];
-    //   fedges     = [(strt_edges, bscenfit, brepscore)]
-    //   tedges     = []
-    //   dedges     = []
-    //   coptions   = '0 --project --opt-strategy=5 --opt-mode=optN --quiet=1'
-    //   solver     = GringoClasp(clasp_options=coptions)
+    let mut fedges: Vec<(Facts, i64, i64)> = vec![(Facts::empty(), bscenfit, brepscore)];
+    // let tedges = vec![];
+    // let dedges = vec![];
 
     while !fedges.is_empty() {
-        //     sys.stdout.flush()
-        //     print ("TODO: ",len(fedges))
-        //     (oedges, oscenfit, orepscore) = fedges.pop()
+        // sys.stdout.flush()
+        // print ("TODO: ",len(fedges))
+        let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
 
-        //     print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
-        //     print('len(oedges):',len(oedges))
+        // print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
+        // print('len(oedges):',len(oedges))
 
-        //     // extend till no better solution can be found
+        // extend till no better solution can be found
 
         let end = true; // assume this time it's the end
-                        //     f_oedges  = TermSet(oedges).to_file()
-                        //     prg       = [ inst, f_oedges, remove_edges_prg, best_one_edge_prg,
-                        //                   min_repairs_prg, show_rep_prg
-                        //                 ] + sem + scenfit
-                        //     models    = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-                        //     nscenfit  = models[0].score[0]
-                        //     nrepscore = models[0].score[1]+2*(len(oedges))
+        let mut ctl = Control::new(vec![
+            "--opt-strategy=5".to_string(),
+            "--opt-mode=optN".to_string(),
+            "--project".to_string(),
+            "--quiet=1".to_string(),
+        ])?;
+        add_facts(&mut ctl, graph);
+        add_facts(&mut ctl, profiles);
+        add_facts(&mut ctl, inputs);
+        add_facts(&mut ctl, &oedges);
 
-        //     print('nscenfit:   ',nscenfit)
-        //     print('nrepscore:  ',nrepscore)
+        ctl.add("base", &[], PRG_SIGN_CONS)?;
+        ctl.add("base", &[], PRG_BWD_PROP)?;
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+        ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+        ctl.add("base", &[], PRG_BEST_ONE_EDGE)?;
+        ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+        ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+        ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+        ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+        ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+        // ground & solve
+        let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+        handle.resume()?;
+        let cost = match handle.model() {
+            Ok(Some(model)) => model.cost(),
+            Ok(None) => Err(IggyError::new("No model found!"))?,
+            Err(e) => Err(e)?,
+        };
+        let cost = cost.unwrap();
+
+        let nscenfit = cost[0];
+        let nrepscore = cost[1] + (2 * oedges.len() as i64);
+
+        // print('nscenfit:   ',nscenfit)
+        // print('nrepscore:  ',nrepscore)
 
         //     if (nscenfit < oscenfit) or nrepscore < orepscore: # better score or more that 1 scenfit
         //       print('maybe better solution:')

@@ -368,3 +368,13 @@ pub const PRG_REMOVE_EDGES: &'static str = "
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
 #minimize[ not false = 0, rep(remedge(U,V,S))=1 @ 1, rep(addedge(U,V,S))=2 @ 1 , rep(addeddy(V))=2 @ 1].
 ";
+
+pub const PRG_BEST_ONE_EDGE: &'static str = "
+% guess one edge end to add
+0{rep(addeddy(or(V)))}  :-     vertex(or(V)).
+
+% new inputs through repair
+input(E,\"unknown\")      :- exp(E).
+vertex(\"unknown\").
+elabel(\"unknown\", V,1)  :- rep(addeddy(V)).
+:-rep(addeddy(U)),rep(addeddy(V)),U!=V.";
