@@ -42,7 +42,7 @@ pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Facts {
     facts: Vec<Symbol>,
 }
@@ -180,8 +180,8 @@ pub fn check_observations(profile: &Facts) -> Result<CheckResult, Error> {
 
             //     // close the solve handle
             //     handle
-            //         .get()
-            //         .expect("Failed to get result from solve handle.");
+            //   .get()
+            //   .expect("Failed to get result from solve handle.");
             //     handle.close().expect("Failed to close solve handle.");
 
             return Ok(CheckResult::Inconsistent(v));
@@ -778,8 +778,8 @@ pub fn get_opt_add_remove_edges_greedy(
         Err(e) => Err(e)?,
     };
     let cost = cost.unwrap();
-    let bscenfit = cost[0];
-    let brepscore = cost[1];
+    let mut bscenfit = cost[0];
+    let mut brepscore = cost[1];
 
     // print('model:   ',models[0])
     // print('bscenfit:   ',bscenfit)
@@ -787,7 +787,7 @@ pub fn get_opt_add_remove_edges_greedy(
 
     let mut fedges: Vec<(Facts, i64, i64)> = vec![(Facts::empty(), bscenfit, brepscore)];
     // let tedges = vec![];
-    // let dedges = vec![];
+    let dedges = vec![];
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
@@ -799,7 +799,7 @@ pub fn get_opt_add_remove_edges_greedy(
 
         // extend till no better solution can be found
 
-        let end = true; // assume this time it's the end
+        let mut end = true; // assume this time it's the end
         let mut ctl = Control::new(vec![
             "--opt-strategy=5".to_string(),
             "--opt-mode=optN".to_string(),
@@ -825,77 +825,143 @@ pub fn get_opt_add_remove_edges_greedy(
 
         // ground & solve
         let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-        handle.resume()?;
-        let cost = match handle.model() {
-            Ok(Some(model)) => model.cost(),
-            Ok(None) => Err(IggyError::new("No model found!"))?,
-            Err(e) => Err(e)?,
-        };
-        let cost = cost.unwrap();
+        loop {
+            handle.resume()?;
+            match handle.model() {
+                Ok(Some(model)) => {
+                    if model.optimality_proven()? {
+                        let symbols = model.symbols(ShowType::SHOWN)?;
+                        let cost = model.cost().unwrap();
 
-        let nscenfit = cost[0];
-        let nrepscore = cost[1] + (2 * oedges.len() as i64);
+                        let nscenfit = cost[0];
+                        let nrepscore = cost[1] + (2 * oedges.len() as i64);
+                        if nscenfit < oscenfit || nrepscore < orepscore {
+                            // better score or more that 1 scenfit
+                            // print('maybe better solution:')
 
-        // print('nscenfit:   ',nscenfit)
-        // print('nrepscore:  ',nrepscore)
+                            for a in symbols {
+                                if a.name().unwrap() == "rep" {
+                                    if a.arguments().unwrap()[0].name().unwrap() == "addeddy" {
+                                        // print('new addeddy to',a.arg(0)[8:-1])
+                                        let nend = Symbol::create_function(
+                                            "edge_end",
+                                            &[a.arguments().unwrap()[0]],
+                                            true,
+                                        )
+                                        .unwrap();
+                                        // search starts of the addeddy
+                                        // print('search best edge starts')
+                                        let mut f_end = Facts::empty();
+                                        f_end.add_fact(&ReturnFact { fact: nend });
+                                        let mut ctl2 = Control::new(vec![
+                                            "--opt-strategy=5".to_string(),
+                                            "--opt-mode=optN".to_string(),
+                                            "--project".to_string(),
+                                            "--quiet=1".to_string(),
+                                        ])?;
+                                        add_facts(&mut ctl2, graph);
+                                        add_facts(&mut ctl2, profiles);
+                                        add_facts(&mut ctl2, inputs);
+                                        add_facts(&mut ctl2, &oedges);
+                                        add_facts(&mut ctl2, &f_end);
 
-        //     if (nscenfit < oscenfit) or nrepscore < orepscore: # better score or more that 1 scenfit
-        //       print('maybe better solution:')
-        //       print('#models: ',len(models))
+                                        ctl2.add("base", &[], PRG_SIGN_CONS)?;
+                                        ctl2.add("base", &[], PRG_BWD_PROP)?;
+                                        ctl2.add("base", &[], PRG_FWD_PROP)?;
+                                        ctl2.add("base", &[], PRG_ELEM_PATH)?;
+                                        ctl2.add("base", &[], PRG_REMOVE_EDGES)?;
+                                        ctl2.add("base", &[], PRG_BEST_EDGE_START)?;
+                                        ctl2.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+                                        ctl2.add("base", &[], PRG_SHOW_REPAIRS)?;
+                                        ctl2.add("base", &[], PRG_ERROR_MEASURE)?;
+                                        ctl2.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+                                        ctl2.add("base", &[], PRG_KEEP_INPUTS)?;
 
-        //       for m in models:
-        //         print('MMM   ',models)
-        //         nend = TermSet()
-        //         for a in m :
-        //           if a.pred() == 'rep' :
-        //             if a.arg(0)[0:7]=='addeddy' :
-        //               print('new addeddy to',a.arg(0)[8:-1])
-        //               nend  = String2TermSet('edge_end('+(a.arg(0)[8:-1])+')')
+                                        // ground & solve
+                                        let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
+                                        loop {
+                                            handle2.resume()?;
+                                            match handle2.model() {
+                                                Ok(Some(model)) => {
+                                                    if model.optimality_proven()? {
+                                                        let symbols2 =
+                                                            model.symbols(ShowType::SHOWN)?;
+                                                        let n2scenfit = model.cost().unwrap()[0];
+                                                        let n2repscore = model.cost().unwrap()[1]
+                                                            + (2 * oedges.len() as i64);
+                                                        // print('n2scenfit:   ', n2scenfit)
+                                                        // print('n2repscore:  ', n2repscore)
 
-        //               // search starts of the addeddy
-        //               print('search best edge starts')
-        //               f_end  = TermSet(nend).to_file()
-
-        //               prg    = [ inst, f_oedges, remove_edges_prg, f_end, best_edge_start_prg,
-        //                          min_repairs_prg, show_rep_prg
-        //                        ] + sem + scenfit
-        //               starts = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-        //               os.unlink(f_end)
-        //               print(starts)
-        //               for s in starts:
-        //                 n2scenfit  = s.score[0]
-        //                 n2repscore = s.score[1]+2*(len(oedges))
-        //                 print('n2scenfit:   ', n2scenfit)
-        //                 print('n2repscore:  ', n2repscore)
-
-        //                 if (n2scenfit < oscenfit) or n2repscore < orepscore: # better score or more that 1 scenfit
-        //                   print('better solution:')
-        //                   if (n2scenfit<bscenfit):
-        //                     bscenfit  = n2scenfit # update bscenfit
-        //                     brepscore = n2repscore
-        //                   if (n2scenfit == bscenfit) :
-        //                     if (n2repscore<brepscore) : brepscore = n2repscore
-
-        //                   nedge = TermSet()
-        //                   for a in s :
-        //                     if a.pred() == 'rep' :
-        //                       if a.arg(0)[0:7]=='addedge' :
-        //                         print('new edge ',a.arg(0)[8:-1])
-        //                         nedge = String2TermSet('obs_elabel('+(a.arg(0)[8:-1])+')')
-        //                         end   = False
-
-        //                   nedges = oedges.union(nedge)
-        //                   if (nedges,n2scenfit,n2repscore) not in fedges and nedges not in dedges:
-        //                     fedges.append((nedges,n2scenfit,n2repscore))
-        //                     dedges.append(nedges)
-
-        if end {
-            //       if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
-            //         print('LAST tedges append',oedges)
-            //         tedges.append((oedges,oscenfit,orepscore))
+                                                        if n2scenfit < oscenfit
+                                                            || n2repscore < orepscore
+                                                        {
+                                                            // better score or more that 1 scenfit
+                                                            // print('better solution:')
+                                                            if n2scenfit < bscenfit {
+                                                                bscenfit = n2scenfit; // update bscenfit
+                                                                brepscore = n2repscore;
+                                                            }
+                                                            if n2scenfit == bscenfit {
+                                                                if n2repscore < brepscore {
+                                                                    brepscore = n2repscore
+                                                                }
+                                                            }
+                                                            let mut nedges = oedges.clone();
+                                                            for a in symbols2 {
+                                                                if a.name().unwrap() == "rep" {
+                                                                    if a.arguments().unwrap()[0]
+                                                                        .name()
+                                                                        .unwrap()
+                                                                        == "addedge"
+                                                                    {
+                                                                        // print('new edge ',a.arg(0)[8:-1])
+                                                                        let nedge = Symbol::create_function("obs_elabel", &[a.arguments().unwrap()[0]], true).unwrap();
+                                                                        nedges.add_fact(
+                                                                            &ReturnFact {
+                                                                                fact: nedge,
+                                                                            },
+                                                                        );
+                                                                        end = false;
+                                                                    }
+                                                                }
+                                                            }
+                                                            let tuple = (
+                                                                nedges.clone(),
+                                                                n2scenfit,
+                                                                n2repscore,
+                                                            );
+                                                            if !fedges.contains(&tuple)
+                                                                && !dedges.contains(&nedges)
+                                                            {
+                                                                // fedges.append((nedges,n2scenfit,n2repscore))
+                                                                // dedges.append(nedges)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Ok(None) => break,
+                                                Err(e) => Err(e)?,
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if end {
+                            // if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
+                            //   print('LAST tedges append',oedges)
+                            //   tedges.append((oedges,oscenfit,orepscore))
+                        }
+                    }
+                }
+                Ok(None) => {
+                    ();
+                }
+                Err(e) => Err(e)?,
+            }
         }
     }
-    //     os.unlink(f_oedges)
+    // os.unlink(f_oedges)
 
     // take only the results with the best scenfit
     //   redges=[]

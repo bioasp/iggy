@@ -13,6 +13,7 @@ edition = "2018"
 [dependencies]
 clingo = {path = "../clingo-rs"} 
 # "0.4.0"
+fact-derive = {path = "../fact_derive"} 
 termion = "1"
 structopt = "0.2"
 failure = "0.1"
