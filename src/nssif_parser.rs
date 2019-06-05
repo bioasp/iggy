@@ -1,5 +1,6 @@
 use crate::{Fact, Facts, NodeId};
 use clingo::*;
+use fact_derive::*;
 use failure::*;
 use std::fs::File;
 use std::io::BufRead;
@@ -27,47 +28,31 @@ pub fn read(file: &File) -> Result<Graph, Error> {
     Ok(graph)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Fact)]
 struct Vertex {
     node: NodeId,
 }
-impl Fact for Vertex {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let node = match &self.node {
-            NodeId::Or(node) => {
-                let id = Symbol::create_string(node).unwrap();
-                Symbol::create_function("or", &[id], true)?
-            }
-            NodeId::And(node) => {
-                let id = Symbol::create_string(node).unwrap();
-                Symbol::create_function("and", &[id], true)?
-            }
-        };
-        let sym = Symbol::create_function("vertex", &[node], true);
-        sym
-    }
-}
+// #[derive(Fact)]
 pub enum EdgeSign {
     Plus,
     Minus,
 }
+impl Fact for EdgeSign {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(match self {
+            EdgeSign::Minus => Symbol::create_number(-1),
+            EdgeSign::Plus => Symbol::create_number(1),
+        })
+    }
+}
+
+#[derive(Fact)]
 pub struct ObsELabel {
     start: NodeId,
     target: NodeId,
     sign: EdgeSign,
 }
-impl Fact for ObsELabel {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let start = self.start.symbol()?;
-        let target = self.target.symbol()?;
-        let sign = match &self.sign {
-            EdgeSign::Plus => Symbol::create_number(1),
-            EdgeSign::Minus => Symbol::create_number(-1),
-        };
-        let sym = Symbol::create_function("obs_elabel", &[start, target, sign], true);
-        sym
-    }
-}
+
 #[derive(Debug, Clone)]
 pub struct Graph {
     or_nodes: Vec<NodeId>,

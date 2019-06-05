@@ -20,7 +20,7 @@ contradiction7(E,X) :- obs_vlabel(E,X,1), ismax(E,X).
 ";
 
 pub const PRG_GUESS_INPUTS: &'static str = "
-edge(X,Y) :- obs_elabel(X,Y,S).
+edge(X,Y) :- obs_e_label(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 % declare inputs
@@ -32,7 +32,7 @@ pub const PRG_SIGN_CONS: &'static str = "
 % input facts
 % obs_vlabel(Experiment, Vertex , Sign)
 % edge(X,Y)
-% obs_elabel(X,Y,Sign).
+% obs_e_label(X,Y,Sign).
 % vertex(Name)
 
 sign(1;-1;0).
@@ -40,7 +40,7 @@ obs(1;-1;0;notPlus;notMinus).
 exp(E) :- obs_vlabel(E,V,S).
 exp(E) :- input(E,V).
 vertex(V) :- obs_vlabel(E,V,S).
-edge(X,Y) :- obs_elabel(X,Y,S).
+edge(X,Y) :- obs_e_label(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 
@@ -49,12 +49,12 @@ vertex(Y) :- edge(X,Y).
 1 {elabel(U,V,1); elabel(U,V,-1)} 1 :- edge(U,V), not rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
 % keep observed labeling of the edges
-error_edge(U,V) :- obs_elabel(U,V,1), obs_elabel(U,V,-1).
-elabel(U,V,S) :- edge(U,V), obs_elabel(U,V,S), not error_edge(U,V), not rep(remedge(U,V,S)).
+error_edge(U,V) :- obs_e_label(U,V,1), obs_e_label(U,V,-1).
+elabel(U,V,S) :- edge(U,V), obs_e_label(U,V,S), not error_edge(U,V), not rep(remedge(U,V,S)).
 
 % how to hande error_edges
-elabel(U,V,1)  :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), not rep(remedge(U,V,1)), rep(remedge(U,V,-1)).
-elabel(U,V,-1) :- edge(U,V), obs_elabel(U,V,1), obs_elabel(U,V,-1), rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
+elabel(U,V,1)  :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), not rep(remedge(U,V,1)), rep(remedge(U,V,-1)).
+elabel(U,V,-1) :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
 
 % influences
 infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
@@ -260,13 +260,13 @@ pred(E,X,change)   :- vlabel(E,X,-1), vlabel(E,X, 1), not vlabel(E,X, 0).
 #show pred/3.";
 
 pub const PRG_MICS: &'static str = "
-edge(X,Y) :- obs_elabel(X,Y,S).
+edge(X,Y) :- obs_e_label(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
 
 % obss_elabel fixes problems with contradictory influences
-obss_elabel(U,V, 1)  :- obs_elabel(U,V, 1),  not obs_elabel(U,V, -1).
-obss_elabel(U,V, -1) :- obs_elabel(U,V, -1), not obs_elabel(U,V, 1).
+obss_elabel(U,V, 1)  :- obs_e_label(U,V, 1),  not obs_e_label(U,V, -1).
+obss_elabel(U,V, -1) :- obs_e_label(U,V, -1), not obs_e_label(U,V, 1).
 obs_vlabel(U,S) :- obs_vlabel(E,U,S).
 input(V) :- input(E,V).
 
@@ -361,8 +361,8 @@ elabel(U,V,-1) :- bot, edge(U,V),               not trivial(V), not input(V), no
 ";
 
 pub const PRG_REMOVE_EDGES: &'static str = "
-0{rep(remedge(U,V,S))}1 :- not mandatory(U,V), obs_elabel(U,V,S).
-0{rep(remedge(U,V,1)), rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_elabel(U,V,1), not obs_elabel(U,V,-1).
+0{rep(remedge(U,V,S))}1 :- not mandatory(U,V), obs_e_label(U,V,S).
+0{rep(remedge(U,V,1)), rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
 ";
 
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
