@@ -41,6 +41,214 @@ impl IggyError {
 pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
 }
+impl Fact for () {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Symbol::create_function( "", &[], true)
+    }
+}
+impl<A: Fact, B: Fact> Fact for (A,B) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Symbol::create_function( "", &[self.0.symbol()?,self.1.symbol()?], true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact> Fact for (A,B,C) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact> Fact for (A,B,C,D) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact> Fact for (A,B,C,D,E) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact> Fact for (A,B,C,D,E,F) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact> Fact for (A,B,C,D,E,F,G) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact> Fact for (A,B,C,D,E,F,G,H) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        tempvec.push(self.7.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact> Fact for (A,B,C,D,E,F,G,H,I) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        tempvec.push(self.7.symbol()?);
+        tempvec.push(self.8.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact> Fact for (A,B,C,D,E,F,G,H,I,J) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        tempvec.push(self.7.symbol()?);
+        tempvec.push(self.8.symbol()?);
+        tempvec.push(self.9.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact, K: Fact> Fact for (A,B,C,D,E,F,G,H,I,J,K) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        tempvec.push(self.7.symbol()?);
+        tempvec.push(self.8.symbol()?);
+        tempvec.push(self.9.symbol()?);
+        tempvec.push(self.10.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact, K: Fact, L: Fact> Fact for (A,B,C,D,E,F,G,H,I,J,K,L) {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        let mut tempvec = vec![];
+        tempvec.push(self.0.symbol()?);
+        tempvec.push(self.1.symbol()?);
+        tempvec.push(self.2.symbol()?);
+        tempvec.push(self.3.symbol()?);
+        tempvec.push(self.4.symbol()?);
+        tempvec.push(self.5.symbol()?);
+        tempvec.push(self.6.symbol()?);
+        tempvec.push(self.7.symbol()?);
+        tempvec.push(self.8.symbol()?);
+        tempvec.push(self.9.symbol()?);
+        tempvec.push(self.10.symbol()?);
+        tempvec.push(self.11.symbol()?);
+        Symbol::create_function( "", &tempvec, true)
+    }
+}
+impl Fact for bool {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        if *self {
+            Symbol::create_id("true",true)
+        } else {
+            Symbol::create_id("false",true)
+        }
+    }
+}
+impl Fact for u8 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self as i32))
+    }
+}
+impl Fact for i8 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self as i32))
+    }
+}
+impl Fact for u16 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self as i32))
+    }
+}
+impl Fact for i16 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self as i32))
+    }
+}
+impl Fact for u32 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self as i32))
+    }
+}
+impl Fact for i32 {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Ok(Symbol::create_number(*self))
+    }
+}
+impl Fact for String {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Symbol::create_string(self)
+    }
+}
+impl Fact for str {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        Symbol::create_string(self)
+    }
+}
+impl<T: Fact> Fact for &T {
+    fn symbol(&self) -> Result<Symbol, Error> {
+        (*self).symbol()
+    }
+}
+
+// Due to a temporary restriction in Rust's type system, these function are only implemented on tuples of arity 12 or less.
+// In the future, this may change.
+// fn tuple_to_symbol(tuple:(A){
+//     let v = vec![];
+//     let a = tuple[0].symbol();
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Facts {
