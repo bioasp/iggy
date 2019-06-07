@@ -200,7 +200,7 @@ forbidden(E,V, 1) :- input(E,V), obs_v_label(E,V,notPlus).
 forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 
 pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
-pub const PRG_SHOW_LABELS: &'static str = "#show vlabel/3.";
+pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
 pub const PRG_SHOW_REPAIRS: &'static str = "#show rep/1.";
 
 pub const PRG_ADD_INFLUENCES: &'static str = "
