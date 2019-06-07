@@ -131,6 +131,7 @@ fn main() {
         }
     } else {
         print!("\nComputing mcos of network and data ... ");
+        io::stdout().flush().ok().expect("Could not flush stdout");
         let mcos = get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
         println!("done.");
         if mcos == 0 {
