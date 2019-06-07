@@ -1,6 +1,5 @@
-use crate::{Fact, FactBase, NodeId};
+use crate::{FactBase, NodeId, ToSymbol};
 use clingo::*;
-use fact_derive::*;
 use failure::*;
 use std::fs::File;
 use std::io::BufRead;
@@ -26,7 +25,7 @@ pub enum NodeSign {
     NotPlus,
     NotMinus,
 }
-impl Fact for NodeSign {
+impl ToSymbol for NodeSign {
     fn symbol(&self) -> Result<Symbol, Error> {
         Ok(match self {
             NodeSign::Plus => Symbol::create_number(1),
@@ -39,26 +38,26 @@ impl Fact for NodeSign {
 }
 type ProfileId = String;
 
-#[derive(Fact)]
+#[derive(ToSymbol)]
 pub struct Input<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
 }
 
-#[derive(Fact)]
+#[derive(ToSymbol)]
 pub struct ObsVLabel<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
     sign: NodeSign,
 }
 
-#[derive(Fact)]
+#[derive(ToSymbol)]
 pub struct IsMin<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
 }
 
-#[derive(Fact)]
+#[derive(ToSymbol)]
 pub struct IsMax<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,

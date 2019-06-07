@@ -1,6 +1,5 @@
-use crate::{Fact, FactBase, NodeId};
+use crate::{FactBase, NodeId, ToSymbol};
 use clingo::*;
-use fact_derive::*;
 use failure::*;
 use std::fs::File;
 use std::io::BufRead;
@@ -28,16 +27,16 @@ pub fn read(file: &File) -> Result<Graph, Error> {
     Ok(graph)
 }
 
-#[derive(Debug, Clone, Fact)]
+#[derive(Debug, Clone, ToSymbol)]
 struct Vertex {
     node: NodeId,
 }
-// #[derive(Fact)]
+// #[derive(ToSymbol)]
 pub enum EdgeSign {
     Plus,
     Minus,
 }
-impl Fact for EdgeSign {
+impl ToSymbol for EdgeSign {
     fn symbol(&self) -> Result<Symbol, Error> {
         Ok(match self {
             EdgeSign::Minus => Symbol::create_number(-1),
@@ -46,7 +45,7 @@ impl Fact for EdgeSign {
     }
 }
 
-#[derive(Fact)]
+#[derive(ToSymbol)]
 pub struct ObsELabel {
     start: NodeId,
     target: NodeId,

@@ -1,3 +1,4 @@
+use clingo::FactBase;
 use failure::*;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;

@@ -1,3 +1,4 @@
+use clingo::FactBase;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -213,7 +214,7 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     let mut unobserved = graph.or_nodes().to_owned();
     let mut i = 0;
     while i != unobserved.len() {
-        if observed.contains(&mut unobserved[i]) {
+        if observed.contains(&unobserved[i]) {
             let _val = unobserved.remove(i);
         } else {
             i += 1;
@@ -225,7 +226,7 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     let mut not_in_model = observed.clone();
     let mut i = 0;
     while i != not_in_model.len() {
-        if graph.or_nodes().contains(&mut not_in_model[i]) {
+        if graph.or_nodes().contains(&not_in_model[i]) {
             let _val = not_in_model.remove(i);
         } else {
             i += 1;

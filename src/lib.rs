@@ -1,8 +1,10 @@
 pub mod nssif_parser;
 use nssif_parser::Graph;
 pub mod profile_parser;
+use clingo::FactBase;
+use clingo::ReturnFact;
 use clingo::*;
-use fact_derive::*;
+use clingo_derive::*;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
@@ -39,248 +41,7 @@ impl IggyError {
     }
 }
 
-pub trait Fact {
-    fn symbol(&self) -> Result<Symbol, Error>;
-}
-// Due to a temporary restriction in Rust's type system, these function are only implemented on tuples of arity 12 or less.
-// In the future, this may change.
-impl Fact for () {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Symbol::create_function( "", &[], true)
-    }
-}
-impl<A: Fact, B: Fact> Fact for (A,B) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Symbol::create_function( "", &[self.0.symbol()?,self.1.symbol()?], true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact> Fact for (A,B,C) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact> Fact for (A,B,C,D) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact> Fact for (A,B,C,D,E) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact> Fact for (A,B,C,D,E,F) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact> Fact for (A,B,C,D,E,F,G) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact> Fact for (A,B,C,D,E,F,G,H) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        tempvec.push(self.7.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact> Fact for (A,B,C,D,E,F,G,H,I) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        tempvec.push(self.7.symbol()?);
-        tempvec.push(self.8.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact> Fact for (A,B,C,D,E,F,G,H,I,J) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        tempvec.push(self.7.symbol()?);
-        tempvec.push(self.8.symbol()?);
-        tempvec.push(self.9.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact, K: Fact> Fact for (A,B,C,D,E,F,G,H,I,J,K) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        tempvec.push(self.7.symbol()?);
-        tempvec.push(self.8.symbol()?);
-        tempvec.push(self.9.symbol()?);
-        tempvec.push(self.10.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl<A: Fact, B: Fact, C: Fact, D: Fact, E: Fact, F: Fact, G: Fact, H: Fact, I: Fact, J: Fact, K: Fact, L: Fact> Fact for (A,B,C,D,E,F,G,H,I,J,K,L) {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let mut tempvec = vec![];
-        tempvec.push(self.0.symbol()?);
-        tempvec.push(self.1.symbol()?);
-        tempvec.push(self.2.symbol()?);
-        tempvec.push(self.3.symbol()?);
-        tempvec.push(self.4.symbol()?);
-        tempvec.push(self.5.symbol()?);
-        tempvec.push(self.6.symbol()?);
-        tempvec.push(self.7.symbol()?);
-        tempvec.push(self.8.symbol()?);
-        tempvec.push(self.9.symbol()?);
-        tempvec.push(self.10.symbol()?);
-        tempvec.push(self.11.symbol()?);
-        Symbol::create_function( "", &tempvec, true)
-    }
-}
-impl Fact for bool {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        if *self {
-            Symbol::create_id("true",true)
-        } else {
-            Symbol::create_id("false",true)
-        }
-    }
-}
-impl Fact for u8 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self as i32))
-    }
-}
-impl Fact for i8 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self as i32))
-    }
-}
-impl Fact for u16 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self as i32))
-    }
-}
-impl Fact for i16 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self as i32))
-    }
-}
-impl Fact for u32 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self as i32))
-    }
-}
-impl Fact for i32 {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(Symbol::create_number(*self))
-    }
-}
-impl Fact for String {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Symbol::create_string(self)
-    }
-}
-impl Fact for str {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Symbol::create_string(self)
-    }
-}
-impl<T: Fact> Fact for &T {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        (*self).symbol()
-    }
-}
-
-
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct FactBase {
-    facts: Vec<Symbol>,
-}
-impl FactBase {
-    pub fn len(&self) -> usize {
-        self.facts.len()
-    }
-    pub fn empty() -> FactBase {
-        FactBase { facts: vec![] }
-    }
-    pub fn iter(&self) -> std::slice::Iter<'_, Symbol> {
-        self.facts.iter()
-    }
-    pub fn add_fact(&mut self, fact: &Fact) {
-        self.facts.push(fact.symbol().unwrap());
-    }
-    pub fn union(&mut self, facts: &FactBase) {
-        for s in &facts.facts {
-            self.facts.push(s.clone());
-        }
-    }
-}
-struct ReturnFact {
-    fact: Symbol,
-}
-impl Fact for ReturnFact {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        Ok(self.fact)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord,Fact)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ToSymbol)]
 pub enum NodeId {
     Or(String),
     And(String),
@@ -310,18 +71,16 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
     handle.resume()?;
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
-        if atoms.len() > 0 {
+        if !atoms.is_empty() {
             let mut v = vec![];
 
             for atom in atoms {
                 let node = atom
                     .arguments()?
-                    .iter()
-                    .nth(1)
+                    .get(1)
                     .ok_or(IggyError::new("Expected atom with at least two arguments."))?
                     .arguments()?
-                    .iter()
-                    .nth(0)
+                    .get(0)
                     .ok_or(IggyError::new(
                         "Expected function with at least one argument.",
                     ))?
@@ -365,7 +124,7 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
                         v.push(format!("Behavior +(increase) while initial level is set to Max in node {} is contradictory.", node));
                     }
                     _ => {
-                        v.push(format!("Unknown contradiction in observations"));
+                        v.push("Unknown contradiction in observations".to_string());
                     }
                 }
             }
@@ -407,7 +166,7 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
-        if atoms.len() > 0 {
+        if !atoms.is_empty() {
             for atom in atoms {
                 inputs.add_fact(&ReturnFact { fact: atom });
             }
@@ -420,7 +179,7 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
     Ok(inputs)
 }
 
-fn strconc(sym: &Symbol) -> Result<String, Error> {
+fn strconc(sym: Symbol) -> Result<String, Error> {
     match sym.symbol_type() {
         Ok(SymbolType::Function) => {
             let a = sym.arguments()?[0];
@@ -444,12 +203,12 @@ impl ExternalFunctionHandler for MyEFH {
         arguments: &[Symbol],
     ) -> Result<Vec<Symbol>, Error> {
         if name == "str" && arguments.len() == 1 {
-            match strconc(&arguments[0]) {
-                Ok(string) => Ok(vec![Symbol::create_string(&format!("{}", string)).unwrap()]),
+            match strconc(arguments[0]) {
+                Ok(string) => Ok(vec![Symbol::create_string(&string.to_string()).unwrap()]),
                 Err(e) => Err(e)?,
             }
         } else if name == "strconc" && arguments.len() == 2 {
-            match strconc(&arguments[1]) {
+            match strconc(arguments[1]) {
                 Ok(string) => {
                     let arg1 = arguments[0];
                     match arg1.symbol_type() {
@@ -468,9 +227,9 @@ impl ExternalFunctionHandler for MyEFH {
             match arg.symbol_type() {
                 Ok(SymbolType::String) => {
                     let list = arg.string().unwrap();
-                    match strconc(&arguments[0]) {
+                    match strconc(arguments[0]) {
                         Ok(string) => {
-                            let v: Vec<&str> = list.split(":").collect();
+                            let v: Vec<&str> = list.split(':').collect();
                             for e in v {
                                 if e == string {
                                     return Ok(vec![Symbol::create_number(1)]);
@@ -1146,9 +905,7 @@ pub fn get_opt_add_remove_edges_greedy(
                         }
                     }
                 }
-                Ok(None) => {
-                    ();
-                }
+                Ok(None) => (),
                 Err(e) => Err(e)?,
             }
         }
