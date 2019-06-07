@@ -1,4 +1,4 @@
-use crate::{Fact, Facts, NodeId};
+use crate::{Fact, FactBase, NodeId};
 use clingo::*;
 use fact_derive::*;
 use failure::*;
@@ -126,8 +126,8 @@ impl Graph {
         }
     }
 
-    pub fn to_facts(&self) -> Facts {
-        let mut facts = Facts::empty();
+    pub fn to_facts(&self) -> FactBase {
+        let mut facts = FactBase::empty();
         for node in &self.or_nodes {
             facts.add_fact(&Vertex { node: node.clone() });
         }

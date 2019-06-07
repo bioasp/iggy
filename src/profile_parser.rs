@@ -1,5 +1,6 @@
-use crate::{Fact, Facts, NodeId};
+use crate::{Fact, FactBase, NodeId};
 use clingo::*;
+use fact_derive::*;
 use failure::*;
 use std::fs::File;
 use std::io::BufRead;
@@ -17,6 +18,7 @@ pub struct Profile {
     pub min: Vec<NodeId>,
     pub max: Vec<NodeId>,
 }
+
 pub enum NodeSign {
     Plus,
     Minus,
@@ -24,118 +26,98 @@ pub enum NodeSign {
     NotPlus,
     NotMinus,
 }
-type ProfileId = String;
-
-pub struct Input<'a> {
-    profile: &'a ProfileId,
-    node: &'a NodeId,
-}
-impl<'a> Fact for Input<'a> {
+impl Fact for NodeSign {
     fn symbol(&self) -> Result<Symbol, Error> {
-        let profile = Symbol::create_id(&self.profile, true).unwrap();
-        let node = self.node.symbol().unwrap();
-        let sym = Symbol::create_function("input", &[profile, node], true);
-        sym
-    }
-}
-pub struct ObsVLabel<'a> {
-    profile: &'a ProfileId,
-    node: &'a NodeId,
-    sign: NodeSign,
-}
-impl<'a> Fact for ObsVLabel<'a> {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let profile = Symbol::create_id(&self.profile, true).unwrap();
-        let node = self.node.symbol().unwrap();
-        let sign = match &self.sign {
+        Ok(match self {
             NodeSign::Plus => Symbol::create_number(1),
             NodeSign::Minus => Symbol::create_number(-1),
             NodeSign::Zero => Symbol::create_number(0),
             NodeSign::NotPlus => Symbol::create_id("notPlus", true).unwrap(),
             NodeSign::NotMinus => Symbol::create_id("notMinus", true).unwrap(),
-        };
-        let sym = Symbol::create_function("obs_vlabel", &[profile, node, sign], true);
-        sym
+        })
     }
 }
+type ProfileId = String;
+
+#[derive(Fact)]
+pub struct Input<'a> {
+    profile: &'a ProfileId,
+    node: &'a NodeId,
+}
+
+#[derive(Fact)]
+pub struct ObsVLabel<'a> {
+    profile: &'a ProfileId,
+    node: &'a NodeId,
+    sign: NodeSign,
+}
+
+#[derive(Fact)]
 pub struct IsMin<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
 }
-impl<'a> Fact for IsMin<'a> {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let profile = Symbol::create_id(&self.profile, true).unwrap();
-        let node = self.node.symbol().unwrap();
-        let sym = Symbol::create_function("ismin", &[profile, node], true);
-        sym
-    }
-}
+
+#[derive(Fact)]
 pub struct IsMax<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
 }
-impl<'a> Fact for IsMax<'a> {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        let profile = Symbol::create_id(&self.profile, true).unwrap();
-        let node = self.node.symbol().unwrap();
-        let sym = Symbol::create_function("ismax", &[profile, node], true);
-        sym
-    }
-}
+
 impl Profile {
-    pub fn to_facts(&self) -> Facts {
-        let mut facts = Facts::empty();
+    pub fn to_facts(&self) -> FactBase {
+        let mut facts = FactBase::empty();
         for node in &self.plus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: node,
+                node,
                 sign: NodeSign::Plus,
             });
         }
         for node in &self.minus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: node,
+                node,
                 sign: NodeSign::Minus,
             });
         }
         for node in &self.zero {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: node,
+                node,
                 sign: NodeSign::Zero,
             });
         }
         for node in &self.notplus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: node,
+                node,
                 sign: NodeSign::NotPlus,
             });
         }
         for node in &self.notminus {
             facts.add_fact(&ObsVLabel {
                 profile: &self.id,
-                node: node,
+                node,
                 sign: NodeSign::NotMinus,
             });
         }
         for node in &self.input {
             facts.add_fact(&Input {
                 profile: &self.id,
-                node: node,
+                node,
             });
         }
         for node in &self.min {
             facts.add_fact(&IsMin {
                 profile: &self.id,
-                node: node,
+                node,
             });
         }
         for node in &self.max {
             facts.add_fact(&IsMax {
                 profile: &self.id,
-                node: node,
+                node,
             });
         }
         facts
@@ -188,14 +170,14 @@ pub fn read(file: &File, id: &str) -> Result<Profile, Error> {
     }
     Ok(Profile {
         id: id.to_string(),
-        input: input,
-        plus: plus,
-        minus: minus,
-        zero: zero,
-        notplus: notplus,
-        notminus: notminus,
-        min: min,
-        max: max,
+        input,
+        plus,
+        minus,
+        zero,
+        notplus,
+        notminus,
+        min,
+        max,
     })
 }
 

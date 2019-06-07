@@ -2,6 +2,7 @@ pub mod nssif_parser;
 use nssif_parser::Graph;
 pub mod profile_parser;
 use clingo::*;
+use fact_derive::*;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
@@ -41,6 +42,8 @@ impl IggyError {
 pub trait Fact {
     fn symbol(&self) -> Result<Symbol, Error>;
 }
+// Due to a temporary restriction in Rust's type system, these function are only implemented on tuples of arity 12 or less.
+// In the future, this may change.
 impl Fact for () {
     fn symbol(&self) -> Result<Symbol, Error> {
         Symbol::create_function( "", &[], true)
@@ -243,23 +246,18 @@ impl<T: Fact> Fact for &T {
     }
 }
 
-// Due to a temporary restriction in Rust's type system, these function are only implemented on tuples of arity 12 or less.
-// In the future, this may change.
-// fn tuple_to_symbol(tuple:(A){
-//     let v = vec![];
-//     let a = tuple[0].symbol();
-// }
+
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Facts {
+pub struct FactBase {
     facts: Vec<Symbol>,
 }
-impl Facts {
+impl FactBase {
     pub fn len(&self) -> usize {
         self.facts.len()
     }
-    pub fn empty() -> Facts {
-        Facts { facts: vec![] }
+    pub fn empty() -> FactBase {
+        FactBase { facts: vec![] }
     }
     pub fn iter(&self) -> std::slice::Iter<'_, Symbol> {
         self.facts.iter()
@@ -267,7 +265,7 @@ impl Facts {
     pub fn add_fact(&mut self, fact: &Fact) {
         self.facts.push(fact.symbol().unwrap());
     }
-    pub fn union(&mut self, facts: &Facts) {
+    pub fn union(&mut self, facts: &FactBase) {
         for s in &facts.facts {
             self.facts.push(s.clone());
         }
@@ -282,24 +280,10 @@ impl Fact for ReturnFact {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord,Fact)]
 pub enum NodeId {
     Or(String),
     And(String),
-}
-impl NodeId {
-    fn symbol(&self) -> Result<Symbol, Error> {
-        match &self {
-            NodeId::Or(node) => {
-                let id = Symbol::create_string(node).unwrap();
-                Symbol::create_function("or", &[id], true)
-            }
-            NodeId::And(node) => {
-                let id = Symbol::create_string(node).unwrap();
-                Symbol::create_function("and", &[id], true)
-            }
-        }
-    }
 }
 
 pub enum CheckResult {
@@ -307,7 +291,7 @@ pub enum CheckResult {
     Inconsistent(Vec<String>),
 }
 
-pub fn check_observations(profile: &Facts) -> Result<CheckResult, Error> {
+pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
 
@@ -401,7 +385,7 @@ pub fn check_observations(profile: &Facts) -> Result<CheckResult, Error> {
     Ok(CheckResult::Consistent)
 }
 
-pub fn guess_inputs(graph: &Facts) -> Result<Facts, Error> {
+pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
 
@@ -419,7 +403,7 @@ pub fn guess_inputs(graph: &Facts) -> Result<Facts, Error> {
 
     handle.resume()?;
 
-    let mut inputs = Facts::empty();
+    let mut inputs = FactBase::empty();
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
@@ -508,7 +492,7 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
-fn add_facts(ctl: &mut Control, facts: &Facts) {
+fn add_facts(ctl: &mut Control, facts: &FactBase) {
     // get the program builder
     let mut builder = ctl.program_builder().ok();
 
@@ -628,9 +612,9 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
 
 /// return the minimal inconsistent cores
 pub fn get_minimal_inconsistent_cores(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<Vec<Vec<Symbol>>, Error> {
     // create a control object and pass command line arguments
@@ -659,9 +643,9 @@ pub fn get_minimal_inconsistent_cores(
 
 /// returns the scenfit of data and model
 pub fn get_scenfit(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
@@ -705,9 +689,9 @@ pub fn get_scenfit(
 ///
 /// + number - maximal number of labelings
 pub fn get_scenfit_labelings(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     number: u32,
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
@@ -756,9 +740,9 @@ pub fn get_scenfit_labelings(
 
 /// returns the mcos of data and model
 pub fn get_mcos(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<i64, Error> {
     // create a control object and pass command line arguments
@@ -802,9 +786,9 @@ pub fn get_mcos(
 ///
 /// + number - maximal number of labelings
 pub fn get_mcos_labelings(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     number: u32,
     setting: &SETTING,
 ) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
@@ -851,9 +835,9 @@ pub fn get_mcos_labelings(
         .collect()
 }
 pub fn get_predictions_under_mcos(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
@@ -900,9 +884,9 @@ pub fn get_predictions_under_mcos(
 }
 
 pub fn get_predictions_under_scenfit(
-    graph: &Facts,
-    profile: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profile: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<Predictions, Error> {
     // create a control object and pass command line arguments
@@ -949,9 +933,9 @@ pub fn get_predictions_under_scenfit(
 }
 /// only apply with elementary path consistency notion
 pub fn get_opt_add_remove_edges_greedy(
-    graph: &Facts,
-    profiles: &Facts,
-    inputs: &Facts,
+    graph: &FactBase,
+    profiles: &FactBase,
+    inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<(), Error> {
     // create a control object and pass command line arguments
@@ -993,7 +977,7 @@ pub fn get_opt_add_remove_edges_greedy(
     // print('bscenfit:   ',bscenfit)
     // print('brepscore:  ',brepscore)
 
-    let mut fedges: Vec<(Facts, i64, i64)> = vec![(Facts::empty(), bscenfit, brepscore)];
+    let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
     // let tedges = vec![];
     let dedges = vec![];
 
@@ -1059,7 +1043,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                         .unwrap();
                                         // search starts of the addeddy
                                         // print('search best edge starts')
-                                        let mut f_end = Facts::empty();
+                                        let mut f_end = FactBase::empty();
                                         f_end.add_fact(&ReturnFact { fact: nend });
                                         let mut ctl2 = Control::new(vec![
                                             "--opt-strategy=5".to_string(),
