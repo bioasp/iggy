@@ -119,7 +119,7 @@ fn main() {
             }
             None => None,
         }
-    });
+    }).unwrap();
 
     let new_inputs = {
         if opt.autoinputs {
@@ -138,11 +138,12 @@ fn main() {
             print!("\nComputing minimal number of changes add/remove edges ... ");
             if setting.ep {
                 print!("\n   using greedy method ... ");
-                //   (scenfit,redges) = query.get_opt_add_remove_edges_greedy(net_with_data)
+                let (scenfit, redges) =
+                    get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
 
                 println!("done.");
-            //   print('\nThe network and data can reach a scenfit of',scenfit)
-            //   #      ,'with', repairs,'removals and ',len(edges),'additions.')
+                println!("\nThe network and data can reach a scenfit of {}.",scenfit);
+                //   with {} removals and {} additions.", repairs, edges.len());
 
             //   count_repairs = 0
 

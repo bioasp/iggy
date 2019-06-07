@@ -695,8 +695,8 @@ pub fn get_opt_add_remove_edges_greedy(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
-) -> Result<(), Error> {
+    // setting: &SETTING,
+) -> Result<(i64, std::vec::Vec<(clingo::FactBase, i64)>), Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         "--opt-strategy=5".to_string(),
@@ -737,8 +737,8 @@ pub fn get_opt_add_remove_edges_greedy(
     // print('brepscore:  ',brepscore)
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
-    // let tedges = vec![];
-    let dedges = vec![];
+    let mut tedges = vec![];
+    let mut dedges = vec![];
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
@@ -866,7 +866,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                                                         == "addedge"
                                                                     {
                                                                         // print('new edge ',a.arg(0)[8:-1])
-                                                                        let nedge = Symbol::create_function("obs_elabel", &[a.arguments().unwrap()[0]], true).unwrap();
+                                                                        let nedge = Symbol::create_function("obs_e_label", &[a.arguments().unwrap()[0]], true).unwrap();
                                                                         nedges.add_fact(
                                                                             &ReturnFact {
                                                                                 fact: nedge,
@@ -884,8 +884,8 @@ pub fn get_opt_add_remove_edges_greedy(
                                                             if !fedges.contains(&tuple)
                                                                 && !dedges.contains(&nedges)
                                                             {
-                                                                // fedges.append((nedges,n2scenfit,n2repscore))
-                                                                // dedges.append(nedges)
+                                                                fedges.push(tuple);
+                                                                dedges.push(nedges);
                                                             }
                                                         }
                                                     }
@@ -899,9 +899,14 @@ pub fn get_opt_add_remove_edges_greedy(
                             }
                         }
                         if end {
-                            // if (oedges,oscenfit,orepscore) not in tedges and oscenfit == bscenfit and orepscore == brepscore:
-                            //   print('LAST tedges append',oedges)
-                            //   tedges.append((oedges,oscenfit,orepscore))
+                            let tuple = (oedges.clone(), oscenfit, orepscore);
+                            if !tedges.contains(&tuple)
+                                && oscenfit == bscenfit
+                                && orepscore == brepscore
+                            {
+                                // println!("LAST tedges append {}",oedges);
+                                tedges.push(tuple);
+                            }
                         }
                     }
                 }
@@ -910,16 +915,15 @@ pub fn get_opt_add_remove_edges_greedy(
             }
         }
     }
-    // os.unlink(f_oedges)
 
     // take only the results with the best scenfit
-    //   redges=[]
-    //   for (tedges,tscenfit,trepairs) in tedges:
-    //     if tscenfit == bscenfit: redges.append((tedges,trepairs))
-
-    //   os.unlink(inst)
-    //   return (bscenfit,redges)
-    Ok(())
+    let mut redges = vec![];
+    for (tedges, tscenfit, trepairs) in tedges {
+        if tscenfit == bscenfit {
+            redges.push((tedges, trepairs));
+        }
+    }
+    Ok((bscenfit, redges))
 }
 
 /// Given a model this function returns a vector of mics
