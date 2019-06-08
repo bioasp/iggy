@@ -349,6 +349,28 @@ fn all_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Erro
         }
     }
 }
+// fn optimal_models(handle: &mut SolveHandle, number: u32) -> Result<Vec<Vec<Symbol>>, Error> {
+//     let mut v = Vec::new();
+//     let mut counter = 0;
+//     loop {
+//         if counter < number {
+//         handle.resume()?;
+//         match handle.model() {
+//             Ok(Some(model)) => {
+//                 if model.optimality_proven()? {
+//                     let symbols = model.symbols(ShowType::SHOWN)?;
+//                     counter += 1;
+//                     v.push(symbols);
+//                 }
+//             }
+//             Ok(None) => {
+//                 return Ok(v);
+//             }
+//             Err(e) => Err(e)?,
+//         }
+//         }else {return Ok(v);}
+//     }
+// }
 
 fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
     loop {
@@ -702,7 +724,7 @@ pub fn get_opt_add_remove_edges_greedy(
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
-        "--quiet=1".to_string(),
+        // "--quiet=1".to_string(),
     ])?;
 
     add_facts(&mut ctl, graph);
@@ -733,7 +755,7 @@ pub fn get_opt_add_remove_edges_greedy(
     let mut brepscore = cost[1];
 
     // print('model:   ',models[0])
-    // print('bscenfit:   ',bscenfit)
+    print!("bscenfit:   {}",bscenfit);
     // print('brepscore:  ',brepscore)
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
@@ -924,6 +946,63 @@ pub fn get_opt_add_remove_edges_greedy(
         }
     }
     Ok((bscenfit, redges))
+}
+
+/// only apply with elementary path consistency notion
+pub fn get_opt_repairs_add_remove_edges_greedy(
+    graph: &FactBase,
+    profiles: &FactBase,
+    inputs: &FactBase,
+    number: u32,
+    edges: &FactBase,
+    // setting: &SETTING,
+) -> Result<Vec<(std::vec::Vec<(clingo::Symbol, clingo::Symbol)>, std::vec::Vec<std::string::String>)>,Error> {
+    // create a control object and pass command line arguments
+    let mut ctl = Control::new(vec![
+        number.to_string(),
+        "--opt-strategy=5".to_string(),
+        "--opt-mode=optN".to_string(),
+        "--project".to_string(),
+        "--quiet=1".to_string(),
+    ])?;
+
+    add_facts(&mut ctl, graph);
+    add_facts(&mut ctl, profiles);
+    add_facts(&mut ctl, inputs);
+    add_facts(&mut ctl, edges);
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+    ctl.add("base", &[], PRG_FWD_PROP)?;
+    ctl.add("base", &[], PRG_ELEM_PATH)?;
+    ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+    ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let models = all_optimal_models(&mut handle)?;
+    models
+        .iter()
+        .map(|model| extract_labels_repairs(model))
+        .collect()
+
+//   solver   = GringoClasp(clasp_options=coptions)
+//   models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+//   #print(models)
+//   #nscenfit  = models[0].score[0]
+//   #nrepscore = models[0].score[1]
+//   #print('scenfit:   ', nscenfit)
+//   #print('repscore:  ', nrepscore) 
+
+//   os.unlink(f_edges)
+//   os.unlink(inst)
+//   return models
+
+    // Ok(vec![])
 }
 
 /// Given a model this function returns a vector of mics

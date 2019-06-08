@@ -97,29 +97,31 @@ fn main() {
 
     let paths = fs::read_dir(opt.observationdir).unwrap();
 
-    let profiles = paths.fold(Some(FactBase::empty()), |acc, path| {
-        let observationfile = path.unwrap().path();
-        let name = format!("{}", observationfile.display());
-        println!("\nReading observations from {}.", name);
-        let f = File::open(observationfile).unwrap();
-        let pprofile = profile_parser::read(&f, &name).unwrap();
-        let profile = pprofile.to_facts();
+    let profiles = paths
+        .fold(Some(FactBase::empty()), |acc, path| {
+            let observationfile = path.unwrap().path();
+            let name = format!("{}", observationfile.display());
+            println!("\nReading observations from {}.", name);
+            let f = File::open(observationfile).unwrap();
+            let pprofile = profile_parser::read(&f, &name).unwrap();
+            let profile = pprofile.to_facts();
 
-        if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
-            println!("The following observations are contradictory. Please correct them!");
-            for r in reasons {
-                println!("{}", r);
+            if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+                println!("The following observations are contradictory. Please correct them!");
+                for r in reasons {
+                    println!("{}", r);
+                }
+                return None;
             }
-            return None;
-        }
-        match acc {
-            Some(mut acc) => {
-                acc.union(&profile);
-                Some(acc)
+            match acc {
+                Some(mut acc) => {
+                    acc.union(&profile);
+                    Some(acc)
+                }
+                None => None,
             }
-            None => None,
-        }
-    }).unwrap();
+        })
+        .unwrap();
 
     let new_inputs = {
         if opt.autoinputs {
@@ -142,29 +144,41 @@ fn main() {
                     get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
 
                 println!("done.");
-                println!("\nThe network and data can reach a scenfit of {}.",scenfit);
+                println!("\nThe network and data can reach a scenfit of {}.", scenfit);
                 //   with {} removals and {} additions.", repairs, edges.len());
 
-            //   count_repairs = 0
+                let mut count_repairs = 0;
 
-            //   if args.show_repairs >= 0 :
-            //     print('\nCompute optimal repairs ... ')
-            //     print('   use greedily added edges ...')
-            //     for (edges,repairs) in redges:
-            //       if repairs > 0:
-            //         repairs = query.get_opt_repairs_add_remove_edges_greedy(net_with_data,args.show_repairs,edges)
+                if let Some(number) = opt.show_repairs {
+                    print!("\nCompute optimal repairs ... ");
+                    print!("   use greedily added edges ...");
+                    for (edges, number_of_repairs) in redges {
+                        if number_of_repairs > 0 {
+                            let repairs = get_opt_repairs_add_remove_edges_greedy(
+                                &graph,
+                                &profiles,
+                                &new_inputs,
+                                number,
+                                &edges,
+                            ).unwrap();
 
-            //         for r in repairs :
-            //           count_repairs+=1
-            //           print('\nRepair ',str(count_repairs),':',sep='')
-            //           for e in edges:
-            //             print('   addedge',str(e)[10:],sep='')
-            //           utils.print_repairs(r)
-            //       else:
-            //         count_repairs+=1
-            //         print('\nRepair ',count_repairs,':',sep='')
-            //         for e in edges:
-            //           print('   addedge',str(e)[10:],sep='')
+                            for r in repairs {
+                                count_repairs += 1;
+                                print!("\nRepair {}:", count_repairs);
+                                for e in edges.iter() {
+                                    print!("   addedge {}", e.to_string().unwrap());
+                                }
+                                // print_repairs(r);
+                            }
+                        } else {
+                            count_repairs += 1;
+                            print!("\nRepair {}:", count_repairs);
+                            for e in edges.iter() {
+                                print!("   addedge{}", e.to_string().unwrap());
+                            }
+                        }
+                    }
+                }
             } else {
                 //   (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP)
                 println!("done.");
