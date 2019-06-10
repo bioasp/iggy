@@ -134,26 +134,26 @@ elabel(or(\"unknownup\"), X,-1)   :- rep(new_influence(E,X,-1)).
 
 % in a network exists under Condition E a positive path to X
 
-pos_path(E,X,@str(X)) :- input(E,X), vlabel(E,X, 1), not is_max(E,X).
+pos_path(E,X,X) :- input(E,X), vlabel(E,X, 1), not is_max(E,X).
 
-neg_path(E,X,@str(X)) :- input(E,X), vlabel(E,X,-1), not is_min(E,X).
+neg_path(E,X,X) :- input(E,X), vlabel(E,X,-1), not is_min(E,X).
 
-pos_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not is_max(E,X),
+pos_path(E,X,conc(P,X)) :- pos_path(E,Y,P), not is_max(E,X),
                                elabel(Y,X, 1), not input(E,X), X!=Y,
-	                       0==@member(X,P).
+	                       false==@member(X,P).
 
 
-neg_path(E,X,@strconc(P,X)) :- pos_path(E,Y,P), not is_min(E,X),
+neg_path(E,X,conc(P,X)) :- pos_path(E,Y,P), not is_min(E,X),
                                elabel(Y,X,-1), not input(E,X), X!=Y,
-	                       0==@member(X,P).
+	                       false==@member(X,P).
 
-pos_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not is_max(E,X),
+pos_path(E,X,conc(P,X)) :- neg_path(E,Y,P), not is_max(E,X),
                                elabel(Y,X,-1), not input(E,X), X!=Y,
-	                       0==@member(X,P).
+	                       false==@member(X,P).
 
-neg_path(E,X,@strconc(P,X)) :- neg_path(E,Y,P), not is_min(E,X),
+neg_path(E,X,conc(P,X)) :- neg_path(E,Y,P), not is_min(E,X),
                                elabel(Y,X, 1), not input(E,X), X!=Y,
-	                       0==@member(X,P).
+	                       false==@member(X,P).
 
 pos_path(E,V) :- pos_path(E,V,P).
 neg_path(E,V) :- neg_path(E,V,P).
@@ -161,16 +161,16 @@ neg_path(E,V) :- neg_path(E,V,P).
 
 % pure influences
 prinfl(E,V, 1) :- elabel(U,V, 1),
-                  pos_path(E,V,P),1==@member(U,P),
+                  pos_path(E,V,P),true==@member(U,P),
                   vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
 prinfl(E,V,-1) :- elabel(U,V,-1),
-                  neg_path(E,V,P),1==@member(U,P),
+                  neg_path(E,V,P),true==@member(U,P),
                   vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
 prinfl(E,V,-1) :- elabel(U,V, 1),
-                  neg_path(E,V,P),1==@member(U,P),
+                  neg_path(E,V,P),true==@member(U,P),
                   vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
 prinfl(E,V, 1) :- elabel(U,V,-1),
-                  pos_path(E,V,P),1==@member(U,P),
+                  pos_path(E,V,P),true==@member(U,P),
                   vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
 
 forbidden(E,V, 1) :- exp(E), vertex(V), not pos_path(E,V), not input(E,V).
@@ -362,11 +362,13 @@ elabel(U,V,-1) :- bot, edge(U,V),               not trivial(V), not input(V), no
 
 pub const PRG_REMOVE_EDGES: &'static str = "
 0{rep(remedge(U,V,S))}1 :- not mandatory(U,V), obs_e_label(U,V,S).
-0{rep(remedge(U,V,1)), rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
+0{rep(remedge(U,V,1)); rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
 ";
 
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
-#minimize[ not false = 0, rep(remedge(U,V,S))=1 @ 1, rep(addedge(U,V,S))=2 @ 1 , rep(addeddy(V))=2 @ 1].
+#minimize{ 1@1, U,V,S : rep(remedge(U,V,S))}.
+#minimize{ 2@1, U,V,S : rep(addedge(U,V,S))}.
+#minimize{ 2@1, V : rep(addeddy(V)) }.
 ";
 
 pub const PRG_BEST_ONE_EDGE: &'static str = "
@@ -377,11 +379,11 @@ pub const PRG_BEST_ONE_EDGE: &'static str = "
 input(E,\"unknown\")      :- exp(E).
 vertex(\"unknown\").
 elabel(\"unknown\", V,1)  :- rep(addeddy(V)).
-:-rep(addeddy(U)),rep(addeddy(V)),U!=V.";
+:- rep(addeddy(U)), rep(addeddy(V)),U!=V.";
 
 pub const PRG_BEST_EDGE_START: &'static str = "
 % guess one edge start to add
-0{rep(addedge(gen(V),X,1)), rep(addedge(gen(V),X,-1))}1 :- vertex(gen(V)), edge_end(X).
+0{rep(addedge(or(V),X,1)); rep(addedge(or(V),X,-1))}1 :- vertex(or(V)), edge_end(X).
 
 % add only one edge !!!
 :- rep(addedge(Y1,X,1)), rep(addedge(Y2,X,-1)).

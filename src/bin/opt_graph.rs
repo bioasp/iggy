@@ -160,7 +160,8 @@ fn main() {
                                 &new_inputs,
                                 number,
                                 &edges,
-                            ).unwrap();
+                            )
+                            .unwrap();
 
                             for r in repairs {
                                 count_repairs += 1;

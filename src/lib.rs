@@ -179,18 +179,38 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
     Ok(inputs)
 }
 
-fn strconc(sym: Symbol) -> Result<String, Error> {
-    match sym.symbol_type() {
+fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
+    match list.symbol_type() {
         Ok(SymbolType::Function) => {
-            let a = sym.arguments()?[0];
-            match a.symbol_type() {
-                            Ok(SymbolType::Function) => Ok(format!("{}({})",sym.name().unwrap(),a.name().unwrap())),
-                             _ => Err(IggyError::new("external function expected SymbolType::Function(SymbolType::Function) as argument"))?,
-                            }
+            let name = list.name()?;
+            let arguments = list.arguments()?;
+            if name == "conc" && arguments.len() == 2 {
+                // dbg!(list.to_string().unwrap());
+                if elem == arguments[1] {
+                    Symbol::create_id("true", true)
+                } else {
+                    member(elem, arguments[0])
+                }
+            } else {
+                if elem == list {
+                    // dbg!(list.to_string().unwrap());
+                    // dbg!(elem.to_string().unwrap());
+                    Symbol::create_id("true", true)
+                } else {
+                    Symbol::create_id("false", true)
+                }
+            }
         }
-        _ => Err(IggyError::new(
-            "external function expected SymbolType::Function(SymbolType::Function) as argument",
-        ))?,
+        Ok(_) => {
+            if elem == list {
+                // dbg!(list.to_string().unwrap());
+                // dbg!(elem.to_string().unwrap());
+                Symbol::create_id("true", true)
+            } else {
+                Symbol::create_id("false", true)
+            }
+        }
+        Err(e) => Err(e)?,
     }
 }
 
@@ -202,51 +222,17 @@ impl ExternalFunctionHandler for MyEFH {
         name: &str,
         arguments: &[Symbol],
     ) -> Result<Vec<Symbol>, Error> {
-        if name == "str" && arguments.len() == 1 {
-            match strconc(arguments[0]) {
-                Ok(string) => Ok(vec![Symbol::create_string(&string.to_string()).unwrap()]),
-                Err(e) => Err(e)?,
-            }
-        } else if name == "strconc" && arguments.len() == 2 {
-            match strconc(arguments[1]) {
-                Ok(string) => {
-                    let arg1 = arguments[0];
-                    match arg1.symbol_type() {
-                        Ok(SymbolType::String) => {
-                                Ok(vec![Symbol::create_string(&format!("{}:{}",arg1.string().unwrap(),string)).unwrap()])
-                            }
-                        _    => {
-                            Err(IggyError::new("external function strconc expected SymbolType::String as first argument"))?
-                        },
-                    }
-                }
-                Err(e) => Err(e),
-            }
-        } else if name == "member" && arguments.len() == 2 {
-            let arg = arguments[1];
-            match arg.symbol_type() {
-                Ok(SymbolType::String) => {
-                    let list = arg.string().unwrap();
-                    match strconc(arguments[0]) {
-                        Ok(string) => {
-                            let v: Vec<&str> = list.split(':').collect();
-                            for e in v {
-                                if e == string {
-                                    return Ok(vec![Symbol::create_number(1)]);
-                                }
-                            }
-                            Ok(vec![Symbol::create_number(0)])
-                        }
-                        Err(e) => Err(e),
-                    }
-                }
-                _ => Err(IggyError::new(
-                    "external function member expected SymbolType::String as second argument",
-                ))?,
-            }
+        if name == "member" && arguments.len() == 2 {
+            let element = arguments[0];
+            let list = arguments[1];
+            // dbg!(element.to_string().unwrap());
+            // dbg!(list.to_string().unwrap());
+            let res = member(element, list)?;
+            // dbg!(res.to_string().unwrap());
+            Ok(vec![res])
         } else {
             println!("name: {}", name);
-            Err(IggyError::new("function not found"))?
+            Err(IggyError::new("unknown external function!"))?
         }
     }
 }
@@ -293,7 +279,8 @@ fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> 
     let part = Part::new("base", &[])?;
     let parts = vec![part];
 
-    ctl.ground_with_event_handler(&parts, &mut efh)?;
+    ctl.ground_with_event_handler(&parts, &mut efh)
+        .expect("ground with event handler did not work.");
 
     // solve
     Ok(ctl.solve(SolveMode::YIELD, &[])?)
@@ -755,8 +742,8 @@ pub fn get_opt_add_remove_edges_greedy(
     let mut brepscore = cost[1];
 
     // print('model:   ',models[0])
-    print!("bscenfit:   {}",bscenfit);
-    // print('brepscore:  ',brepscore)
+    dbg!(bscenfit);
+    dbg!(brepscore);
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
     let mut tedges = vec![];
@@ -764,10 +751,10 @@ pub fn get_opt_add_remove_edges_greedy(
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
-        // print ("TODO: ",len(fedges))
+        dbg!(fedges.len());
         let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
 
-        // print('(oedges,oscenfit, orepscore):',(oedges,oscenfit, orepscore))
+        dbg!((&oedges, oscenfit, orepscore));
         // print('len(oedges):',len(oedges))
 
         // extend till no better solution can be found
@@ -777,7 +764,7 @@ pub fn get_opt_add_remove_edges_greedy(
             "--opt-strategy=5".to_string(),
             "--opt-mode=optN".to_string(),
             "--project".to_string(),
-            "--quiet=1".to_string(),
+            // "--quiet=1".to_string(),
         ])?;
         add_facts(&mut ctl, graph);
         add_facts(&mut ctl, profiles);
@@ -804,33 +791,33 @@ pub fn get_opt_add_remove_edges_greedy(
                 Ok(Some(model)) => {
                     if model.optimality_proven()? {
                         let symbols = model.symbols(ShowType::SHOWN)?;
-                        let cost = model.cost().unwrap();
+                        let cost = model.cost()?;
 
                         let nscenfit = cost[0];
                         let nrepscore = cost[1] + (2 * oedges.len() as i64);
+                        dbg!(nscenfit);
+                        dbg!(nrepscore);
                         if nscenfit < oscenfit || nrepscore < orepscore {
                             // better score or more that 1 scenfit
                             // print('maybe better solution:')
 
                             for a in symbols {
-                                if a.name().unwrap() == "rep" {
-                                    if a.arguments().unwrap()[0].name().unwrap() == "addeddy" {
+                                if a.name()? == "rep" {
+                                    if a.arguments()?[0].name()? == "addeddy" {
+                                        let edge_end = a.arguments()?[0].arguments()?[0];
+                                        dbg!(edge_end.to_string()?);
                                         // print('new addeddy to',a.arg(0)[8:-1])
-                                        let nend = Symbol::create_function(
-                                            "edge_end",
-                                            &[a.arguments().unwrap()[0]],
-                                            true,
-                                        )
-                                        .unwrap();
+                                        let nend =
+                                            Symbol::create_function("edge_end", &[edge_end], true)?;
                                         // search starts of the addeddy
-                                        // print('search best edge starts')
+                                        print!("search best edge starts");
                                         let mut f_end = FactBase::empty();
                                         f_end.add_fact(&ReturnFact { fact: nend });
                                         let mut ctl2 = Control::new(vec![
                                             "--opt-strategy=5".to_string(),
                                             "--opt-mode=optN".to_string(),
                                             "--project".to_string(),
-                                            "--quiet=1".to_string(),
+                                            // "--quiet=1".to_string(),
                                         ])?;
                                         add_facts(&mut ctl2, graph);
                                         add_facts(&mut ctl2, profiles);
@@ -859,11 +846,11 @@ pub fn get_opt_add_remove_edges_greedy(
                                                     if model.optimality_proven()? {
                                                         let symbols2 =
                                                             model.symbols(ShowType::SHOWN)?;
-                                                        let n2scenfit = model.cost().unwrap()[0];
-                                                        let n2repscore = model.cost().unwrap()[1]
+                                                        let n2scenfit = model.cost()?[0];
+                                                        let n2repscore = model.cost()?[1]
                                                             + (2 * oedges.len() as i64);
-                                                        // print('n2scenfit:   ', n2scenfit)
-                                                        // print('n2repscore:  ', n2repscore)
+                                                        dbg!(n2scenfit);
+                                                        dbg!(n2repscore);
 
                                                         if n2scenfit < oscenfit
                                                             || n2repscore < orepscore
@@ -881,14 +868,13 @@ pub fn get_opt_add_remove_edges_greedy(
                                                             }
                                                             let mut nedges = oedges.clone();
                                                             for a in symbols2 {
-                                                                if a.name().unwrap() == "rep" {
-                                                                    if a.arguments().unwrap()[0]
-                                                                        .name()
-                                                                        .unwrap()
+                                                                if a.name()? == "rep" {
+                                                                    dbg!(a.arguments()?[0].name()?);
+                                                                    if a.arguments()?[0].name()?
                                                                         == "addedge"
                                                                     {
-                                                                        // print('new edge ',a.arg(0)[8:-1])
-                                                                        let nedge = Symbol::create_function("obs_e_label", &[a.arguments().unwrap()[0]], true).unwrap();
+                                                                        // dbg!(a.arg(0)[8:-1]);
+                                                                        let nedge = Symbol::create_function("obs_e_label", &[a.arguments()?[0]], true)?;
                                                                         nedges.add_fact(
                                                                             &ReturnFact {
                                                                                 fact: nedge,
@@ -956,14 +942,20 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     number: u32,
     edges: &FactBase,
     // setting: &SETTING,
-) -> Result<Vec<(std::vec::Vec<(clingo::Symbol, clingo::Symbol)>, std::vec::Vec<std::string::String>)>,Error> {
+) -> Result<
+    Vec<(
+        std::vec::Vec<(clingo::Symbol, clingo::Symbol)>,
+        std::vec::Vec<std::string::String>,
+    )>,
+    Error,
+> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         number.to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
-        "--quiet=1".to_string(),
+        // "--quiet=1".to_string(),
     ])?;
 
     add_facts(&mut ctl, graph);
@@ -990,17 +982,17 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
         .map(|model| extract_labels_repairs(model))
         .collect()
 
-//   solver   = GringoClasp(clasp_options=coptions)
-//   models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-//   #print(models)
-//   #nscenfit  = models[0].score[0]
-//   #nrepscore = models[0].score[1]
-//   #print('scenfit:   ', nscenfit)
-//   #print('repscore:  ', nrepscore) 
+    //   solver   = GringoClasp(clasp_options=coptions)
+    //   models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
+    //   #print(models)
+    //   #nscenfit  = models[0].score[0]
+    //   #nrepscore = models[0].score[1]
+    //   #print('scenfit:   ', nscenfit)
+    //   #print('repscore:  ', nrepscore)
 
-//   os.unlink(f_edges)
-//   os.unlink(inst)
-//   return models
+    //   os.unlink(f_edges)
+    //   os.unlink(inst)
+    //   return models
 
     // Ok(vec![])
 }
