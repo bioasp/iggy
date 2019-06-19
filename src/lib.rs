@@ -1,9 +1,18 @@
 pub mod nssif_parser;
 use nssif_parser::Graph;
 pub mod profile_parser;
-use clingo::FactBase;
 use clingo::add_facts;
-use clingo::*;
+use clingo::Control;
+use clingo::ExternalFunctionHandler;
+use clingo::FactBase;
+use clingo::Location;
+use clingo::Part;
+use clingo::ShowType;
+use clingo::SolveHandle;
+use clingo::SolveMode;
+use clingo::Symbol;
+use clingo::SymbolType;
+use clingo::ToSymbol;
 use clingo_derive::*;
 
 /// This module contains the queries which can be asked to the model and data.
@@ -168,7 +177,7 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if !atoms.is_empty() {
             for atom in atoms {
-                inputs.insert(&atom );
+                inputs.insert(&atom);
             }
         }
     }
@@ -236,8 +245,6 @@ impl ExternalFunctionHandler for MyEFH {
         }
     }
 }
-
-
 
 fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
     // declare extern function handler
@@ -676,14 +683,12 @@ fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
             return Symbol::create_function("edge_end", &[edge_end], true);
         }
     }
-    Err(IggyError::new(
-        "Expected addeddy(X) atom in the answer!",
-    ))?
+    Err(IggyError::new("Expected addeddy(X) atom in the answer!"))?
 }
 
 fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
-        dbg!(a.to_string()?);
+        // dbg!(a.to_string()?);
         if a.name()? == "addedge" {
             let edge_start = a.arguments()?[0];
             let edge_end = a.arguments()?[1];
@@ -695,9 +700,7 @@ fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
             );
         }
     }
-    Err(IggyError::new(
-        "Expected addedge(X) atom in the answer!",
-    ))?
+    Err(IggyError::new("Expected addedge(X) atom in the answer!"))?
 }
 
 /// only apply with elementary path consistency notion
@@ -746,16 +749,14 @@ pub fn get_opt_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
-
-
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
     let optima = get_optimum(&mut handle)?;
     let mut bscenfit = optima[0];
     let mut brepscore = optima[1];
 
-    dbg!(bscenfit);
-    dbg!(brepscore);
+    // dbg!(bscenfit);
+    // dbg!(brepscore);
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
@@ -763,9 +764,9 @@ pub fn get_opt_add_remove_edges_greedy(
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
-        dbg!(fedges.len());
+        // dbg!(fedges.len());
         let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
-        dbg!((&oedges, oscenfit, orepscore));
+        // dbg!((&oedges, oscenfit, orepscore));
 
         // extend till no better solution can be found
 
@@ -781,27 +782,6 @@ pub fn get_opt_add_remove_edges_greedy(
         add_facts(&mut ctl, inputs);
         add_facts(&mut ctl, &oedges);
 
-        // graph.print();
-        // profiles.print();
-        // inputs.print();
-        // oedges.print();
-   
-        // let modules = vec![PRG_SIGN_CONS,
-        // PRG_BWD_PROP,
-        // PRG_FWD_PROP,
-        // PRG_ELEM_PATH,
-        // PRG_REMOVE_EDGES,
-        // PRG_BEST_ONE_EDGE,
-        // PRG_MIN_WEIGHTED_REPAIRS,
-        // PRG_SHOW_ADD_EDGE_END,
-        // PRG_ERROR_MEASURE,
-        // PRG_MIN_WEIGHTED_ERROR,
-        // PRG_KEEP_INPUTS
-        // ];
-        // for m in modules {
-        //     print!("{}",m);
-        // }
-
         ctl.add("base", &[], PRG_SIGN_CONS)?;
         ctl.add("base", &[], PRG_BWD_PROP)?;
         ctl.add("base", &[], PRG_FWD_PROP)?;
@@ -809,7 +789,6 @@ pub fn get_opt_add_remove_edges_greedy(
         ctl.add("base", &[], PRG_REMOVE_EDGES)?;
         ctl.add("base", &[], PRG_BEST_ONE_EDGE)?;
         ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-        // ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
         ctl.add("base", &[], PRG_SHOW_ADD_EDGE_END)?;
         ctl.add("base", &[], PRG_ERROR_MEASURE)?;
         ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
@@ -876,12 +855,9 @@ pub fn get_opt_add_remove_edges_greedy(
                                             let n2scenfit = model.cost()?[0];
                                             let n2repscore =
                                                 model.cost()?[1] + (2 * oedges.len() as i64);
-                                            
 
                                             if n2scenfit < oscenfit || n2repscore < orepscore {
                                                 // better score or more that 1 scenfit
-                                                // dbg!(n2scenfit);
-                                                // dbg!(n2repscore);
                                                 if n2scenfit < bscenfit {
                                                     bscenfit = n2scenfit; // update bscenfit
                                                     brepscore = n2repscore;
@@ -894,10 +870,12 @@ pub fn get_opt_add_remove_edges_greedy(
                                                 let mut nedges = oedges.clone();
                                                 let nedge = extract_addedge(&symbols2).unwrap();
                                                 nedges.insert(&nedge);
-                                                // dbg!(nedge.to_string()?);
-                                                print!("n2scenfit: {} n2repscore: {} ",n2scenfit,n2repscore);
+                                                print!(
+                                                    "n2scenfit: {} n2repscore: {} ",
+                                                    n2scenfit, n2repscore
+                                                );
                                                 for e in nedges.iter() {
-                                                    print!(" {}",e.to_string()?);
+                                                    print!(" {}", e.to_string()?);
                                                 }
                                                 println!();
                                                 let tuple = (nedges.clone(), n2scenfit, n2repscore);
@@ -916,7 +894,8 @@ pub fn get_opt_add_remove_edges_greedy(
                                 }
                             }
                         }
-                        if end { // could not get better
+                        if end {
+                            // could not get better
                             let tuple = (oedges.clone(), oscenfit, orepscore);
                             if !tedges.contains(&tuple)
                                 && oscenfit == bscenfit
@@ -953,10 +932,9 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     edges: &FactBase,
     // setting: &SETTING,
 ) -> Result<
-    Vec<(
-        std::vec::Vec<(clingo::Symbol, clingo::Symbol)>,
-        std::vec::Vec<std::string::String>,
-    )>,
+    Vec<
+        std::vec::Vec<clingo::Symbol>,
+    >,
     Error,
 > {
     // create a control object and pass command line arguments
@@ -972,6 +950,27 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
     add_facts(&mut ctl, edges);
+
+    // graph.print();
+    // profiles.print();
+    // inputs.print();
+    // edges.print();
+
+    // let modules = vec![PRG_SIGN_CONS,
+    // PRG_BWD_PROP,
+    // PRG_FWD_PROP,
+    // PRG_ELEM_PATH,
+    // PRG_REMOVE_EDGES,
+    // PRG_MIN_WEIGHTED_REPAIRS,
+    // PRG_SHOW_REPAIRS,
+    // PRG_ERROR_MEASURE,
+    // PRG_MIN_WEIGHTED_ERROR,
+    // PRG_KEEP_INPUTS
+    // ];
+    // for m in modules {
+    //     print!("{}",m);
+    // }
+
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
     ctl.add("base", &[], PRG_FWD_PROP)?;
@@ -989,7 +988,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     let models = all_optimal_models(&mut handle)?;
     models
         .iter()
-        .map(|model| extract_labels_repairs(model))
+        .map(|model| extract_repairs(model))
         .collect()
 
     //   solver   = GringoClasp(clasp_options=coptions)
@@ -1035,6 +1034,7 @@ fn extract_labels_repairs(
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
+        print!("{}",symbol.to_string()?);
         match symbol.name()? {
             "vlabel" => {
                 let id = symbol.arguments()?[1];
@@ -1062,6 +1062,32 @@ fn extract_labels_repairs(
         }
     }
     Ok((vlabels, err))
+}
+
+/// Given a model this function returns a vector of pairs (node,label)
+/// and a vector of repair operations needed to make the labeling consistent
+fn extract_repairs(
+    symbols: &[Symbol],
+) -> Result<Vec<Symbol>, Error> {
+    let mut rep = vec![];
+    for symbol in symbols {
+        print!("{}",symbol.to_string()?);
+        match symbol.name()? {
+            "addedge" => {
+                rep.push(*symbol);
+            }
+            "remedge" => {
+                rep.push(*symbol);
+            }
+            "new_influence" => {
+                rep.push(*symbol);
+            }
+            _ => {
+                panic!("unmatched symbol: {}", symbol.to_string()?);
+            }
+        }
+    }
+    Ok(rep)
 }
 
 pub struct Predictions {
