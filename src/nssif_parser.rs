@@ -126,22 +126,22 @@ impl Graph {
     }
 
     pub fn to_facts(&self) -> FactBase {
-        let mut facts = FactBase::empty();
+        let mut facts = FactBase::new();
         for node in &self.or_nodes {
-            facts.add_fact(&Vertex { node: node.clone() });
+            facts.insert(&Vertex { node: node.clone() });
         }
         for node in &self.and_nodes {
-            facts.add_fact(&Vertex { node: node.clone() });
+            facts.insert(&Vertex { node: node.clone() });
         }
         for &(ref s, ref t) in &self.p_edges {
-            facts.add_fact(&ObsELabel {
+            facts.insert(&ObsELabel {
                 start: s.clone(),
                 target: t.clone(),
                 sign: EdgeSign::Plus,
             });
         }
         for &(ref s, ref t) in &self.n_edges {
-            facts.add_fact(&ObsELabel {
+            facts.insert(&ObsELabel {
                 start: s.clone(),
                 target: t.clone(),
                 sign: EdgeSign::Minus,

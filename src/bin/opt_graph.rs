@@ -98,7 +98,7 @@ fn main() {
     let paths = fs::read_dir(opt.observationdir).unwrap();
 
     let profiles = paths
-        .fold(Some(FactBase::empty()), |acc, path| {
+        .fold(Some(FactBase::new()), |acc, path| {
             let observationfile = path.unwrap().path();
             let name = format!("{}", observationfile.display());
             println!("\nReading observations from {}.", name);
@@ -131,7 +131,7 @@ fn main() {
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
         } else {
-            FactBase::empty()
+            FactBase::new()
         }
     };
 

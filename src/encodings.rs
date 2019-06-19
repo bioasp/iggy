@@ -46,20 +46,20 @@ vertex(Y) :- edge(X,Y).
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
 1 {vlabel(E,V,1); vlabel(E,V,-1); vlabel(E,V,0)} :- vertex(V), exp(E).
-1 {elabel(U,V,1); elabel(U,V,-1)} 1 :- edge(U,V), not rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
+1 {elabel(U,V,1); elabel(U,V,-1)} 1 :- edge(U,V), not remedge(U,V,1), not remedge(U,V,-1).
 
 % keep observed labeling of the edges
 error_edge(U,V) :- obs_e_label(U,V,1), obs_e_label(U,V,-1).
-elabel(U,V,S) :- edge(U,V), obs_e_label(U,V,S), not error_edge(U,V), not rep(remedge(U,V,S)).
+elabel(U,V,S) :- edge(U,V), obs_e_label(U,V,S), not error_edge(U,V), not remedge(U,V,S).
 
 % how to hande error_edges
-elabel(U,V,1)  :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), not rep(remedge(U,V,1)), rep(remedge(U,V,-1)).
-elabel(U,V,-1) :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), rep(remedge(U,V,1)), not rep(remedge(U,V,-1)).
+elabel(U,V,1)  :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), not remedge(U,V,1), remedge(U,V,-1).
+elabel(U,V,-1) :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), remedge(U,V,1), not remedge(U,V,-1).
 
 % influences
 infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
 % effects of a repair
-infl(E,V,S) :- rep(new_influence(E,V,S)).
+infl(E,V,S) :- new_influence(E,V,S).
 
 % pure influences
 pinfl(E,V, 1) :- elabel(U,V, 1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E,U,-1).
@@ -67,7 +67,7 @@ pinfl(E,V,-1) :- elabel(U,V,-1), vlabel(E,U, 1), not vlabel(E,U,0), not vlabel(E
 pinfl(E,V,-1) :- elabel(U,V, 1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
 pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E,U, 1).
 % effects of a repair
-pinfl(E,V,S) :- rep(new_influence(E,V,S)).
+pinfl(E,V,S) :- new_influence(E,V,S).
 
 % if a node has been observed only one sign
 % forbidden(E,V,T) :- vlabel(E,V,S1), obs_v_label(E,V,S), sign(S), sign(T), T!=S1.
@@ -119,7 +119,7 @@ founded(E,X,-1) :- founded(E,Y, 1), elabel(Y,X,-1).
 founded(E,X, 1) :- founded(E,Y,-1), elabel(Y,X,-1).
 founded(E,X, 1) :- founded(E,Y, 1), elabel(Y,X, 1).
 
-founded(E,X,S) :- vlabel(E,X,S), rep(new_influence(E,X,S)).
+founded(E,X,S) :- vlabel(E,X,S), new_influence(E,X,S).
 
 forbidden(E,V, 1):- exp(E), vertex(V), not founded(E,V, 1).
 forbidden(E,V,-1):- exp(E), vertex(V), not founded(E,V,-1).
@@ -127,10 +127,10 @@ forbidden(E,V,-1):- exp(E), vertex(V), not founded(E,V,-1).
 
 pub const PRG_ELEM_PATH: &'static str = "
 % new inputs through repair
-input(E,or(\"unknownup\"))    :- rep(new_influence(E,X,S)).
-vlabel(E,or(\"unknownup\"),1) :- rep(new_influence(E,X,S)).
-elabel(or(\"unknownup\"), X, 1)   :- rep(new_influence(E,X,1)).
-elabel(or(\"unknownup\"), X,-1)   :- rep(new_influence(E,X,-1)).
+input(E,or(\"unknownup\"))    :- new_influence(E,X,S).
+vlabel(E,or(\"unknownup\"),1) :- new_influence(E,X,S).
+elabel(or(\"unknownup\"), X, 1)   :- new_influence(E,X,1).
+elabel(or(\"unknownup\"), X,-1)   :- new_influence(E,X,-1).
 
 % in a network exists under Condition E a positive path to X
 
@@ -201,18 +201,20 @@ forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 
 pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
-pub const PRG_SHOW_REPAIRS: &'static str = "#show rep/1.";
+pub const PRG_SHOW_REPAIRS: &'static str = "#show remedge/2.
+#show addedge/3.
+#show new_influence/1.";
 pub const PRG_SHOW_ADD_EDGE_END: &'static str = "
-#show rep(addeddy(V)) : rep(addeddy(V)).
+#show addeddy/1.
 ";
 pub const PRG_ADD_INFLUENCES: &'static str = "
 % repair model
 % define possible repair operations
-rep(new_influence(E,or(X),1)) :- not not rep(new_influence(E,or(X),1)), not rep(new_influence(E,or(X),-1)), vertex(or(X)), exp(E), not input(E,or(X)).
-rep(new_influence(E,or(X),-1)) :- not not rep(new_influence(E,or(X),-1)), not rep(new_influence(E,or(X),1)), vertex(or(X)), exp(E), not input(E,or(X)).
+new_influence(E,or(X),1) :- not not new_influence(E,or(X),1), not new_influence(E,or(X),-1), vertex(or(X)), exp(E), not input(E,or(X)).
+new_influence(E,or(X),-1) :- not not new_influence(E,or(X),-1), not new_influence(E,or(X),1), vertex(or(X)), exp(E), not input(E,or(X)).
 ";
 pub const PRG_MIN_ADDED_INFLUENCES: &'static str =
-    "#minimize{ 1,(E,X,S):rep(new_influence(E,or(X),S))}.";
+    "#minimize{ 1,(E,X,S):new_influence(E,or(X),S)}.";
 pub const PRG_KEEP_OBSERVATIONS: &'static str = "% keep observed variations
 forbidden(E,V,T) :- obs_v_label(E,V,S), sign(S), sign(T), S!=T.
 
@@ -363,38 +365,38 @@ elabel(U,V,-1) :- bot, edge(U,V),               not trivial(V), not input(V), no
 ";
 
 pub const PRG_REMOVE_EDGES: &'static str = "
-0{rep(remedge(U,V,S))}1 :- not mandatory(U,V), obs_e_label(U,V,S).
-0{rep(remedge(U,V,1)); rep(remedge(U,V,-1))}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
+0{remedge(U,V,S)}1 :- not mandatory(U,V), obs_e_label(U,V,S).
+0{remedge(U,V,1); remedge(U,V,-1)}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
 ";
 
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
-#minimize{ 1@1, U,V,S : rep(remedge(U,V,S))}.
-#minimize{ 2@1, U,V,S : rep(addedge(U,V,S))}.
-#minimize{ 2@1, V : rep(addeddy(V)) }.
+#minimize{ 1@1, U,V,S : remedge(U,V,S)}.
+#minimize{ 2@1, U,V,S : addedge(U,V,S)}.
+#minimize{ 2@1, V : addeddy(V) }.
 ";
 
 pub const PRG_BEST_ONE_EDGE: &'static str = "
 % guess one edge end to add
-0{rep(addeddy(or(V)))}  :-     vertex(or(V)).
+0{addeddy(or(V))}  :-     vertex(or(V)).
 
 % new inputs through repair
 input(E,\"unknown\")      :- exp(E).
 vertex(\"unknown\").
-elabel(\"unknown\", V,1)  :- rep(addeddy(V)).
-:- rep(addeddy(U)), rep(addeddy(V)),U!=V.";
+elabel(\"unknown\", V,1)  :- addeddy(V).
+:- addeddy(U), addeddy(V),U!=V.";
 
 pub const PRG_BEST_EDGE_START: &'static str = "
 % guess one edge start to add
-0{rep(addedge(or(V),X,1)); rep(addedge(or(V),X,-1))}1 :- vertex(or(V)), edge_end(X).
+0{addedge(or(V),X,1); addedge(or(V),X,-1)}1 :- vertex(or(V)), edge_end(X).
 
 % input(E,or(\"unknown\"))      :- exp(E).
 % vertex(or(\"unknown\")).
 
 % add only one edge !!!
-:- rep(addedge(Y1,X,1)), rep(addedge(Y2,X,-1)).
-:- rep(addedge(Y1,X,S)), rep(addedge(Y2,X,T)), Y1!=Y2.
+:- addedge(Y1,X,1), addedge(Y2,X,-1).
+:- addedge(Y1,X,S), addedge(Y2,X,T), Y1!=Y2.
 
 % new inputs through repair
 
-elabel(U,V,1) :- rep(addedge(U,V,1)).
-elabel(U,V,-1) :-rep(addedge(U,V,-1)).";
+elabel(U,V,1) :- addedge(U,V,1).
+elabel(U,V,-1) :-addedge(U,V,-1).";

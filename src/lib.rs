@@ -2,7 +2,7 @@ pub mod nssif_parser;
 use nssif_parser::Graph;
 pub mod profile_parser;
 use clingo::FactBase;
-use clingo::ReturnFact;
+use clingo::add_facts;
 use clingo::*;
 use clingo_derive::*;
 
@@ -162,13 +162,13 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
 
     handle.resume()?;
 
-    let mut inputs = FactBase::empty();
+    let mut inputs = FactBase::new();
 
     if let Ok(Some(model)) = handle.model() {
         let atoms = model.symbols(ShowType::SHOWN)?;
         if !atoms.is_empty() {
             for atom in atoms {
-                inputs.add_fact(&ReturnFact { fact: atom });
+                inputs.insert(&atom );
             }
         }
     }
@@ -237,39 +237,7 @@ impl ExternalFunctionHandler for MyEFH {
     }
 }
 
-fn add_facts(ctl: &mut Control, facts: &FactBase) {
-    // get the program builder
-    let mut builder = ctl.program_builder().ok();
 
-    // initialize the location
-    let location = Location::new("<rewrite>", "<rewrite>", 0, 0, 0, 0).unwrap();
-
-    for sym in facts.iter() {
-        // print!("{}",sym.to_string().unwrap());
-
-        // initilize atom to add
-        let atom = ast::Atom::from_symbol(location, *sym);
-
-        // create literal
-        let lit = ast::Literal::from_atom(location, ast::Sign::None, &atom);
-
-        // add atom enable to the rule body
-        let hlit = ast::HeadLiteral::new(atom.location(), ast::HeadLiteralType::Literal, &lit);
-
-        // initialize the rule
-        let rule = ast::Rule::new(hlit, &[]);
-
-        // initialize the statement
-        let stm = rule.ast_statement(location);
-
-        // add the rewritten statement to the program
-        builder
-            .as_mut()
-            .unwrap()
-            .add(&stm)
-            .expect("Failed to add statement to ProgramBuilder.");
-    }
-}
 
 fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> {
     // declare extern function handler
@@ -702,23 +670,24 @@ pub fn get_predictions_under_scenfit(
 
 fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
-        dbg!(a.to_string()?);
-        if a.name()? == "rep" && a.arguments()?[0].name()? == "addeddy" {
-            let edge_end = a.arguments()?[0].arguments()?[0];
+        // dbg!(a.to_string()?);
+        if a.name()? == "addeddy" {
+            let edge_end = a.arguments()?[0];
             return Symbol::create_function("edge_end", &[edge_end], true);
         }
     }
     Err(IggyError::new(
-        "Expected rep(addeddy(X)) atom in the answer!",
+        "Expected addeddy(X) atom in the answer!",
     ))?
 }
 
 fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
-        if a.name()? == "rep" && a.arguments()?[0].name()? == "addedge" {
-            let edge_start = a.arguments()?[0].arguments()?[0];
-            let edge_end = a.arguments()?[0].arguments()?[1];
-            let edge_sign = a.arguments()?[0].arguments()?[2];
+        dbg!(a.to_string()?);
+        if a.name()? == "addedge" {
+            let edge_start = a.arguments()?[0];
+            let edge_end = a.arguments()?[1];
+            let edge_sign = a.arguments()?[2];
             return Symbol::create_function(
                 "obs_e_label",
                 &[edge_start, edge_end, edge_sign],
@@ -727,7 +696,7 @@ fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
         }
     }
     Err(IggyError::new(
-        "Expected rep(addedge(X)) atom in the answer!",
+        "Expected addedge(X) atom in the answer!",
     ))?
 }
 
@@ -749,6 +718,22 @@ pub fn get_opt_add_remove_edges_greedy(
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
+
+    // let modules = vec![PRG_SIGN_CONS,
+    // PRG_BWD_PROP,
+    // PRG_FWD_PROP,
+    // PRG_ELEM_PATH,
+    // PRG_REMOVE_EDGES,
+    // PRG_MIN_WEIGHTED_REPAIRS,
+    // PRG_SHOW_REPAIRS,
+    // PRG_ERROR_MEASURE,
+    // PRG_MIN_WEIGHTED_ERROR,
+    // PRG_KEEP_INPUTS
+    // ];
+    // for m in modules {
+    //     print!("{}",m);
+    // }
+
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
     ctl.add("base", &[], PRG_FWD_PROP)?;
@@ -761,17 +746,18 @@ pub fn get_opt_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
+
+
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
     let optima = get_optimum(&mut handle)?;
     let mut bscenfit = optima[0];
     let mut brepscore = optima[1];
 
-    // print('model:   ',models[0])
     dbg!(bscenfit);
     dbg!(brepscore);
 
-    let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
+    let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
     // let mut dedges = vec![];
 
@@ -795,6 +781,27 @@ pub fn get_opt_add_remove_edges_greedy(
         add_facts(&mut ctl, inputs);
         add_facts(&mut ctl, &oedges);
 
+        // graph.print();
+        // profiles.print();
+        // inputs.print();
+        // oedges.print();
+   
+        // let modules = vec![PRG_SIGN_CONS,
+        // PRG_BWD_PROP,
+        // PRG_FWD_PROP,
+        // PRG_ELEM_PATH,
+        // PRG_REMOVE_EDGES,
+        // PRG_BEST_ONE_EDGE,
+        // PRG_MIN_WEIGHTED_REPAIRS,
+        // PRG_SHOW_ADD_EDGE_END,
+        // PRG_ERROR_MEASURE,
+        // PRG_MIN_WEIGHTED_ERROR,
+        // PRG_KEEP_INPUTS
+        // ];
+        // for m in modules {
+        //     print!("{}",m);
+        // }
+
         ctl.add("base", &[], PRG_SIGN_CONS)?;
         ctl.add("base", &[], PRG_BWD_PROP)?;
         ctl.add("base", &[], PRG_FWD_PROP)?;
@@ -810,7 +817,8 @@ pub fn get_opt_add_remove_edges_greedy(
 
         // ground & solve
         let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-        println!(" search edge end ! ");
+        // println!(" search edge end !");
+        // seach best edge end loop
         loop {
             handle.resume()?;
             match handle.model() {
@@ -828,10 +836,9 @@ pub fn get_opt_add_remove_edges_greedy(
 
                             let nend = extract_addeddy(&symbols).unwrap();
 
-                            // search starts of the addeddy
-                            let mut f_end = FactBase::empty();
-                            println!("end: {} ",nend.to_string()?);
-                            f_end.add_fact(&ReturnFact { fact: nend });
+                            let mut f_end = FactBase::new();
+                            f_end.insert(&nend);
+
                             let mut ctl2 = Control::new(vec![
                                 "--opt-strategy=5".to_string(),
                                 "--opt-mode=optN".to_string(),
@@ -858,7 +865,8 @@ pub fn get_opt_add_remove_edges_greedy(
 
                             // ground & solve
                             let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
-                            println!(" search edge start !");
+                            // println!(" search edge start !");
+                            // seach best edge start loop
                             loop {
                                 handle2.resume()?;
                                 match handle2.model() {
@@ -885,9 +893,9 @@ pub fn get_opt_add_remove_edges_greedy(
                                                 }
                                                 let mut nedges = oedges.clone();
                                                 let nedge = extract_addedge(&symbols2).unwrap();
+                                                nedges.insert(&nedge);
                                                 // dbg!(nedge.to_string()?);
                                                 print!("n2scenfit: {} n2repscore: {} ",n2scenfit,n2repscore);
-                                                nedges.add_fact(&ReturnFact { fact: nedge });
                                                 for e in nedges.iter() {
                                                     print!(" {}",e.to_string()?);
                                                 }
@@ -1039,7 +1047,13 @@ fn extract_labels_repairs(
             "err" => {
                 err.push(symbol.to_string()?);
             }
-            "rep" => {
+            "addedge" => {
+                err.push(symbol.to_string()?);
+            }
+            "remedge" => {
+                err.push(symbol.to_string()?);
+            }
+            "new_influence" => {
                 err.push(symbol.to_string()?);
             }
             _ => {

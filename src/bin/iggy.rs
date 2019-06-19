@@ -98,7 +98,7 @@ fn main() {
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
         } else {
-            FactBase::empty()
+            FactBase::new()
         }
     };
 

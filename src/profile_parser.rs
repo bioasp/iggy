@@ -65,56 +65,56 @@ pub struct IsMax<'a> {
 
 impl Profile {
     pub fn to_facts(&self) -> FactBase {
-        let mut facts = FactBase::empty();
+        let mut facts = FactBase::new();
         for node in &self.plus {
-            facts.add_fact(&ObsVLabel {
+            facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node,
                 sign: NodeSign::Plus,
             });
         }
         for node in &self.minus {
-            facts.add_fact(&ObsVLabel {
+            facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node,
                 sign: NodeSign::Minus,
             });
         }
         for node in &self.zero {
-            facts.add_fact(&ObsVLabel {
+            facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node,
                 sign: NodeSign::Zero,
             });
         }
         for node in &self.notplus {
-            facts.add_fact(&ObsVLabel {
+            facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node,
                 sign: NodeSign::NotPlus,
             });
         }
         for node in &self.notminus {
-            facts.add_fact(&ObsVLabel {
+            facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node,
                 sign: NodeSign::NotMinus,
             });
         }
         for node in &self.input {
-            facts.add_fact(&Input {
+            facts.insert(&Input {
                 profile: &self.id,
                 node,
             });
         }
         for node in &self.min {
-            facts.add_fact(&IsMin {
+            facts.insert(&IsMin {
                 profile: &self.id,
                 node,
             });
         }
         for node in &self.max {
-            facts.add_fact(&IsMax {
+            facts.insert(&IsMax {
                 profile: &self.id,
                 node,
             });
