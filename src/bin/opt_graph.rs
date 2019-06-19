@@ -158,7 +158,7 @@ fn main() {
                                 &graph,
                                 &profiles,
                                 &new_inputs,
-                                number,
+                                number_of_repairs,
                                 &edges,
                             )
                             .unwrap();

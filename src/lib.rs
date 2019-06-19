@@ -699,6 +699,38 @@ pub fn get_predictions_under_scenfit(
     let model = cautious_consequences_optimal_models(&mut handle)?;
     Ok(extract_predictions(&model)?)
 }
+
+fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
+    for a in symbols {
+        dbg!(a.to_string()?);
+        if a.name()? == "rep" && a.arguments()?[0].name()? == "addeddy" {
+            let edge_end = a.arguments()?[0].arguments()?[0];
+            return Symbol::create_function("edge_end", &[edge_end], true);
+        }
+    }
+    Err(IggyError::new(
+        "Expected rep(addeddy(X)) atom in the answer!",
+    ))?
+}
+
+fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
+    for a in symbols {
+        if a.name()? == "rep" && a.arguments()?[0].name()? == "addedge" {
+            let edge_start = a.arguments()?[0].arguments()?[0];
+            let edge_end = a.arguments()?[0].arguments()?[1];
+            let edge_sign = a.arguments()?[0].arguments()?[2];
+            return Symbol::create_function(
+                "obs_e_label",
+                &[edge_start, edge_end, edge_sign],
+                true,
+            );
+        }
+    }
+    Err(IggyError::new(
+        "Expected rep(addedge(X)) atom in the answer!",
+    ))?
+}
+
 /// only apply with elementary path consistency notion
 pub fn get_opt_add_remove_edges_greedy(
     graph: &FactBase,
@@ -731,15 +763,9 @@ pub fn get_opt_add_remove_edges_greedy(
 
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-    handle.resume()?;
-    let cost = match handle.model() {
-        Ok(Some(model)) => model.cost(),
-        Ok(None) => Err(IggyError::new("No model found!"))?,
-        Err(e) => Err(e)?,
-    };
-    let cost = cost.unwrap();
-    let mut bscenfit = cost[0];
-    let mut brepscore = cost[1];
+    let optima = get_optimum(&mut handle)?;
+    let mut bscenfit = optima[0];
+    let mut brepscore = optima[1];
 
     // print('model:   ',models[0])
     dbg!(bscenfit);
@@ -747,15 +773,13 @@ pub fn get_opt_add_remove_edges_greedy(
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::empty(), bscenfit, brepscore)];
     let mut tedges = vec![];
-    let mut dedges = vec![];
+    // let mut dedges = vec![];
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
         dbg!(fedges.len());
         let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
-
         dbg!((&oedges, oscenfit, orepscore));
-        // print('len(oedges):',len(oedges))
 
         // extend till no better solution can be found
 
@@ -778,13 +802,15 @@ pub fn get_opt_add_remove_edges_greedy(
         ctl.add("base", &[], PRG_REMOVE_EDGES)?;
         ctl.add("base", &[], PRG_BEST_ONE_EDGE)?;
         ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-        ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+        // ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+        ctl.add("base", &[], PRG_SHOW_ADD_EDGE_END)?;
         ctl.add("base", &[], PRG_ERROR_MEASURE)?;
         ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
         ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
         // ground & solve
         let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+        println!(" search edge end ! ");
         loop {
             handle.resume()?;
             match handle.model() {
@@ -795,118 +821,94 @@ pub fn get_opt_add_remove_edges_greedy(
 
                         let nscenfit = cost[0];
                         let nrepscore = cost[1] + (2 * oedges.len() as i64);
-                        dbg!(nscenfit);
-                        dbg!(nrepscore);
+                        // dbg!((nscenfit,nrepscore));
                         if nscenfit < oscenfit || nrepscore < orepscore {
                             // better score or more that 1 scenfit
                             // print('maybe better solution:')
 
-                            for a in symbols {
-                                if a.name()? == "rep" {
-                                    if a.arguments()?[0].name()? == "addeddy" {
-                                        let edge_end = a.arguments()?[0].arguments()?[0];
-                                        dbg!(edge_end.to_string()?);
-                                        // print('new addeddy to',a.arg(0)[8:-1])
-                                        let nend =
-                                            Symbol::create_function("edge_end", &[edge_end], true)?;
-                                        // search starts of the addeddy
-                                        print!("search best edge starts");
-                                        let mut f_end = FactBase::empty();
-                                        f_end.add_fact(&ReturnFact { fact: nend });
-                                        let mut ctl2 = Control::new(vec![
-                                            "--opt-strategy=5".to_string(),
-                                            "--opt-mode=optN".to_string(),
-                                            "--project".to_string(),
-                                            // "--quiet=1".to_string(),
-                                        ])?;
-                                        add_facts(&mut ctl2, graph);
-                                        add_facts(&mut ctl2, profiles);
-                                        add_facts(&mut ctl2, inputs);
-                                        add_facts(&mut ctl2, &oedges);
-                                        add_facts(&mut ctl2, &f_end);
+                            let nend = extract_addeddy(&symbols).unwrap();
 
-                                        ctl2.add("base", &[], PRG_SIGN_CONS)?;
-                                        ctl2.add("base", &[], PRG_BWD_PROP)?;
-                                        ctl2.add("base", &[], PRG_FWD_PROP)?;
-                                        ctl2.add("base", &[], PRG_ELEM_PATH)?;
-                                        ctl2.add("base", &[], PRG_REMOVE_EDGES)?;
-                                        ctl2.add("base", &[], PRG_BEST_EDGE_START)?;
-                                        ctl2.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-                                        ctl2.add("base", &[], PRG_SHOW_REPAIRS)?;
-                                        ctl2.add("base", &[], PRG_ERROR_MEASURE)?;
-                                        ctl2.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-                                        ctl2.add("base", &[], PRG_KEEP_INPUTS)?;
+                            // search starts of the addeddy
+                            let mut f_end = FactBase::empty();
+                            println!("end: {} ",nend.to_string()?);
+                            f_end.add_fact(&ReturnFact { fact: nend });
+                            let mut ctl2 = Control::new(vec![
+                                "--opt-strategy=5".to_string(),
+                                "--opt-mode=optN".to_string(),
+                                "--project".to_string(),
+                                // "--quiet=1".to_string(),
+                            ])?;
+                            add_facts(&mut ctl2, graph);
+                            add_facts(&mut ctl2, profiles);
+                            add_facts(&mut ctl2, inputs);
+                            add_facts(&mut ctl2, &oedges);
+                            add_facts(&mut ctl2, &f_end);
 
-                                        // ground & solve
-                                        let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
-                                        loop {
-                                            handle2.resume()?;
-                                            match handle2.model() {
-                                                Ok(Some(model)) => {
-                                                    if model.optimality_proven()? {
-                                                        let symbols2 =
-                                                            model.symbols(ShowType::SHOWN)?;
-                                                        let n2scenfit = model.cost()?[0];
-                                                        let n2repscore = model.cost()?[1]
-                                                            + (2 * oedges.len() as i64);
-                                                        dbg!(n2scenfit);
-                                                        dbg!(n2repscore);
+                            ctl2.add("base", &[], PRG_SIGN_CONS)?;
+                            ctl2.add("base", &[], PRG_BWD_PROP)?;
+                            ctl2.add("base", &[], PRG_FWD_PROP)?;
+                            ctl2.add("base", &[], PRG_ELEM_PATH)?;
+                            ctl2.add("base", &[], PRG_REMOVE_EDGES)?;
+                            ctl2.add("base", &[], PRG_BEST_EDGE_START)?;
+                            ctl2.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+                            ctl2.add("base", &[], PRG_SHOW_REPAIRS)?;
+                            ctl2.add("base", &[], PRG_ERROR_MEASURE)?;
+                            ctl2.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+                            ctl2.add("base", &[], PRG_KEEP_INPUTS)?;
 
-                                                        if n2scenfit < oscenfit
-                                                            || n2repscore < orepscore
-                                                        {
-                                                            // better score or more that 1 scenfit
-                                                            // print('better solution:')
-                                                            if n2scenfit < bscenfit {
-                                                                bscenfit = n2scenfit; // update bscenfit
-                                                                brepscore = n2repscore;
-                                                            }
-                                                            if n2scenfit == bscenfit {
-                                                                if n2repscore < brepscore {
-                                                                    brepscore = n2repscore
-                                                                }
-                                                            }
-                                                            let mut nedges = oedges.clone();
-                                                            for a in symbols2 {
-                                                                if a.name()? == "rep" {
-                                                                    dbg!(a.arguments()?[0].name()?);
-                                                                    if a.arguments()?[0].name()?
-                                                                        == "addedge"
-                                                                    {
-                                                                        // dbg!(a.arg(0)[8:-1]);
-                                                                        let nedge = Symbol::create_function("obs_e_label", &[a.arguments()?[0]], true)?;
-                                                                        nedges.add_fact(
-                                                                            &ReturnFact {
-                                                                                fact: nedge,
-                                                                            },
-                                                                        );
-                                                                        end = false;
-                                                                    }
-                                                                }
-                                                            }
-                                                            let tuple = (
-                                                                nedges.clone(),
-                                                                n2scenfit,
-                                                                n2repscore,
-                                                            );
-                                                            if !fedges.contains(&tuple)
-                                                                && !dedges.contains(&nedges)
-                                                            {
-                                                                fedges.push(tuple);
-                                                                dedges.push(nedges);
-                                                            }
-                                                        }
+                            // ground & solve
+                            let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
+                            println!(" search edge start !");
+                            loop {
+                                handle2.resume()?;
+                                match handle2.model() {
+                                    Ok(Some(model)) => {
+                                        if model.optimality_proven()? {
+                                            let symbols2 = model.symbols(ShowType::SHOWN)?;
+                                            let n2scenfit = model.cost()?[0];
+                                            let n2repscore =
+                                                model.cost()?[1] + (2 * oedges.len() as i64);
+                                            
+
+                                            if n2scenfit < oscenfit || n2repscore < orepscore {
+                                                // better score or more that 1 scenfit
+                                                // dbg!(n2scenfit);
+                                                // dbg!(n2repscore);
+                                                if n2scenfit < bscenfit {
+                                                    bscenfit = n2scenfit; // update bscenfit
+                                                    brepscore = n2repscore;
+                                                }
+                                                if n2scenfit == bscenfit {
+                                                    if n2repscore < brepscore {
+                                                        brepscore = n2repscore
                                                     }
                                                 }
-                                                Ok(None) => break,
-                                                Err(e) => Err(e)?,
+                                                let mut nedges = oedges.clone();
+                                                let nedge = extract_addedge(&symbols2).unwrap();
+                                                // dbg!(nedge.to_string()?);
+                                                print!("n2scenfit: {} n2repscore: {} ",n2scenfit,n2repscore);
+                                                nedges.add_fact(&ReturnFact { fact: nedge });
+                                                for e in nedges.iter() {
+                                                    print!(" {}",e.to_string()?);
+                                                }
+                                                println!();
+                                                let tuple = (nedges.clone(), n2scenfit, n2repscore);
+                                                if !fedges.contains(&tuple)
+                                                // && !dedges.contains(&nedges)
+                                                {
+                                                    fedges.push(tuple);
+                                                    // dedges.push(nedges);
+                                                }
+                                                end = false;
                                             }
                                         }
                                     }
+                                    Ok(None) => break,
+                                    Err(e) => Err(e)?,
                                 }
                             }
                         }
-                        if end {
+                        if end { // could not get better
                             let tuple = (oedges.clone(), oscenfit, orepscore);
                             if !tedges.contains(&tuple)
                                 && oscenfit == bscenfit
@@ -918,7 +920,7 @@ pub fn get_opt_add_remove_edges_greedy(
                         }
                     }
                 }
-                Ok(None) => (),
+                Ok(None) => break,
                 Err(e) => Err(e)?,
             }
         }
@@ -939,7 +941,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    number: u32,
+    number: i64,
     edges: &FactBase,
     // setting: &SETTING,
 ) -> Result<

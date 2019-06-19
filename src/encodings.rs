@@ -202,7 +202,9 @@ forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
 pub const PRG_SHOW_REPAIRS: &'static str = "#show rep/1.";
-
+pub const PRG_SHOW_ADD_EDGE_END: &'static str = "
+#show rep(addeddy(V)) : rep(addeddy(V)).
+";
 pub const PRG_ADD_INFLUENCES: &'static str = "
 % repair model
 % define possible repair operations
@@ -384,6 +386,9 @@ elabel(\"unknown\", V,1)  :- rep(addeddy(V)).
 pub const PRG_BEST_EDGE_START: &'static str = "
 % guess one edge start to add
 0{rep(addedge(or(V),X,1)); rep(addedge(or(V),X,-1))}1 :- vertex(or(V)), edge_end(X).
+
+% input(E,or(\"unknown\"))      :- exp(E).
+% vertex(or(\"unknown\")).
 
 % add only one edge !!!
 :- rep(addedge(Y1,X,1)), rep(addedge(Y2,X,-1)).
