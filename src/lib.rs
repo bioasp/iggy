@@ -260,6 +260,16 @@ fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle, Error> 
     // solve
     Ok(ctl.solve(SolveMode::YIELD, &[])?)
 }
+fn ground_with_myefh(ctl: &mut Control) -> Result<(), Error> {
+    // declare extern function handler
+    let mut efh = MyEFH;
+
+    // ground the base part
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    Ok(ctl.ground_with_event_handler(&parts, &mut efh)?)
+}
 
 fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>, Error> {
     let mut symbols = vec![];
@@ -293,46 +303,6 @@ fn all_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
         }
     }
 }
-fn all_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                if model.optimality_proven()? {
-                    let symbols = model.symbols(ShowType::SHOWN)?;
-                    v.push(symbols);
-                }
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
-}
-// fn optimal_models(handle: &mut SolveHandle, number: u32) -> Result<Vec<Vec<Symbol>>, Error> {
-//     let mut v = Vec::new();
-//     let mut counter = 0;
-//     loop {
-//         if counter < number {
-//         handle.resume()?;
-//         match handle.model() {
-//             Ok(Some(model)) => {
-//                 if model.optimality_proven()? {
-//                     let symbols = model.symbols(ShowType::SHOWN)?;
-//                     counter += 1;
-//                     v.push(symbols);
-//                 }
-//             }
-//             Ok(None) => {
-//                 return Ok(v);
-//             }
-//             Err(e) => Err(e)?,
-//         }
-//         }else {return Ok(v);}
-//     }
-// }
 
 fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
     loop {
@@ -378,10 +348,9 @@ pub fn get_minimal_inconsistent_cores(
     }
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-
-    let models = all_models(&mut handle)?;
-    models.iter().map(|model| extract_mics(model)).collect()
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.all_models()?;
+    models.map(|model| extract_mics(&model.symbols)).collect()
 }
 
 /// returns the scenfit of data and model
@@ -473,11 +442,10 @@ pub fn get_scenfit_labelings(
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-    let models = all_optimal_models(&mut handle)?;
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.optimal_models()?;
     models
-        .iter()
-        .map(|model| extract_labels_repairs(model))
+        .map(|model| extract_labels_repairs(&model.symbols))
         .collect()
 }
 
@@ -570,11 +538,11 @@ pub fn get_mcos_labelings(
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-    let models = all_optimal_models(&mut handle)?;
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.optimal_models()?;
+
     models
-        .iter()
-        .map(|model| extract_labels_repairs(model))
+        .map(|model| extract_labels_repairs(&model.symbols))
         .collect()
 }
 pub fn get_predictions_under_mcos(
@@ -755,8 +723,8 @@ pub fn get_opt_add_remove_edges_greedy(
     let mut bscenfit = optima[0];
     let mut brepscore = optima[1];
 
-    // dbg!(bscenfit);
-    // dbg!(brepscore);
+    dbg!(bscenfit);
+    dbg!(brepscore);
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
@@ -844,7 +812,7 @@ pub fn get_opt_add_remove_edges_greedy(
 
                             // ground & solve
                             let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
-                            // println!(" search edge start !");
+                            println!(" search edge start !");
                             // seach best edge start loop
                             loop {
                                 handle2.resume()?;
@@ -855,6 +823,8 @@ pub fn get_opt_add_remove_edges_greedy(
                                             let n2scenfit = model.cost()?[0];
                                             let n2repscore =
                                                 model.cost()?[1] + (2 * oedges.len() as i64);
+                                            print!("cost: {}", model.cost()?[1]);
+                                            print!("oedges: {}", oedges.len());
 
                                             if n2scenfit < oscenfit || n2repscore < orepscore {
                                                 // better score or more that 1 scenfit
@@ -931,12 +901,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     number: i64,
     edges: &FactBase,
     // setting: &SETTING,
-) -> Result<
-    Vec<
-        std::vec::Vec<clingo::Symbol>,
-    >,
-    Error,
-> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         number.to_string(),
@@ -984,11 +949,10 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-    let models = all_optimal_models(&mut handle)?;
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.optimal_models()?;
     models
-        .iter()
-        .map(|model| extract_repairs(model))
+        .map(|model| extract_repairs(&model.symbols))
         .collect()
 
     //   solver   = GringoClasp(clasp_options=coptions)
@@ -1011,12 +975,7 @@ pub fn get_opt_add_remove_edges(
     profiles: &FactBase,
     inputs: &FactBase,
     setting: &SETTING,
-) -> Result<
-    Vec<
-        std::vec::Vec<clingo::Symbol>,
-    >,
-    Error,
-> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
@@ -1036,12 +995,16 @@ pub fn get_opt_add_remove_edges(
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
     }
     if setting.ep {
-        print!("error query.get_opt_add_remove_edges should not be called with
+        print!(
+            "error query.get_opt_add_remove_edges should not be called with
           elementary path constraint, use instead
-          get_opt_add_remove_edges_greedy");
-        panic!("error query.get_opt_add_remove_edges should not be called with
+          get_opt_add_remove_edges_greedy"
+        );
+        panic!(
+            "error query.get_opt_add_remove_edges should not be called with
           elementary path constraint, use instead
-          get_opt_add_remove_edges_greedy");
+          get_opt_add_remove_edges_greedy"
+        );
     }
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
@@ -1052,22 +1015,20 @@ pub fn get_opt_add_remove_edges(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-
-    let models = all_optimal_models(&mut handle)?;
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.optimal_models()?;
     models
-        .iter()
-        .map(|model| extract_repairs(model))
+        .map(|model| extract_repairs(&model.symbols))
         .collect()
 
-//   coptions = '--opt-strategy=5'
-//   solver   = GringoClasp(clasp_options=coptions)
-//   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-//   fit      = solution[0].score[0]
-//   repairs  = solution[0].score[1]
+    //   coptions = '--opt-strategy=5'
+    //   solver   = GringoClasp(clasp_options=coptions)
+    //   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+    //   fit      = solution[0].score[0]
+    //   repairs  = solution[0].score[1]
 
-//   os.unlink(inst)
-//   return (fit,repairs)
+    //   os.unlink(inst)
+    //   return (fit,repairs)
 }
 
 /// Given a model this function returns a vector of mics
@@ -1098,7 +1059,7 @@ fn extract_labels_repairs(
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
-        print!("{}",symbol.to_string()?);
+        print!("{}", symbol.to_string()?);
         match symbol.name()? {
             "vlabel" => {
                 let id = symbol.arguments()?[1];
@@ -1130,12 +1091,10 @@ fn extract_labels_repairs(
 
 /// Given a model this function returns a vector of pairs (node,label)
 /// and a vector of repair operations needed to make the labeling consistent
-fn extract_repairs(
-    symbols: &[Symbol],
-) -> Result<Vec<Symbol>, Error> {
+fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
     let mut rep = vec![];
     for symbol in symbols {
-        print!("{}",symbol.to_string()?);
+        print!("{}", symbol.to_string()?);
         match symbol.name()? {
             "addedge" => {
                 rep.push(*symbol);

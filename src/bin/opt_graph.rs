@@ -183,14 +183,17 @@ fn main() {
                     }
                 }
             } else {
-                //   (scenfit,repairscore) 
+                //   (scenfit,repairscore)
                 let bla = get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting);
                 for i in bla {
-                    print!("{:?}",i);
+                    print!("{:?}", i);
                 }
-                let (scenfit,repairscore) = (444,555);
+                let (scenfit, repairscore) = (444, 555);
                 println!("done.");
-                print!("\nThe network and data can reach a scenfit of {} with repairs of score {}",scenfit,repairscore);
+                print!(
+                    "\nThe network and data can reach a scenfit of {} with repairs of score {}",
+                    scenfit, repairscore
+                );
 
                 if repairscore > 0 {
                     if let Some(number) = opt.show_repairs {
@@ -199,9 +202,9 @@ fn main() {
                         println!("done.");
                         let mut count = 0;
                         // for r in repairs {
-                            count += 1;
-                            print!("\nRepair {}: ",count);
-                            // utils.print_repairs(r)
+                        count += 1;
+                        print!("\nRepair {}: ", count);
+                        // utils.print_repairs(r)
                         // }
                     }
                 }
