@@ -152,48 +152,59 @@ fn main() {
                 if let Some(number) = opt.show_repairs {
                     print!("\nCompute optimal repairs ... ");
                     print!("   use greedily added edges ...");
-                    for (edges, number_of_repairs) in redges {
+                    for (new_edges, number_of_repairs) in redges {
                         if number_of_repairs > 0 {
                             let repairs = get_opt_repairs_add_remove_edges_greedy(
                                 &graph,
                                 &profiles,
                                 &new_inputs,
                                 number_of_repairs,
-                                &edges,
+                                &new_edges,
                             )
                             .unwrap();
 
                             for r in repairs {
                                 count_repairs += 1;
                                 print!("\nRepair {}:", count_repairs);
-                                for e in edges.iter() {
-                                    print!("   addedge {}", e.to_string().unwrap());
+                                for e in new_edges.iter() {
+                                    print!("   add {}", e.to_string().unwrap());
                                 }
-                                // print_repairs(r);
+                                for e in r {
+                                    print!("   r: {}", e.to_string().unwrap());
+                                }
                             }
                         } else {
                             count_repairs += 1;
                             print!("\nRepair {}:", count_repairs);
-                            for e in edges.iter() {
-                                print!("   addedge{}", e.to_string().unwrap());
+                            for e in new_edges.iter() {
+                                print!("   add {}", e.to_string().unwrap());
                             }
                         }
                     }
                 }
             } else {
-                //   (scenfit,repairscore) = query.get_opt_add_remove_edges(net_with_data, OS, FP, FC, EP)
+                //   (scenfit,repairscore) 
+                let bla = get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting);
+                for i in bla {
+                    print!("{:?}",i);
+                }
+                let (scenfit,repairscore) = (444,555);
                 println!("done.");
-                //   print('\nThe network and data can reach a scenfit of',scenfit,'with repairs of score',str(repairscore)+'.')
+                print!("\nThe network and data can reach a scenfit of {} with repairs of score {}",scenfit,repairscore);
 
-                //   if args.show_repairs >= 0 and repairscore > 0:
-                //     print('\nCompute optimal repairs ... ',end='')
-                //     repairs = query.get_opt_repairs_add_remove_edges(net_with_data,args.show_repairs, OS, FP, FC, EP)
-                //     print('done.')
-                //     count = 0
-                //     for r in repairs :
-                //       count += 1
-                //       print('\nRepair ',str(count),':',sep='')
-                //       utils.print_repairs(r)
+                if repairscore > 0 {
+                    if let Some(number) = opt.show_repairs {
+                        print!("\nCompute optimal repairs ... ");
+                        // let repairs = query.get_opt_repairs_add_remove_edges(net_with_data,number, &setting);
+                        println!("done.");
+                        let mut count = 0;
+                        // for r in repairs {
+                            count += 1;
+                            print!("\nRepair {}: ",count);
+                            // utils.print_repairs(r)
+                        // }
+                    }
+                }
             }
         }
         Some(RepairMode::Flip) => {

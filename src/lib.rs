@@ -796,7 +796,7 @@ pub fn get_opt_add_remove_edges_greedy(
 
         // ground & solve
         let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-        // println!(" search edge end !");
+        println!(" search edge end !");
         // seach best edge end loop
         loop {
             handle.resume()?;
@@ -1004,6 +1004,70 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     //   return models
 
     // Ok(vec![])
+}
+
+pub fn get_opt_add_remove_edges(
+    graph: &FactBase,
+    profiles: &FactBase,
+    inputs: &FactBase,
+    setting: &SETTING,
+) -> Result<
+    Vec<
+        std::vec::Vec<clingo::Symbol>,
+    >,
+    Error,
+> {
+    // create a control object and pass command line arguments
+    let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
+
+    add_facts(&mut ctl, graph);
+    add_facts(&mut ctl, profiles);
+    add_facts(&mut ctl, inputs);
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        print!("error query.get_opt_add_remove_edges should not be called with
+          elementary path constraint, use instead
+          get_opt_add_remove_edges_greedy");
+        panic!("error query.get_opt_add_remove_edges should not be called with
+          elementary path constraint, use instead
+          get_opt_add_remove_edges_greedy");
+    }
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+
+    let models = all_optimal_models(&mut handle)?;
+    models
+        .iter()
+        .map(|model| extract_repairs(model))
+        .collect()
+
+//   coptions = '--opt-strategy=5'
+//   solver   = GringoClasp(clasp_options=coptions)
+//   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+//   fit      = solution[0].score[0]
+//   repairs  = solution[0].score[1]
+
+//   os.unlink(inst)
+//   return (fit,repairs)
 }
 
 /// Given a model this function returns a vector of mics
