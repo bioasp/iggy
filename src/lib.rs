@@ -287,22 +287,6 @@ fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<
     }
     Ok(symbols)
 }
-fn all_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                let symbols = model.symbols(ShowType::SHOWN)?;
-                v.push(symbols);
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
-}
 
 fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
     loop {
@@ -690,6 +674,9 @@ pub fn get_opt_add_remove_edges_greedy(
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
 
+    // graph.print();
+    // profiles.print();
+    // inputs.print();
     // let modules = vec![PRG_SIGN_CONS,
     // PRG_BWD_PROP,
     // PRG_FWD_PROP,
