@@ -23,7 +23,11 @@ pub fn read(file: &File) -> Result<Graph, Error> {
     graph.or_nodes.sort();
     graph.or_nodes.dedup();
     graph.and_nodes.sort();
-    graph.or_nodes.dedup();
+    graph.and_nodes.dedup();
+    graph.p_edges.sort();
+    graph.p_edges.dedup();
+    graph.n_edges.sort();
+    graph.n_edges.dedup();
     Ok(graph)
 }
 
