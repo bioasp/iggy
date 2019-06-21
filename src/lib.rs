@@ -289,16 +289,25 @@ fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<
 }
 
 fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>, Error> {
+    let mut last = vec![];
+    let mut found = false;
     loop {
         handle.resume()?;
         match handle.model() {
             Ok(Some(model)) => {
                 if model.optimality_proven()? {
                     return Ok(model.cost()?);
+                } else {
+                    found = true;
+                    last = model.cost()?;
                 }
             }
             Ok(None) => {
-                panic!("Error: no model found!");
+                if found {
+                    return Ok(last);
+                } else {
+                    panic!("Error: no optimal model found!");
+                }
             }
             Err(e) => {
                 Err(e)?;
@@ -710,18 +719,13 @@ pub fn get_opt_add_remove_edges_greedy(
     let mut bscenfit = optima[0];
     let mut brepscore = optima[1];
 
-    dbg!(bscenfit);
-    dbg!(brepscore);
-
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
     // let mut dedges = vec![];
 
     while !fedges.is_empty() {
         // sys.stdout.flush()
-        // dbg!(fedges.len());
         let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
-        // dbg!((&oedges, oscenfit, orepscore));
 
         // extend till no better solution can be found
 
@@ -751,7 +755,6 @@ pub fn get_opt_add_remove_edges_greedy(
 
         // ground & solve
         let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-        println!(" search edge end !");
         // seach best edge end loop
         loop {
             handle.resume()?;
@@ -766,7 +769,6 @@ pub fn get_opt_add_remove_edges_greedy(
                         // dbg!((nscenfit,nrepscore));
                         if nscenfit < oscenfit || nrepscore < orepscore {
                             // better score or more that 1 scenfit
-                            // print('maybe better solution:')
 
                             let nend = extract_addeddy(&symbols).unwrap();
 
@@ -799,7 +801,6 @@ pub fn get_opt_add_remove_edges_greedy(
 
                             // ground & solve
                             let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
-                            println!(" search edge start !");
                             // seach best edge start loop
                             loop {
                                 handle2.resume()?;
@@ -810,8 +811,6 @@ pub fn get_opt_add_remove_edges_greedy(
                                             let n2scenfit = model.cost()?[0];
                                             let n2repscore =
                                                 model.cost()?[1] + (2 * oedges.len() as i64);
-                                            print!("cost: {}", model.cost()?[1]);
-                                            print!("oedges: {}", oedges.len());
 
                                             if n2scenfit < oscenfit || n2repscore < orepscore {
                                                 // better score or more that 1 scenfit
@@ -827,14 +826,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                                 let mut nedges = oedges.clone();
                                                 let nedge = extract_addedge(&symbols2).unwrap();
                                                 nedges.insert(&nedge);
-                                                print!(
-                                                    "n2scenfit: {} n2repscore: {} ",
-                                                    n2scenfit, n2repscore
-                                                );
-                                                for e in nedges.iter() {
-                                                    print!(" {}", e.to_string()?);
-                                                }
-                                                println!();
+
                                                 let tuple = (nedges.clone(), n2scenfit, n2repscore);
                                                 if !fedges.contains(&tuple)
                                                 // && !dedges.contains(&nedges)
@@ -858,7 +850,6 @@ pub fn get_opt_add_remove_edges_greedy(
                                 && oscenfit == bscenfit
                                 && orepscore == brepscore
                             {
-                                // println!("LAST tedges append {}",oedges);
                                 tedges.push(tuple);
                             }
                         }
@@ -885,43 +876,24 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    number: i64,
     edges: &FactBase,
+    scenfit: i64,
+    repair_score: i64,
+    max_solutions: u32,
     // setting: &SETTING,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
-        number.to_string(),
+        max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
-        "--opt-mode=optN".to_string(),
+        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
         "--project".to_string(),
-        // "--quiet=1".to_string(),
     ])?;
 
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
     add_facts(&mut ctl, edges);
-
-    // graph.print();
-    // profiles.print();
-    // inputs.print();
-    // edges.print();
-
-    // let modules = vec![PRG_SIGN_CONS,
-    // PRG_BWD_PROP,
-    // PRG_FWD_PROP,
-    // PRG_ELEM_PATH,
-    // PRG_REMOVE_EDGES,
-    // PRG_MIN_WEIGHTED_REPAIRS,
-    // PRG_SHOW_REPAIRS,
-    // PRG_ERROR_MEASURE,
-    // PRG_MIN_WEIGHTED_ERROR,
-    // PRG_KEEP_INPUTS
-    // ];
-    // for m in modules {
-    //     print!("{}",m);
-    // }
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -941,20 +913,6 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     models
         .map(|model| extract_repairs(&model.symbols))
         .collect()
-
-    //   solver   = GringoClasp(clasp_options=coptions)
-    //   models   = solver.run(prg, collapseTerms=True, collapseAtoms=False)
-    //   #print(models)
-    //   #nscenfit  = models[0].score[0]
-    //   #nrepscore = models[0].score[1]
-    //   #print('scenfit:   ', nscenfit)
-    //   #print('repscore:  ', nrepscore)
-
-    //   os.unlink(f_edges)
-    //   os.unlink(inst)
-    //   return models
-
-    // Ok(vec![])
 }
 
 pub fn get_opt_add_remove_edges(
@@ -962,15 +920,20 @@ pub fn get_opt_add_remove_edges(
     profiles: &FactBase,
     inputs: &FactBase,
     setting: &SETTING,
-) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
+) -> Result<(i64, i64), Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
+
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
@@ -982,24 +945,76 @@ pub fn get_opt_add_remove_edges(
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
     }
     if setting.ep {
-        print!(
-            "error query.get_opt_add_remove_edges should not be called with
-          elementary path constraint, use instead
-          get_opt_add_remove_edges_greedy"
-        );
         panic!(
             "error query.get_opt_add_remove_edges should not be called with
           elementary path constraint, use instead
           get_opt_add_remove_edges_greedy"
         );
+
+        // ctl.add("base", &[], PRG_ELEM_PATH)?;
     }
+
+    ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+    ctl.add("base", &[], PRG_ADD_EDGES)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+
+    // ground & solve
+    let part = Part::new("base", &[])?;
+    let parts = vec![part];
+
+    ctl.ground(&parts).expect("ground did not work.");
+
+    // solve
+    let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
+    let cost = get_optimum(&mut handle)?;
+    Ok((cost[0], cost[1]))
+}
+
+pub fn get_opt_repairs_add_remove_edges(
+    graph: &FactBase,
+    profiles: &FactBase,
+    inputs: &FactBase,
+    scenfit: i64,
+    repair_score: i64,
+    max_solutions: u32,
+    setting: &SETTING,
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
+    // create a control object and pass command line arguments
+    let mut ctl = Control::new(vec![
+        max_solutions.to_string(),
+        "--opt-strategy=5".to_string(),
+        "--project".to_string(),
+        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
+    ])?;
+
+    add_facts(&mut ctl, graph);
+    add_facts(&mut ctl, profiles);
+    add_facts(&mut ctl, inputs);
+
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
+
     ctl.add("base", &[], PRG_REMOVE_EDGES)?;
+    ctl.add("base", &[], PRG_ADD_EDGES)?;
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+    ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
@@ -1007,16 +1022,74 @@ pub fn get_opt_add_remove_edges(
     models
         .map(|model| extract_repairs(&model.symbols))
         .collect()
-
-    //   coptions = '--opt-strategy=5'
-    //   solver   = GringoClasp(clasp_options=coptions)
-    //   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
-    //   fit      = solution[0].score[0]
-    //   repairs  = solution[0].score[1]
-
-    //   os.unlink(inst)
-    //   return (fit,repairs)
 }
+
+pub fn get_opt_flip_edges(
+    graph: &FactBase,
+    profiles: &FactBase,
+    inputs: &FactBase,
+    setting: &SETTING,
+) -> Result<(i64, i64), Error> {
+    // create a control object and pass command line arguments
+    let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
+
+    ctl.add("base", &[], PRG_SIGN_CONS)?;
+    ctl.add("base", &[], PRG_BWD_PROP)?;
+
+    ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+
+    if setting.os {
+        ctl.add("base", &[], PRG_ONE_STATE)?;
+    }
+    if setting.fp {
+        ctl.add("base", &[], PRG_FWD_PROP)?;
+    }
+    if setting.fc {
+        ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    }
+    if setting.ep {
+        ctl.add("base", &[], PRG_ELEM_PATH)?;
+    }
+
+    ctl.add("base", &[], PRG_FLIP_EDGES)?;
+    ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+    ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+
+    // ground & solve
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let cost = get_optimum(&mut handle)?;
+    Ok((cost[0], cost[1]))
+}
+
+// pub fn get_opt_repairs_flip_edges(
+//     graph: &FactBase,
+//     profiles: &FactBase,
+//     inputs: &FactBase,
+//     setting: &SETTING,) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
+
+//   sem = [sign_cons_prg,bwd_prop_prg]
+//   if OS : sem.append(one_state_prg)
+//   if FP : sem.append(fwd_prop_prg)
+//   if FC : sem.append(founded_prg)
+//   if EP : sem.append(elem_path_prg)
+
+//   inst     = instance.to_file()
+//   prg      = sem + scenfit + [flip_edges_prg, min_repairs_prg, inst ]
+//   coptions = '--opt-strategy=5'
+//   solver   = GringoClasp(clasp_options=coptions)
+//   solution = solver.run(prg,collapseTerms=True,collapseAtoms=False)
+//   fit      = solution[0].score[0]
+//   repairs  = solution[0].score[1]
+//   prg      = prg + [show_rep_prg]
+//   coptions = str(nm)+' --project --opt-strategy=5 --opt-mode=optN --opt-bound='+str(fit)+','+str(repairs)
+//   solver2  = GringoClasp(clasp_options=coptions)
+//   models   = solver2.run(prg, collapseTerms=True, collapseAtoms=False)
+
+//   os.unlink(inst)
+//   return models
+// }
 
 /// Given a model this function returns a vector of mics
 fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
@@ -1081,7 +1154,6 @@ fn extract_labels_repairs(
 fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
     let mut rep = vec![];
     for symbol in symbols {
-        print!("{}", symbol.to_string()?);
         match symbol.name()? {
             "addedge" => {
                 rep.push(*symbol);

@@ -400,3 +400,22 @@ pub const PRG_BEST_EDGE_START: &'static str = "
 
 elabel(U,V,1) :- addedge(U,V,1).
 elabel(U,V,-1) :-addedge(U,V,-1).";
+
+pub const PRG_ADD_EDGES: &'static str = "
+% guess edges to add
+0{addedge(or(U),or(V),1); addedge(or(U),or(V),-1)}1 :- vertex(or(U)), vertex(or(V)), U!=V,
+                                               not obs_e_label(or(U),or(V),1), not obs_e_label(or(U),or(V),-1).
+
+% labels for newly added edgesm
+elabel(U,V,1) :- addedge(U,V,1).
+elabel(U,V,-1) :-addedge(U,V,-1).
+";
+
+pub const PRG_FLIP_EDGES: &'static str = "
+0{flip(U,V,S)}1 :- not mandatory(U,V), obs_e_label(U,V,S).
+
+
+% labels for fliped edges
+remedge(U,V,S) :- flip(U,V,S).
+elabel(V,U,S) :- flip(U,V,S).
+";
