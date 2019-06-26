@@ -43,6 +43,7 @@ vertex(V) :- obs_v_label(E,V,S).
 edge(X,Y) :- obs_e_label(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).
+input(E,V) :- input(V), exp(E).
 
 % for each vertex the measurements are either changing (1,-1) or not (0)
 1 {vlabel(E,V,1); vlabel(E,V,-1); vlabel(E,V,0)} :- vertex(V), exp(E).
