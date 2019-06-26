@@ -1047,8 +1047,8 @@ pub fn get_opt_flip_edges(
         // print!("{}",PRG_ELEM_PATH);
     }
 
-    ctl.add("base", &[], PRG_FLIP_EDGES)?;
-    // print!("{}",PRG_FLIP_EDGES);
+    ctl.add("base", &[], PRG_FLIP_EDGE_DIRECTIONS)?;
+    // print!("{}",PRG_FLIP_EDGE_DIRECTIONS);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
     // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
 
@@ -1110,8 +1110,8 @@ pub fn get_opt_repairs_flip_edges(
         // print!("{}",PRG_ELEM_PATH);
     }
 
-    ctl.add("base", &[], PRG_FLIP_EDGES)?;
-    // print!("{}",PRG_FLIP_EDGES);
+    ctl.add("base", &[], PRG_FLIP_EDGE_DIRECTIONS)?;
+    // print!("{}",PRG_FLIP_EDGE_DIRECTIONS);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
     // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
     ctl.add("base", &[], PRG_SHOW_FLIP)?;
