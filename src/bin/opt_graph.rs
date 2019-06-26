@@ -16,7 +16,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "opt_graph")]
 struct Opt {
-    /// Influence graph in NSSIF format
+    /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
     networkfile: PathBuf,
 
@@ -135,7 +135,7 @@ fn main() {
         }
     };
 
-    // compute opt repair scores
+    // compute opt scenfit repair scores
     let (scenfit, repair_score, redges) = match opt.repair_mode {
         Some(RepairMode::OptGraph) => {
             print!("\nComputing repair through add/removing edges ... ");
@@ -184,7 +184,7 @@ fn main() {
         }
     };
 
-    // compute optimal repair score
+    // compute optimal repairs
     if let Some(max_repairs) = opt.show_repairs {
         let repairs = match opt.repair_mode {
             Some(RepairMode::OptGraph) => {
