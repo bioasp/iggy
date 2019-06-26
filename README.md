@@ -22,7 +22,7 @@ Typical usage is:
 For more options you can ask for help as follows:
 
     $ iggy -h
-    iggy 0.1.0
+    iggy 2.0.0
     Sven Thiele <sthiele78@gmail.com>
     Iggy confronts interaction graph models with observations of (signed) changes between two measured states (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
@@ -56,7 +56,7 @@ Typical usage is:
 For more options you can ask for help as follows:
 
     $ opt_graph -h
-    opt_graph 0.1.0
+    opt_graph 2.0.0
     Sven Thiele <sthiele78@gmail.com>
     Opt-graph confronts interaction graph models with observations of (signed) changes between two measured states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
 
@@ -74,12 +74,12 @@ For more options you can ask for help as follows:
         -V, --version                   Prints version information
 
     OPTIONS:
+        -r, --show_repairs <max_repairs>     Show max_repairs repairs, default is OFF, 0=all
         -n, --network <networkfile>            Influence graph in NSSIF format
         -o, --observations <observationdir>   Directory of observations in bioquali format
         -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
                                                            flip = flip edges
-        -r, --show_repairs <show_repairs>     Show N repairs to print, default is OFF, 0=all
 
 
 # Samples

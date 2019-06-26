@@ -1,7 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## v2.0.0 - 2019
+Rewrite in rust.
 
 ## v1.4.1 - 2017, Jul 20
 ### Fixed

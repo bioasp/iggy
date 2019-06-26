@@ -44,9 +44,9 @@ struct Opt {
     #[structopt(short = "a", long = "autoinputs")]
     autoinputs: bool,
 
-    /// Show N repairs to print, default is OFF, 0=all
+    /// Show max_repairs repairs, default is OFF, 0=all
     #[structopt(short = "r", long = "show_repairs")]
-    show_repairs: Option<u32>,
+    max_repairs: Option<u32>,
 
     /// Repair mode: remove = remove edges (default),
     ///              optgraph = add + remove edges,
@@ -185,7 +185,7 @@ fn main() {
     };
 
     // compute optimal repairs
-    if let Some(max_repairs) = opt.show_repairs {
+    if let Some(max_repairs) = opt.max_repairs {
         let repairs = match opt.repair_mode {
             Some(RepairMode::OptGraph) => {
                 if setting.ep {
