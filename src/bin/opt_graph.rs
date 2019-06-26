@@ -248,7 +248,7 @@ fn main() {
             Some(RepairMode::Flip) => {
                 if repair_score > 0 {
                     print!("\nCompute optimal repairs ... ");
-                    // repairs = get_opt_repairs_flip_edges(&graph, &profiles, &new_inputs,max_repairs,&setting).unwrap();
+                    let repairs = get_opt_repairs_flip_edges(&graph, &profiles, &new_inputs,max_repairs,&setting).unwrap();
                     print!("done.");
                     //   count=0
                     //   for r in repairs :

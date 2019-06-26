@@ -202,6 +202,7 @@ forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
 pub const PRG_SHOW_REPAIRS: &'static str = "#show remedge/3.
+#show flip/3.
 #show addedge/3.
 #show new_influence/1.";
 pub const PRG_SHOW_ADD_EDGE_END: &'static str = "

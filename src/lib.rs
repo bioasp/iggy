@@ -1033,29 +1033,48 @@ pub fn get_opt_flip_edges(
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
+    add_facts(&mut ctl, graph);
+    add_facts(&mut ctl, profiles);
+    add_facts(&mut ctl, inputs);
+    graph.print();
+    profiles.print();
+    inputs.print();
+
     ctl.add("base", &[], PRG_SIGN_CONS)?;
+    print!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)?;
+    print!("{}",PRG_BWD_PROP);
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
+    print!("{}",PRG_ERROR_MEASURE);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
+    print!("{}",PRG_MIN_WEIGHTED_ERROR);
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
+    print!("{}",PRG_KEEP_INPUTS);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
+    print!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)?;
+    print!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
+    print!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)?;
+    print!("{}",PRG_ELEM_PATH);
     }
 
     ctl.add("base", &[], PRG_FLIP_EDGES)?;
+    print!("{}",PRG_FLIP_EDGES);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
+    print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
     ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
+    print!("{}",PRG_SHOW_REPAIRS);
 
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
