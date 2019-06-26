@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 ## v2.0.0 - 2019
 Rewrite in rust.
 
+## v1.4.3 - 2019, Mar 1
+use pyasp 1.4.4
+
 ## v1.4.2 - 2018, Aug 16
 ### Fixed
 - Fix in optgraph autoinputs are now used for all experiments
