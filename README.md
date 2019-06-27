@@ -24,7 +24,10 @@ For more options you can ask for help as follows:
     $ iggy -h
     iggy 2.0.0
     Sven Thiele <sthiele78@gmail.com>
-    Iggy confronts interaction graph models with observations of (signed) changes between two measured states (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
+    Iggy confronts interaction graph models with observations of (signed) changes between two measured states 
+    (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal 
+    repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. 
+    increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
     USAGE:
         iggy [FLAGS] [OPTIONS] --network <networkfile> --observations <observationfile>
@@ -58,7 +61,9 @@ For more options you can ask for help as follows:
     $ opt_graph -h
     opt_graph 2.0.0
     Sven Thiele <sthiele78@gmail.com>
-    Opt-graph confronts interaction graph models with observations of (signed) changes between two measured states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
+    Opt-graph confronts interaction graph models with observations of (signed) changes between two measured 
+    states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number 
+    of edges in the given network.
 
     USAGE:
         opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
