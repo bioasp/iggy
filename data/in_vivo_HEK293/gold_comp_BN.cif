@@ -10,7 +10,7 @@ gab1_bras_py	->	ras_gap
 !shp2_ph&gab1_ps&jak2_p&pi3k	->	gab1_bras_py
 !shp2_ph	->	gab1_bpi3k_py
 shp2&gab1_bshp2_ph_py	->	shp2_ph
-gab1_ps&jak2_p&pi3)	->	gab1_bpi3k_py
+gab1_ps&jak2_p&pi3k	->	gab1_bpi3k_py
 gab1_ps&jak2_p&pi3k	->	plcg
 gab1_ps&jak2_p&pi3k	->	gab1_bshp2_ph_py
 erk	->	gab1_ps

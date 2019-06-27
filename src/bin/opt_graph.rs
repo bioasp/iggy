@@ -50,7 +50,7 @@ struct Opt {
 
     /// Repair mode: remove = remove edges (default),
     ///              optgraph = add + remove edges,
-    ///              flip = flip edges
+    ///              flip = flip direction of edges
     #[structopt(short = "m", long = "repair_mode")]
     repair_mode: Option<RepairMode>,
 }
@@ -91,7 +91,7 @@ fn main() {
 
     println!("Reading network model from {:?}.", opt.networkfile);
     let f = File::open(opt.networkfile).unwrap();
-    let ggraph = nssif_parser::read(&f).unwrap();
+    let ggraph = cif_parser::read(&f).unwrap();
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 

@@ -12,7 +12,7 @@ pub fn read(file: &File) -> Result<Graph, Error> {
         let l1 = line?;
         let l = l1.trim();
         if l.len() != 0 {
-            match nssif::statement(&l) {
+            match cif::statement(&l) {
                 Ok(r) => {
                     graph.add(r);
                 }
@@ -172,6 +172,6 @@ pub struct Expression {
     ident: String,
 }
 
-mod nssif {
-    include!(concat!(env!("OUT_DIR"), "/nssif_grammar.rs"));
+mod cif {
+    include!(concat!(env!("OUT_DIR"), "/cif_grammar.rs"));
 }

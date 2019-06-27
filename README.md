@@ -3,7 +3,7 @@
 
 Clone the git repository:
 
-	git clone https://github.com/sthiele/iggy.git
+	git clone https://github.com/bioasp/iggy.git
 
 
 Compile:
@@ -43,7 +43,7 @@ For more options you can ask for help as follows:
         -V, --version                   Prints version information
 
     OPTIONS:
-        -n, --network <networkfile>              Influence graph in NSSIF format
+        -n, --network <networkfile>              Influence graph in CIF format
         -o, --observations <observationfile>     Observations in bioquali format
         -l, --show_labelings <show_labelings>   Show N labelings to print, default is OFF, 0=all
 
@@ -75,11 +75,11 @@ For more options you can ask for help as follows:
 
     OPTIONS:
         -r, --show_repairs <max_repairs>     Show max_repairs repairs, default is OFF, 0=all
-        -n, --network <networkfile>            Influence graph in NSSIF format
+        -n, --network <networkfile>            Influence graph in CIF format
         -o, --observations <observationdir>   Directory of observations in bioquali format
         -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
-                                                           flip = flip edges
+                                                           flip = flip direction of edges
 
 
 # Samples

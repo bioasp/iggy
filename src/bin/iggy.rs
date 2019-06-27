@@ -4,8 +4,8 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use iggy::nssif_parser;
-use iggy::nssif_parser::Graph;
+use iggy::cif_parser;
+use iggy::cif_parser::Graph;
 
 use iggy::profile_parser;
 use iggy::profile_parser::Profile;
@@ -21,7 +21,7 @@ use iggy::*;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "iggy")]
 struct Opt {
-    /// Influence graph in NSSIF format
+    /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
     networkfile: PathBuf,
 
@@ -72,7 +72,7 @@ fn main() {
 
     println!("Reading network model from {:?}.", opt.networkfile);
     let f = File::open(opt.networkfile).unwrap();
-    let ggraph = nssif_parser::read(&f).unwrap();
+    let ggraph = cif_parser::read(&f).unwrap();
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 

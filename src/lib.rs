@@ -1,5 +1,5 @@
-pub mod nssif_parser;
-use nssif_parser::Graph;
+pub mod cif_parser;
+use cif_parser::Graph;
 pub mod profile_parser;
 use clingo::add_facts;
 use clingo::Control;
