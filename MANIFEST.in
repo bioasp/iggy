@@ -1,4 +1,0 @@
-include src/encodings/*.lp
-include CHANGES.txt
-include LICENSE
-include README.md
