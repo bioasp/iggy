@@ -1272,7 +1272,6 @@ fn extract_labels_repairs(
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
-        print!("{}", symbol.to_string()?);
         match symbol.name()? {
             "vlabel" => {
                 let id = symbol.arguments()?[1];

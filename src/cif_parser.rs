@@ -55,6 +55,11 @@ pub struct ObsELabel {
     target: NodeId,
     sign: EdgeSign,
 }
+#[derive(ToSymbol)]
+pub struct Edge {
+    start: NodeId,
+    target: NodeId,
+}
 
 #[derive(Debug, Clone)]
 pub struct Graph {
@@ -62,6 +67,7 @@ pub struct Graph {
     and_nodes: Vec<NodeId>,
     p_edges: Vec<(NodeId, NodeId)>,
     n_edges: Vec<(NodeId, NodeId)>,
+    u_edges: Vec<(NodeId, NodeId)>,
 }
 impl Graph {
     pub fn empty() -> Graph {
@@ -70,6 +76,7 @@ impl Graph {
             and_nodes: vec![],
             p_edges: vec![],
             n_edges: vec![],
+            u_edges: vec![],
         }
     }
     pub fn or_nodes(&self) -> &[NodeId] {
@@ -89,26 +96,41 @@ impl Graph {
         let targetnode = NodeId::Or(stm.target);
         self.or_nodes.push(targetnode.clone());
         match stm.start {
-            SNode::Single(expr) => {
-                let startnode = NodeId::Or(expr.ident);
+            SNode::Single(Expression::Plain(s)) => {
+                let startnode = NodeId::Or(s);
                 self.or_nodes.push(startnode.clone());
-                if expr.negated {
-                    self.n_edges.push((startnode, targetnode));
-                } else {
-                    self.p_edges.push((startnode, targetnode));
-                }
+                self.p_edges.push((startnode, targetnode));
+            }
+            SNode::Single(Expression::Negated(s)) => {
+                let startnode = NodeId::Or(s);
+                self.or_nodes.push(startnode.clone());
+                self.n_edges.push((startnode, targetnode));
+            }
+            SNode::Single(Expression::Unknown(s)) => {
+                let startnode = NodeId::Or(s);
+                self.or_nodes.push(startnode.clone());
+                self.u_edges.push((startnode, targetnode));
             }
             SNode::List(l) => {
                 let mut inner = "".to_string();
                 let mut pos = vec![];
                 let mut neg = vec![];
+                let mut unk = vec![];
+
                 for expr in l {
-                    if expr.negated {
-                        inner = format!("neg__{}__AND__{}", &expr.ident, inner);
-                        neg.push(expr.ident);
-                    } else {
-                        inner = format!("{}__AND__{}", &expr.ident, inner);
-                        pos.push(expr.ident);
+                    match expr {
+                        Expression::Negated(s) => {
+                            inner = format!("neg__{}__AND__{}", s, inner);
+                            neg.push(s);
+                        }
+                        Expression::Plain(s) => {
+                            inner = format!("{}__AND__{}", s, inner);
+                            pos.push(s);
+                        }
+                        Expression::Unknown(s) => {
+                            inner = format!("unk__{}__AND__{}", s, inner);
+                            unk.push(s);
+                        }
                     }
                 }
                 let andnode = NodeId::And(inner);
@@ -124,6 +146,11 @@ impl Graph {
                     let startnode = NodeId::Or(node);
                     self.or_nodes.push(startnode.clone());
                     self.n_edges.push((startnode, andnode.clone()));
+                }
+                for node in unk {
+                    let startnode = NodeId::Or(node);
+                    self.or_nodes.push(startnode.clone());
+                    self.u_edges.push((startnode, andnode.clone()));
                 }
             }
         }
@@ -151,6 +178,12 @@ impl Graph {
                 sign: EdgeSign::Minus,
             });
         }
+        for &(ref s, ref t) in &self.n_edges {
+            facts.insert(&Edge {
+                start: s.clone(),
+                target: t.clone(),
+            });
+        }
         facts
     }
 }
@@ -166,12 +199,13 @@ pub enum SNode {
     Single(Expression),
     List(Vec<Expression>),
 }
-#[derive(Debug, Clone)]
-pub struct Expression {
-    negated: bool, //TODO: make enum modified NO, NEGATED/ UNKNOWN
-    ident: String,
-}
 
+#[derive(Debug, Clone)]
+pub enum Expression {
+    Plain(String),
+    Negated(String),
+    Unknown(String),
+}
 mod cif {
     include!(concat!(env!("OUT_DIR"), "/cif_grammar.rs"));
 }
