@@ -1,7 +1,7 @@
 C.Cguziolowski
 --------------
 
-Ecoli_2013.sif
+Ecoli_2013.cif
  - was extracted from RegulonDB on October 2013
  - It has 4477 edges, 1742 nodes
  - Mostly activations and inhibitions, but it also has B (for interactions with both signs) and ? (for unknown signed)
@@ -20,7 +20,7 @@ This data is easy to generate with different thresholds
 
 S. Thiele
 ---------
-Ecoli_component_compressed.sif
-  - is the biggest connected component of the Ecoli_2013.sif network compressed using CNA method compressIG
+Ecoli_component_compressed.cif
+  - is the biggest connected component of the Ecoli_2013.cif network compressed using CNA method compressIG
 
 
