@@ -1,0 +1,23 @@
+[package]
+name = "iggy"
+version = "2.0.0"
+authors = ["Sven Thiele <sthiele78@gmail.com>"]
+description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
+readme = "README.md"
+documentation = "bioasp.github.io/iggy"
+repository = "https://github.com/bioasp/iggy"
+build = "build.rs"
+publish = false
+edition = "2018"
+
+[dependencies]
+clingo = {path = "../clingo-rs"} 
+# "0.4.0"
+clingo-derive = {path = "../clingo_derive"} 
+termion = "1"
+structopt = "0.2"
+failure = "0.1"
+failure_derive = "0.1"
+
+[build-dependencies]
+peg = { version = "0.5.7" }

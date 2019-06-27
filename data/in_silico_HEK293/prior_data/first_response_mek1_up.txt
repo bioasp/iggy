@@ -1,5 +1,5 @@
-depor                       = input
-mek1                        = input
+depor                   =     input
+mek1                    =     input
 
 grb2_sos = 0
 akt = 0
