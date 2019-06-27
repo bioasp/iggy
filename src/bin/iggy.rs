@@ -57,9 +57,9 @@ struct Opt {
     #[structopt(long = "scenfit")]
     scenfit: bool,
 
-    /// Show N labelings to print, default is OFF, 0=all
+    /// Show max_labelings labelings, default is OFF, 0=all
     #[structopt(short = "l", long = "show_labelings")]
-    show_labelings: Option<u32>,
+    max_labelings: Option<u32>,
 
     /// Show predictions
     #[structopt(short = "p", long = "show_predictions")]
@@ -117,8 +117,8 @@ fn main() {
             if opt.mics {
                 compute_mics(&graph, &profile, &new_inputs, &setting);
             }
-            if let Some(number) = opt.show_labelings {
-                compute_scenfit_labelings(&graph, &profile, &new_inputs, number, &setting);
+            if let Some(max_labelings) = opt.max_labelings {
+                compute_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
@@ -142,8 +142,8 @@ fn main() {
             if opt.mics {
                 compute_mics(&graph, &profile, &new_inputs, &setting);
             }
-            if let Some(number) = opt.show_labelings {
-                compute_mcos_labelings(&graph, &profile, &new_inputs, number, &setting);
+            if let Some(max_labelings) = opt.max_labelings {
+                compute_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
             }
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
