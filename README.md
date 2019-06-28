@@ -13,7 +13,7 @@ Compile:
 
 	cargo build --release
 
-The binaries can be found under `./target/release/`
+The executables can be found under `./target/release/`
 
 
 ## Usage
