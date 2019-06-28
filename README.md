@@ -1,4 +1,7 @@
-# Installation
+# Iggy
+[![Build Status](https://travis-ci.org/bioasp/iggy.svg?branch=master)](https://travis-ci.org/bioasp/iggy)
+
+## Installation
 
 
 Clone the git repository:
@@ -13,7 +16,7 @@ Compile:
 The binaries can be found under `./target/release/`
 
 
-# Usage
+## Usage
 
 Typical usage is:
 
@@ -86,6 +89,6 @@ For more options you can ask for help as follows:
                                                            flip = flip direction of edges
 
 
-# Samples
+## Samples
 
 Sample files available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
