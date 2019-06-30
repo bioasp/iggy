@@ -651,14 +651,7 @@ fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
         // dbg!(a.to_string()?);
         if a.name()? == "addedge" {
-            let edge_start = a.arguments()?[0];
-            let edge_end = a.arguments()?[1];
-            let edge_sign = a.arguments()?[2];
-            return Symbol::create_function(
-                "obs_e_label",
-                &[edge_start, edge_end, edge_sign],
-                true,
-            );
+            return Ok(*a);
         }
     }
     Err(IggyError::new("Expected addedge(X) atom in the answer!"))?

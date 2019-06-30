@@ -57,6 +57,11 @@ elabel(U,V,S) :- edge(U,V), obs_e_label(U,V,S), not error_edge(U,V), not remedge
 elabel(U,V,1)  :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), not remedge(U,V,1), remedge(U,V,-1).
 elabel(U,V,-1) :- edge(U,V), obs_e_label(U,V,1), obs_e_label(U,V,-1), remedge(U,V,1), not remedge(U,V,-1).
 
+% new edges through repair
+
+elabel(U,V,1) :- addedge(U,V,1).
+elabel(U,V,-1) :-addedge(U,V,-1).
+
 % influences
 infl(E,V,S*T) :- elabel(U,V,S), vlabel(E,U,T).
 % effects of a repair
@@ -399,11 +404,7 @@ pub const PRG_BEST_EDGE_START: &'static str = "
 % add only one edge !!!
 :- addedge(Y1,X,1), addedge(Y2,X,-1).
 :- addedge(Y1,X,S), addedge(Y2,X,T), Y1!=Y2.
-
-% new inputs through repair
-
-elabel(U,V,1) :- addedge(U,V,1).
-elabel(U,V,-1) :-addedge(U,V,-1).";
+";
 
 pub const PRG_ADD_EDGES: &'static str = "
 % guess edges to add
