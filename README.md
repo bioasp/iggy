@@ -59,7 +59,6 @@ For more options you can ask for help as follows:
 
 ## Opt_graph
 
-The second program contained is opt_graph
 Typical usage is:
 
     $ opt_graph -n network.cif -o observations_dir/ --show_repairs 10
