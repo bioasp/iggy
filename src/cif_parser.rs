@@ -85,6 +85,9 @@ impl Graph {
     pub fn inhibitions(&self) -> &[(NodeId, NodeId)] {
         &self.n_edges
     }
+    pub fn unknowns(&self) -> &[(NodeId, NodeId)] {
+        &self.u_edges
+    }
 
     fn add(&mut self, stm: Statement) {
         let targetnode = NodeId::Or(stm.target);

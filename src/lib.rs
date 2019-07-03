@@ -38,6 +38,7 @@ pub fn network_statistics(graph: &Graph) {
     );
     println!("  Activations = {}", graph.activations().len());
     println!("  Inhibitions = {}", graph.inhibitions().len());
+    println!("  Unknowns = {}", graph.unknowns().len());
     // println!("          Dual = {}", len(unspecified))
 }
 
