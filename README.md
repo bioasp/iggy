@@ -1,20 +1,25 @@
 [![Build Status](https://travis-ci.org/bioasp/iggy.svg?branch=master)](https://travis-ci.org/bioasp/iggy)
 
-## Installation
+# `iggy` + `opt_graph`
 
+`iggy` and `opt_graph` are tools for consistency based analysis of influence graphs and observed systems behavior (signed changes between two measured states). For many (biological) systems are knowledge bases available that describe the interaction of its components in terms of causal networks, boolean networks and influence graphs where edges indicate either positive or negative effect of one node upon another.
+
+`iggy` implements methods to check the consistency of large-scale data sets and provides explanations for inconsistencies. In practice, this is used to identify unreliable data or to indicate missing reactions. Further, `iggy` addresses the problem of  repairing networks and corresponding yet often discrepant measurements in order to re-establish their mutual consistency and predict unobserved variations even under inconsistency.
+
+`opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments. `opt_graph` computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
+
+[**Download precompiled binaries for 64bit linux and macos on the release page.**](https://github.com/bioasp/iggy/releases)
+
+## Compile yourself
 
 Clone the git repository:
 
 	git clone https://github.com/bioasp/iggy.git
-
-
-Compile:
-
 	cargo build --release
 
 The executables can be found under `./target/release/`
 
-
+# Iggy
 ## Usage
 
 Typical usage is:
