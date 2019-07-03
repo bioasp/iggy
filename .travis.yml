@@ -32,7 +32,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: $iggy-deploy-token-oauth
+    secure: iggy-deploy-token-oauth
   file: ${PACKAGE}
   skip_cleanup: true
   on:
