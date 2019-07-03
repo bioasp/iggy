@@ -13,12 +13,27 @@ matrix:
           packages:
             - g++-5
       env:
+        - NAME=iggy
+        - PACKAGE=$NAME-linux-x86_64.tar.gz
         - CXX=g++-5
     - os: osx
       env:
+        - NAME=iggy
+        - PACKAGE=$NAME-macos-x86_64.tar.gz
         - CXX=clang++
         - CXXFLAGS="-stdlib=libc++ "
 before_script: 
   - (rustup component add rustfmt || true)
   - test "$TRAVIS_OS_NAME" != osx || export MACOSX_DEPLOYMENT_TARGET=10.7
- 
+  
+before_deploy:
+  - tar -czf $PACKAGE -C target/$TARGET/release/ $NAME
+
+deploy:
+  provider: releases
+  api_key:
+    secure: $iggy-deploy-token-oauth
+  file: ${PACKAGE}
+  skip_cleanup: true
+  on:
+    tags: true
