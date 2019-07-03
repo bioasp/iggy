@@ -24,10 +24,20 @@ matrix:
         - PACKAGE=$NAME-macos-x86_64.tar.gz
         - CXX=clang++
         - CXXFLAGS="-stdlib=libc++ "
+        
 before_script: 
   - (rustup component add rustfmt || true)
+  - (rustup target add $TARGET || true)
   - test "$TRAVIS_OS_NAME" != osx || export MACOSX_DEPLOYMENT_TARGET=10.7
-  
+  - export PATH="$PATH:$HOME/.cargo/bin"
+
+script:
+  - |
+    if [ $TARGET = "x86_64-unknown-linux-gnu" ]; then
+      cargo test
+    fi
+- cargo build --target $TARGET --verbose --release
+
 before_deploy:
   - tar -czf $PACKAGE -C target/$TARGET/release/ $NAME
 
