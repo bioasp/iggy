@@ -19,8 +19,7 @@ Clone the git repository:
 
 The executables can be found under `./target/release/`
 
-# Iggy
-## Usage
+## Iggy
 
 Typical usage is:
 
@@ -57,6 +56,8 @@ For more options you can ask for help as follows:
         -n, --network <networkfile>            Influence graph in CIF format
         -o, --observations <observationfile>   Observations in bioquali format
 
+
+## Opt_graph
 
 The second program contained is opt_graph
 Typical usage is:
