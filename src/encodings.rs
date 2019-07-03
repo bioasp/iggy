@@ -247,8 +247,8 @@ pred(E,V,notMinus):- vlabel(E,V, 1).
 pred(E,V,change) :- vlabel(E,V, 1).
 pred(E,V,change) :- vlabel(E,V,-1).
 
-
 #show pred/3.
+
 
 %new_pred(E,V,1) :- pred(E,V,1), not obs_v_label(E,V,1).
 %new_pred(E,V,0) :- pred(E,V,0), not obs_v_label(E,V,0).
@@ -257,7 +257,6 @@ pred(E,V,change) :- vlabel(E,V,-1).
 %new_pred(E,V,notPlus) :- pred(E,V,notPlus), not obs_v_label(E,V,notPlus), not obs_v_label(E,V,-1), not obs_v_label(E,V,0).
 %new_pred(E,V,notMinus) :- pred(E,V,notMinus), not obs_v_label(E,V,notMinus), not obs_v_label(E,V,1), not obs_v_label(E,V,0).
 %new_pred(E,V,change) :- pred(E,V,change), not obs_v_label(E,V,1), not obs_v_label(E,V,-1).
-
 
 %#show new_pred/3.";
 
@@ -397,9 +396,6 @@ elabel(\"unknown\", V,1)  :- addeddy(V).
 pub const PRG_BEST_EDGE_START: &'static str = "
 % guess one edge start to add
 0{addedge(or(V),X,1); addedge(or(V),X,-1)}1 :- vertex(or(V)), edge_end(X).
-
-% input(E,or(\"unknown\"))      :- exp(E).
-% vertex(or(\"unknown\")).
 
 % add only one edge !!!
 :- addedge(Y1,X,1), addedge(Y2,X,-1).

@@ -1,6 +1,7 @@
 pub mod cif_parser;
 use cif_parser::Graph;
 pub mod profile_parser;
+use cif_parser::EdgeSign;
 use clingo::add_facts;
 use clingo::Control;
 use clingo::ExternalFunctionHandler;
@@ -19,6 +20,7 @@ use clingo_derive::*;
 pub mod encodings;
 use encodings::*;
 use failure::*;
+use std::fmt;
 
 pub struct SETTING {
     pub os: bool,
@@ -50,17 +52,51 @@ impl IggyError {
     }
 }
 
+#[derive(ToSymbol)]
+pub struct ObsELabel {
+    start: NodeId,
+    target: NodeId,
+    sign: EdgeSign,
+}
+impl fmt::Display for ObsELabel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.sign {
+            EdgeSign::Plus => write!(f, "{} -> {} ", self.start, self.target),
+            EdgeSign::Minus => write!(f, "!{} -> {} ", self.start, self.target),
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ToSymbol)]
 pub enum NodeId {
     Or(String),
     And(String),
 }
-
+impl fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            NodeId::Or(s) => write!(f, "{}", s),
+            NodeId::And(s) => write!(f, "and({})", s),
+        }
+    }
+}
 pub enum CheckResult {
     Consistent,
     Inconsistent(Vec<String>),
 }
-
+pub enum RepairOp {
+    Add(ObsELabel),
+    Remove(ObsELabel),
+    Flip(ObsELabel),
+}
+impl fmt::Display for RepairOp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RepairOp::Add(e) => write!(f, "add: {}", e),
+            RepairOp::Remove(e) => write!(f, "remove: {}", e),
+            RepairOp::Flip(e) => write!(f, "flip direction: {}", e),
+        }
+    }
+}
 pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
@@ -655,6 +691,79 @@ fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
         }
     }
     Err(IggyError::new("Expected addedge(X) atom in the answer!"))?
+}
+
+fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
+    match symbol.name()? {
+        "or" => {
+            let arguments = symbol.arguments()?;
+            let s = arguments[0].string()?;
+            Ok(NodeId::Or(s.to_string()))
+        }
+        "and" => {
+            let arguments = symbol.arguments()?;
+            let s = arguments[0].string()?;
+            Ok(NodeId::And(s.to_string()))
+        }
+        _ => {
+            panic!("unmatched symbol: {}", symbol.to_string()?);
+        }
+    }
+}
+pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
+    match symbol.name()? {
+        "addedge" => {
+            let arguments = symbol.arguments()?;
+            let start = into_node_id(&arguments[0])?;
+            let target = into_node_id(&arguments[1])?;
+            let sign = match arguments[2].number() {
+                Ok(1) => EdgeSign::Plus,
+                Ok(-1) => EdgeSign::Minus,
+                _ => panic!("unexpected EdgeSign"),
+            };
+
+            Ok(RepairOp::Add(ObsELabel {
+                start,
+                target,
+                sign,
+            }))
+        }
+        "remedge" => {
+            let arguments = symbol.arguments()?;
+            let start = into_node_id(&arguments[0])?;
+            let target = into_node_id(&arguments[1])?;
+            let sign = match arguments[2].number() {
+                Ok(1) => EdgeSign::Plus,
+                Ok(-1) => EdgeSign::Minus,
+                _ => panic!("unexpected EdgeSign"),
+            };
+
+            Ok(RepairOp::Remove(ObsELabel {
+                start,
+                target,
+                sign,
+            }))
+        }
+        "flip" => {
+            let arguments = symbol.arguments()?;
+            let start = into_node_id(&arguments[0])?;
+            let target = into_node_id(&arguments[1])?;
+            let sign = match arguments[2].number() {
+                Ok(1) => EdgeSign::Plus,
+                Ok(-1) => EdgeSign::Minus,
+                _ => panic!("unexpected EdgeSign"),
+            };
+
+            Ok(RepairOp::Flip(ObsELabel {
+                start,
+                target,
+                sign,
+            }))
+        }
+        _ => {
+            panic!("unmatched symbol: {}", symbol.to_string()?);
+        }
+    }
 }
 
 /// only apply with elementary path consistency notion

@@ -1,4 +1,4 @@
-use crate::{FactBase, NodeId, ToSymbol};
+use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
 use clingo::*;
 use failure::*;
 use std::fs::File;
@@ -49,12 +49,6 @@ impl ToSymbol for EdgeSign {
     }
 }
 
-#[derive(ToSymbol)]
-pub struct ObsELabel {
-    start: NodeId,
-    target: NodeId,
-    sign: EdgeSign,
-}
 #[derive(ToSymbol)]
 pub struct Edge {
     start: NodeId,

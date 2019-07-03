@@ -279,7 +279,8 @@ fn main() {
             count += 1;
             println!("\nRepair {}: ", count);
             for e in r {
-                println!("       {}", e.to_string().unwrap());
+                let repair_op = into_repair(&e).unwrap();
+                println!("       {}", repair_op);
             }
         }
     }
