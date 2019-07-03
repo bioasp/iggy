@@ -75,7 +75,7 @@ impl fmt::Display for NodeId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             NodeId::Or(s) => write!(f, "{}", s),
-            NodeId::And(s) => write!(f, "and({})", s),
+            NodeId::And(s) => write!(f, "{}", s),
         }
     }
 }

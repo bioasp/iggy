@@ -114,15 +114,15 @@ impl Graph {
                 for expr in l {
                     match expr {
                         Expression::Negated(s) => {
-                            inner = format!("neg__{}__AND__{}", s, inner);
+                            inner = format!("!{}&{}", s, inner);
                             neg.push(s);
                         }
                         Expression::Plain(s) => {
-                            inner = format!("{}__AND__{}", s, inner);
+                            inner = format!("{}&{}", s, inner);
                             pos.push(s);
                         }
                         Expression::Unknown(s) => {
-                            inner = format!("unk__{}__AND__{}", s, inner);
+                            inner = format!("?{}&{}", s, inner);
                             unk.push(s);
                         }
                     }
