@@ -1471,22 +1471,22 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
                 if id.name()? == "or" {
                     match symbol.arguments()?[2].to_string()?.as_ref() {
                         "1" => {
-                            increase.push(id.arguments()?[0].to_string()?);
+                            increase.push(id.arguments()?[0].string()?.to_string());
                         }
                         "-1" => {
-                            decrease.push(id.arguments()?[0].to_string()?);
+                            decrease.push(id.arguments()?[0].string()?.to_string());
                         }
                         "0" => {
-                            no_change.push(id.arguments()?[0].to_string()?);
+                            no_change.push(id.arguments()?[0].string()?.to_string());
                         }
                         "notPlus" => {
-                            no_increase.push(id.arguments()?[0].to_string()?);
+                            no_increase.push(id.arguments()?[0].string()?.to_string());
                         }
                         "notMinus" => {
-                            no_decrease.push(id.arguments()?[0].to_string()?);
+                            no_decrease.push(id.arguments()?[0].string()?.to_string());
                         }
                         "change" => {
-                            change.push(id.arguments()?[0].to_string()?);
+                            change.push(id.arguments()?[0].string()?.to_string());
                         }
                         x => {
                             panic!("Unexpected predicted behavior: {}", x);

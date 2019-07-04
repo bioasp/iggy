@@ -331,7 +331,7 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
             }
         };
 
-        println!(" {} = {}", node.to_string().unwrap(), sign);
+        println!(" {} = {}", node.string().unwrap(), sign);
     }
 }
 
