@@ -378,9 +378,30 @@ pub fn get_minimal_inconsistent_cores(
     }
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
-    let models = ctl.all_models()?;
-    models.map(|model| extract_mics(&model.symbols)).collect()
+    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let models = all_models(&mut handle)?;
+    models.iter().map(|model| extract_mics(model)).collect()
+
+    // ground_with_myefh(&mut ctl)?;
+    // let models = ctl.all_models()?;
+    // models.map(|model| extract_mics(&model.symbols)).collect()
+}
+
+fn all_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
+    let mut v = Vec::new();
+    loop {
+        handle.resume()?;
+        match handle.model() {
+            Ok(Some(model)) => {
+                let symbols = model.symbols(ShowType::SHOWN)?;
+                v.push(symbols);
+            }
+            Ok(None) => {
+                return Ok(v);
+            }
+            Err(e) => Err(e)?,
+        }
+    }
 }
 
 /// returns the scenfit of data and model
