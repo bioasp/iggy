@@ -27,7 +27,7 @@ struct Opt {
 
     /// Observations in bioquali format
     #[structopt(short = "o", long = "observations", parse(from_os_str))]
-    observationfile: PathBuf,
+    observationfile: Option<PathBuf>,
 
     /// Disable forward propagation constraints
     #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
@@ -76,19 +76,28 @@ fn main() {
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
-    println!("\nReading observations from {:?}.", opt.observationfile);
-    let f = File::open(opt.observationfile).unwrap();
-    let pprofile = profile_parser::read(&f, "x1").unwrap();
-    let profile = pprofile.to_facts();
-    observation_statistics(&pprofile, &ggraph);
+    let profile = {
+        if let Some(observationfile) = opt.observationfile {
+            println!("\nReading observations from {:?}.", observationfile);
+            let f = File::open(observationfile).unwrap();
+            let pprofile = profile_parser::read(&f, "x1").unwrap();
 
-    if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
-        println!("The following observations are contradictory. Please correct them!");
-        for r in reasons {
-            println!("{}", r);
+            observation_statistics(&pprofile, &ggraph);
+            let profile = pprofile.to_facts();
+
+            if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+                println!("The following observations are contradictory. Please correct them!");
+                for r in reasons {
+                    println!("{}", r);
+                }
+            }
+
+            profile
+        } else {
+            println!("\nEmpty observation data.");
+            FactBase::new()
         }
-        return;
-    }
+    };
 
     let new_inputs = {
         if opt.autoinputs {
