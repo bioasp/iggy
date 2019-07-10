@@ -11,7 +11,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-clingo = "0.4.2"
+clingo = "0.4.3"
 clingo-derive = "*" 
 termion = "1"
 structopt = "0.2"

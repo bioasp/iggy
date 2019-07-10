@@ -75,10 +75,6 @@ pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E
 % effects of a repair
 pinfl(E,V,S) :- new_influence(E,V,S).
 
-% if a node has been observed only one sign
-% forbidden(E,V,T) :- vlabel(E,V,S1), obs_v_label(E,V,S), sign(S), sign(T), T!=S1.
-% forbidden(E,V,T) :- vlabel(E,V,S1), err(flip(E,V,N)), obs_v_label(E,V,S), sign(T), T!=S1.
-
 % constraints
 :- forbidden(E,V,S), vlabel(E,V,S).
 
@@ -184,18 +180,17 @@ forbidden(E,V,-1) :- exp(E), vertex(V), not neg_path(E,V), not input(E,V).
 ";
 
 pub const PRG_ERROR_MEASURE: &'static str = "
-err(flip(E,X,1)) :- obs_v_label(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
-err(flip(E,X,2)) :- obs_v_label(E,X, 1), not vlabel(E,X, 1), not vlabel(E,X,0), vlabel(E,X,-1).
+flip_node_sign_Plus_to_0(E,X) :- obs_v_label(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
+flip_node_sign_Plus_to_Minus(E,X) :- obs_v_label(E,X, 1), not vlabel(E,X, 1), not vlabel(E,X,0), vlabel(E,X,-1).
 
-err(flip(E,X,1)) :- obs_v_label(E,X,-1), not vlabel(E,X,-1),     vlabel(E,X,0).
-err(flip(E,X,2)) :- obs_v_label(E,X,-1), not vlabel(E,X,-1), not vlabel(E,X,0), vlabel(E,X, 1).
+flip_node_sign_Minus_to_0(E,X) :- obs_v_label(E,X,-1), not vlabel(E,X,-1),     vlabel(E,X,0).
+flip_node_sign_Minus_to_Plus(E,X) :- obs_v_label(E,X,-1), not vlabel(E,X,-1), not vlabel(E,X,0), vlabel(E,X, 1).
 
-err(flip(E,X,1)) :- obs_v_label(E,X, 0), not vlabel(E,X, 0).
+flip_node_sign_0_to_Plus(E,X) :- obs_v_label(E,X, 0), not vlabel(E,X, 0), vlabel(E,X, 1).
+flip_node_sign_0_to_Minus(E,X) :- obs_v_label(E,X, 0), not vlabel(E,X, 0), vlabel(E,X, -1).
 
-err(flip(E,X,2)) :- obs_v_label(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
-err(flip(E,X,2)) :- obs_v_label(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
-
-pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2,(E,X,V) : err(flip(E,X,V)) }.";
+flip_node_sign_notMinus_to_Minus(E,X) :- obs_v_label(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
+flip_node_sign_notPlus_to_Plus(E,X) :- obs_v_label(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
 
 pub const PRG_KEEP_INPUTS: &'static str = "
 % keep observed input variation
@@ -205,25 +200,32 @@ forbidden(E,V,T) :- input(E,V), obs_v_label(E,V,S), sign(S), sign(T), S!=T.
 forbidden(E,V, 1) :- input(E,V), obs_v_label(E,V,notPlus).
 forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 
-pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
+pub const PRG_SHOW_ERRORS: &'static str = "
+#show flip_node_sign_Plus_to_0/2.
+#show flip_node_sign_Plus_to_Minus/2.
+#show flip_node_sign_Minus_to_0/2.
+#show flip_node_sign_Minus_to_Plus/2.
+#show flip_node_sign_0_to_Plus/2.
+#show flip_node_sign_0_to_Minus/2.
+#show flip_node_sign_notMinus_to_Minus/2.
+#show flip_node_sign_notPlus_to_Plus/2.
+";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
-pub const PRG_SHOW_REPAIRS: &'static str = "#show remedge/3.
+pub const PRG_SHOW_REPAIRS: &'static str = "
+#show remedge/3.
 #show addedge/3.
-#show new_influence/1.";
+#show new_influence/3.";
 
 pub const PRG_SHOW_FLIP: &'static str = "#show flip/3.";
 
-pub const PRG_SHOW_ADD_EDGE_END: &'static str = "
-#show addeddy/1.
-";
+pub const PRG_SHOW_ADD_EDGE_END: &'static str = "#show addeddy/1.";
 pub const PRG_ADD_INFLUENCES: &'static str = "
 % repair model
 % define possible repair operations
 new_influence(E,or(X),1) :- not not new_influence(E,or(X),1), not new_influence(E,or(X),-1), vertex(or(X)), exp(E), not input(E,or(X)).
 new_influence(E,or(X),-1) :- not not new_influence(E,or(X),-1), not new_influence(E,or(X),1), vertex(or(X)), exp(E), not input(E,or(X)).
 ";
-pub const PRG_MIN_ADDED_INFLUENCES: &'static str =
-    "#minimize{ 1,(E,X,S):new_influence(E,or(X),S)}.";
+
 pub const PRG_KEEP_OBSERVATIONS: &'static str = "% keep observed variations
 forbidden(E,V,T) :- obs_v_label(E,V,S), sign(S), sign(T), S!=T.
 
@@ -377,11 +379,29 @@ pub const PRG_REMOVE_EDGES: &'static str = "
 0{remedge(U,V,1); remedge(U,V,-1)}2 :- not mandatory(U,V), edge(U,V), not obs_e_label(U,V,1), not obs_e_label(U,V,-1).
 ";
 
+pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "
+#minimize{ 0,notfalse : not false;
+           1,(E,X,S)  : new_influence(E,or(X),S)
+         }.";
+
+pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "
+#minimize{ 0,notfalse : not false;
+           1,(E,X)    : flip_node_sign_Plus_to_0(E,X);
+           2,(E,X)    : flip_node_sign_Plus_to_Minus(E,X);
+           1,(E,X)    : flip_node_sign_Minus_to_0(E,X);
+           2,(E,X)    : flip_node_sign_Minus_to_Plus(E,X);
+           1,(E,X)    : flip_node_sign_0_to_Plus(E,X);
+           1,(E,X)    : flip_node_sign_0_to_Minus(E,X);
+           2,(E,X)    : flip_node_sign_notMinus_to_Minus(E,X);
+           2,(E,X)    : flip_node_sign_notPlus_to_Plus(E,X)
+         }.";
+
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
-#minimize{ 1@1, U,V,S : remedge(U,V,S)}.
-#minimize{ 2@1, U,V,S : addedge(U,V,S)}.
-#minimize{ 2@1, V : addeddy(V) }.
-";
+#minimize{ 0,notfalse : not false;
+           1@1, U,V,S : remedge(U,V,S);
+           2@1, U,V,S : addedge(U,V,S);
+           2@1, V     : addeddy(V) 
+         }.";
 
 pub const PRG_BEST_ONE_EDGE: &'static str = "
 % guess one edge end to add
@@ -399,8 +419,7 @@ pub const PRG_BEST_EDGE_START: &'static str = "
 
 % add only one edge !!!
 :- addedge(Y1,X,1), addedge(Y2,X,-1).
-:- addedge(Y1,X,S), addedge(Y2,X,T), Y1!=Y2.
-";
+:- addedge(Y1,X,S), addedge(Y2,X,T), Y1!=Y2.";
 
 pub const PRG_ADD_EDGES: &'static str = "
 % guess edges to add
@@ -414,7 +433,6 @@ elabel(U,V,-1) :-addedge(U,V,-1).
 
 pub const PRG_FLIP_EDGE_DIRECTIONS: &'static str = "
 0{flip(U,V,S)}1 :- not mandatory(U,V), obs_e_label(U,V,S).
-
 
 % labels for fliped edges
 remedge(U,V,S) :- flip(U,V,S).

@@ -27,7 +27,7 @@ struct Opt {
 
     /// Observations in bioquali format
     #[structopt(short = "o", long = "observations", parse(from_os_str))]
-    observationfile: PathBuf,
+    observationfile: Option<PathBuf>,
 
     /// Disable forward propagation constraints
     #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
@@ -76,19 +76,28 @@ fn main() {
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
-    println!("\nReading observations from {:?}.", opt.observationfile);
-    let f = File::open(opt.observationfile).unwrap();
-    let pprofile = profile_parser::read(&f, "x1").unwrap();
-    let profile = pprofile.to_facts();
-    observation_statistics(&pprofile, &ggraph);
+    let profile = {
+        if let Some(observationfile) = opt.observationfile {
+            println!("\nReading observations from {:?}.", observationfile);
+            let f = File::open(observationfile).unwrap();
+            let pprofile = profile_parser::read(&f, "x1").unwrap();
 
-    if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
-        println!("The following observations are contradictory. Please correct them!");
-        for r in reasons {
-            println!("{}", r);
+            observation_statistics(&pprofile, &ggraph);
+            let profile = pprofile.to_facts();
+
+            if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+                println!("The following observations are contradictory. Please correct them!");
+                for r in reasons {
+                    println!("{}", r);
+                }
+            }
+
+            profile
+        } else {
+            println!("\nEmpty observation data.");
+            FactBase::new()
         }
-        return;
-    }
+    };
 
     let new_inputs = {
         if opt.autoinputs {
@@ -258,9 +267,11 @@ fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting
     let mut oldmic = vec![];
     for mic in mics {
         if oldmic != mic {
-            println!("mic {}:", count);
+            println!("\nmic {}:", count);
+            print!("  ");
             for e in mic.clone() {
-                print!("{} ", e.to_string().unwrap());
+                let node = into_node_id(&e).unwrap();
+                print!("{} ", node);
             }
             println!();
             count += 1;
@@ -286,7 +297,8 @@ fn compute_scenfit_labelings(
         print_labels(labels);
         println!();
         println!(" Repairs: ");
-        for fix in repairs {
+        for r in repairs {
+            let fix = into_repair(&r).unwrap();
             println!("  {}", fix);
         }
         println!();
@@ -310,7 +322,8 @@ fn compute_mcos_labelings(
         print_labels(labels);
         println!();
         println!(" Repairs: ");
-        for fix in repairs {
+        for r in repairs {
+            let fix = into_repair(&r).unwrap();
             println!("  {}", fix);
         }
         println!();
@@ -331,7 +344,7 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
             }
         };
 
-        println!(" {} = {}", node.to_string().unwrap(), sign);
+        println!("  {} = {}", node.string().unwrap(), sign);
     }
 }
 

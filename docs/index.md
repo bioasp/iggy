@@ -1,175 +1,119 @@
 ---
 layout: index
 title: iggy
-tagline: A tool for consistency based analysis of influence graphs and observed systems behavior
+tagline: Tools for consistency based analysis of influence graphs and observed systems behavior
 ---
 
 ### Sign Consistency on Influence Graphs - Diagnosis, Repair, Prediction
 
-For many biological systems knowledge bases are available that describe the interaction of its components usually in terms of causal networks and influence graphs. In particular signed influence graphs where edges indicate either positive or negative effect of one node upon another. Building upon a notion of consistency between biochemical/genetic regulations and high-throughput profiles of cell activity. We present an approach to check the consistency of large-scale data sets, provide explanations for inconsistencies by determining minimal representations of conflicts. In practice, this can be used to identify unreliable data or to indicate missing reactions. Further, we address the problem of repairing networks and corresponding yet often discrepant measurements in order to re-establish their mutual consistency and predict unobserved variations even under inconsistency. 
-[![DOI](https://zenodo.org/badge/5393/bioasp/iggy.png)](http://dx.doi.org/10.5281/zenodo.19042)
+# `iggy` + `opt_graph` [![DOI](https://zenodo.org/badge/5393/bioasp/iggy.png)](http://dx.doi.org/10.5281/zenodo.19042)
 
-### Installation
+`iggy` and `opt_graph` are tools for consistency based analysis of influence graphs and observed systems behavior (signed changes between two measured states). For many (biological) systems are knowledge bases available that describe the interaction of its components in terms of causal networks, boolean networks and influence graphs where edges indicate either positive or negative effect of one node upon another.
 
-You can install iggy by running:
+`iggy` implements methods to check the consistency of large-scale data sets and provides explanations for inconsistencies. In practice, this is used to identify unreliable data or to indicate missing reactions. Further, `iggy` addresses the problem of  repairing networks and corresponding yet often discrepant measurements in order to re-establish their mutual consistency and predict unobserved variations even under inconsistency.
 
-	$ pip install --user iggy
+`opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments. `opt_graph` computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
 
-On Linux the executable scripts can then be found in ``~/.local/bin``
-
-and on Mac OS the scripts are under ``/Users/YOURUSERNAME/Library/Python/3.5/bin``.
-
-
-### Usage
+ [**Download precompiled binaries for 64bit linux and macos on the release page.**](https://github.com/bioasp/iggy/releases)
 
 You can download the [iggy user guide](https://bioasp.github.io/iggy/guide/guide.pdf).
+
+
+Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+
+## Compile yourself
+
+Clone the git repository:
+
+	git clone https://github.com/bioasp/iggy.git
+	cargo build --release
+
+The executables can be found under `./target/release/`
+
+## Iggy
+
 Typical usage is:
 
-	$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions
+    $ iggy -n network.cif -o observation.obs -l 10 -p
 
 For more options you can ask for help as follows:
 
-	$ iggy.py -h 		
-	usage: iggy.py [-h] [--no_fwd_propagation] [--no_founded_constraints]
-		       [--elempath] [--depmat] [--mics] [--autoinputs] [--scenfit]
-		       [--show_labelings SHOW_LABELINGS] [--show_predictions]
-		       networkfile observationfile
+    $ iggy -h
+    iggy 2.0.0
+    Sven Thiele <sthiele78@gmail.com>
+    Iggy confronts interaction graph models with observations of (signed) changes between two measured states 
+    (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal 
+    repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. 
+    increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
-	Iggy confronts biological networks given as interaction graphs with
-	experimental observations given as signs that represent the concentration
-	changes between two measured states. Iggy supports the incorporation of
-	uncertain measurements, discovers inconsistencies in data or network, applies
-	minimal repairs, and predicts the behavior of unmeasured species. In
-	particular, it distinguishes strong predictions (e.g. increase of a node
-	level) and weak predictions (e.g., node level increases or remains unchanged).
+    USAGE:
+        iggy [FLAGS] [OPTIONS] --network <networkfile>
 
-	positional arguments:
-	  networkfile           influence graph in SIF format
-	  observationfile       observations in bioquali format
+    FLAGS:
+        -a, --autoinputs                 Declare nodes with indegree 0 as inputs
+            --depmat                     Combine multiple states, a change must be explained by an elementary path from an
+                                         input
+            --elempath                   Every change must be explained by an elementary path from an input
+            --founded_constraints_off    Disable foundedness constraints
+            --fwd_propagation_off        Disable forward propagation constraints
+        -h, --help                       Prints help information
+            --mics                       Compute minimal inconsistent cores
+            --scenfit                    Compute scenfit of the data, default is mcos
+        -p, --show_predictions           Show predictions
+        -V, --version                    Prints version information
 
-	optional arguments:
-	  -h, --help            show this help message and exit
-	  --no_fwd_propagation  turn forward propagation OFF, default is ON
-	  --no_founded_constraints
-				turn constraints OFF that every variation must be
-				founded in an input, default is ON
-	  --elempath            a change must be explained by an elementary path from
-				an input.
-	  --depmat              combines multiple states, a change must be explained
-				by an elementary path from an input.
-	  --mics                compute minimal inconsistent cores
-	  --autoinputs          compute possible inputs of the network (nodes with
-				indegree 0)
-	  --scenfit             compute scenfit of the data, default is mcos
-	  --show_labelings SHOW_LABELINGS
-				number of labelings to print, default is OFF, 0=all
-	  --show_predictions    show predictions
+    OPTIONS:
+        -l, --show_labelings <max_labelings>    Show max_labelings labelings, default is OFF, 0=all
+        -n, --network <networkfile>             Influence graph in CIF format
+        -o, --observations <observationfile>    Observations in bioquali format
 
 
-The second script contained is opt_graph.py
+
+## Opt_graph
+
 Typical usage is:
 
-	$ opt_graph.py network.sif observations_dir/ --show_repairs 10
+    $ opt_graph -n network.cif -o observations_dir/ --show_repairs 10
 
 For more options you can ask for help as follows:
 
-	$ opt_graph.py -h 
-	usage: opt_graph.py [-h] [--no_fwd_propagation] [--no_founded_constraints]
-                    [--elempath] [--depmat] [--autoinputs]
-                    [--show_repairs SHOW_REPAIRS] [--repair_mode REPAIR_MODE]
-                    networkfile observationfiles
+    $ opt_graph -h
+    opt_graph 2.0.0
+    Sven Thiele <sthiele78@gmail.com>
+    Opt-graph confronts interaction graph models with observations of (signed) changes between two measured 
+    states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number 
+    of edges in the given network.
 
-	Opt-graph confronts a biological network given as interaction graphs with sets
-	of experimental observations given as signs that represent the concentration
-	changes between two measured states. Opt-graph computes the networks fitting
-	the observation data by removing (or adding) a minimal number of edges in the
-	given network
+    USAGE:
+        opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
 
-	positional arguments:
-	  networkfile           influence graph in SIF format
-	  observationfiles      directory of observations in bioquali format
+    FLAGS:
+        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+            --depmat                    Combine multiple states, a change must be explained by an                                elementary path from an input
+            --elempath                  Every change must be explained by an elementary path from an                             input
+            --founded_constraints_off   Disable foundedness constraints
+            --fwd_propagation_off       Disable forward propagation constraints
+        -h, --help                      Prints help information
+        -V, --version                   Prints version information
 
-	optional arguments:
-	  -h, --help            show this help message and exit
-	  --no_fwd_propagation  turn forward propagation OFF, default is ON
-	  --no_founded_constraints
-				turn constraints OFF that every variation must be
-				founded in an input, default is ON
-	  --elempath            a change must be explained by an elementary path from
-				an input.
-	  --depmat              combines multiple states, a change must be explained
-				by an elementary path from an input.
-	  --autoinputs          compute possible inputs of the network (nodes with
-				indegree 0)
-	  --show_repairs SHOW_REPAIRS
-				number of repairs to show, default is OFF, 0=all
-	  --repair_mode REPAIR_MODE
-				choose repair mode: 1 = add edges (default), 2 = add +
-				remove edges (opt-graph), 3 = flip edges
+    OPTIONS:
+        -r, --show_repairs <max_repairs>      Show max_repairs repairs, default is OFF, 0=all
+        -n, --network <networkfile>           Influence graph in CIF format
+        -o, --observations <observationdir>   Directory of observations in bioquali format
+        -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
+                                                           optgraph = add + remove edges,
+                                                           flip = flip direction of edges
 
 
-### Samples
 
-Sample files available here: [demo\_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+
 
 ### Related publications
+
+* [*Designing optimal experiments to discriminate interaction graph models*](https://doi.org/10.1109/TCBB.2018.2812184), IEEE/ACM Trans. Comput. Biol. Bioinform, 16(3), 2019.
 
 * [*Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies*](http://dx.doi.org/10.1186/s12859-015-0733-7), BMC Bioinformatics, 2015.
 
 * [*Repair and Prediction (under Inconsistency) in Large Biological Networks with Answer Set Programming*](http://aaai.org/ocs/index.php/KR/KR2010/paper/view/1334/1660), 12th International Conference on the Principles of Knowledge Representation and Reasoning, 2010.
 
 * [*Directed random walks and constraint programming reveal active pathways in HGF signaling*](http://dx.doi.org/10.1111/febs.13580), FEBS Journal, 2015.
-
-### FAQ
-
-**Q**: I don't have pip. How can I install pip without admin rights?
-
-**A**: You can install pip without admin rights.
-
-1. Download [getpip.py](https://bootstrap.pypa.io/get-pip.py).
-
-		$ wget https://bootstrap.pypa.io/get-pip.py
-
-2. Install pip locally. 
-
-		$ python get-pip.py --user
-
-3. You can install using your local pip.
-
-
-**Q**: I don't have pip. How can I install iggy without pip?
-
-**A**:  You can install iggy without pip if you take care of the dependencies yourself.
-
-1. Download [pyasp-1.4.3](https://pypi.python.org/pypi/pyasp/1.4.3). 
- 
-		$ wget https://pypi.python.org/packages/source/p/pyasp/pyasp-1.4.3.tar.gz
-
-2. Extract and install pyasp. 
-
-		$ gzip -d pyasp-1.4.3.tar.gz
-		$ tar -xvf pyasp-1.4.3.tar
-		$ cd pyasp-1.4.3
-		$ python setup.py install --user
-
-3. Download [iggy-1.4.1](https://pypi.python.org/pypi/iggy/1.4.1). 
-
-		$ wget https://pypi.python.org/packages/source/i/iggy/iggy-1.4.1.tar.gz
- 
-4. Extract and install iggy.
-
-		$ gzip -d iggy-1.4.1.tar.gz
-		$ tar -xvf iggy-1.4.1.tar
-		$ cd iggy-1.4.1
-		$ python setup.py install --user
-	
-
-   The executable script can then be found in ``~/.local/bin`` on Linux and in ``/Users/YOURUSERNAME/Library/Python/3.5/bin``on Mac OS.
-
-
-**Q**: How can I write the output of iggy into a file?
-
-**A**:  You can redirect the output of iggy using ``>`` into a file. For example to write the results into the file ``myfile.txt`` type:
-
-		$ iggy.py network.sif observation.obs --show_labelings 10 --show_predictions > myfile.txt
-	

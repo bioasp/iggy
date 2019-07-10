@@ -36,25 +36,26 @@ For more options you can ask for help as follows:
     increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
     USAGE:
-        iggy [FLAGS] [OPTIONS] --network <networkfile> --observations <observationfile>
+        iggy [FLAGS] [OPTIONS] --network <networkfile>
 
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
-            --depmat                    Combine multiple states, a change must be explained by an 
-                                        elementary path from an input
-            --elempath                  Every change must be explained by an elementary path from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
-        -h, --help                      Prints help information
-            --mics                      Compute minimal inconsistent cores
-            --scenfit                   Compute scenfit of the data, default is mcos
-        -p, --show_predictions          Show predictions
-        -V, --version                   Prints version information
+        -a, --autoinputs                 Declare nodes with indegree 0 as inputs
+            --depmat                     Combine multiple states, a change must be explained by an elementary path from an
+                                         input
+            --elempath                   Every change must be explained by an elementary path from an input
+            --founded_constraints_off    Disable foundedness constraints
+            --fwd_propagation_off        Disable forward propagation constraints
+        -h, --help                       Prints help information
+            --mics                       Compute minimal inconsistent cores
+            --scenfit                    Compute scenfit of the data, default is mcos
+        -p, --show_predictions           Show predictions
+        -V, --version                    Prints version information
 
     OPTIONS:
-        -l, --show_labelings <max_labelings>   Show max_labelings labelings, default is OFF, 0=all
-        -n, --network <networkfile>            Influence graph in CIF format
-        -o, --observations <observationfile>   Observations in bioquali format
+        -l, --show_labelings <max_labelings>    Show max_labelings labelings, default is OFF, 0=all
+        -n, --network <networkfile>             Influence graph in CIF format
+        -o, --observations <observationfile>    Observations in bioquali format
+
 
 
 ## Opt_graph
