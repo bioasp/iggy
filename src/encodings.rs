@@ -75,10 +75,6 @@ pinfl(E,V, 1) :- elabel(U,V,-1), vlabel(E,U,-1), not vlabel(E,U,0), not vlabel(E
 % effects of a repair
 pinfl(E,V,S) :- new_influence(E,V,S).
 
-% if a node has been observed only one sign
-% forbidden(E,V,T) :- vlabel(E,V,S1), obs_v_label(E,V,S), sign(S), sign(T), T!=S1.
-% forbidden(E,V,T) :- vlabel(E,V,S1), err(flip(E,V,N)), obs_v_label(E,V,S), sign(T), T!=S1.
-
 % constraints
 :- forbidden(E,V,S), vlabel(E,V,S).
 
@@ -184,18 +180,27 @@ forbidden(E,V,-1) :- exp(E), vertex(V), not neg_path(E,V), not input(E,V).
 ";
 
 pub const PRG_ERROR_MEASURE: &'static str = "
-err(flip(E,X,1)) :- obs_v_label(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
-err(flip(E,X,2)) :- obs_v_label(E,X, 1), not vlabel(E,X, 1), not vlabel(E,X,0), vlabel(E,X,-1).
+flip_node_sign_Plus_to_0(E,X) :- obs_v_label(E,X, 1), not vlabel(E,X, 1),     vlabel(E,X,0).
+flip_node_sign_Plus_to_Minus(E,X) :- obs_v_label(E,X, 1), not vlabel(E,X, 1), not vlabel(E,X,0), vlabel(E,X,-1).
 
-err(flip(E,X,1)) :- obs_v_label(E,X,-1), not vlabel(E,X,-1),     vlabel(E,X,0).
-err(flip(E,X,2)) :- obs_v_label(E,X,-1), not vlabel(E,X,-1), not vlabel(E,X,0), vlabel(E,X, 1).
+flip_node_sign_Minus_to_0(E,X) :- obs_v_label(E,X,-1), not vlabel(E,X,-1),     vlabel(E,X,0).
+flip_node_sign_Minus_to_Plus(E,X) :- obs_v_label(E,X,-1), not vlabel(E,X,-1), not vlabel(E,X,0), vlabel(E,X, 1).
 
-err(flip(E,X,1)) :- obs_v_label(E,X, 0), not vlabel(E,X, 0).
+flip_node_sign_0_to_Plus(E,X) :- obs_v_label(E,X, 0), not vlabel(E,X, 0), vlabel(E,X, 1).
+flip_node_sign_0_to_Minus(E,X) :- obs_v_label(E,X, 0), not vlabel(E,X, 0), vlabel(E,X, -1).
 
-err(flip(E,X,2)) :- obs_v_label(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
-err(flip(E,X,2)) :- obs_v_label(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
+flip_node_sign_notMinus_to_Minus(E,X) :- obs_v_label(E,X, notMinus), not vlabel(E,X, 0), not vlabel(E,X, 1).
+flip_node_sign_notPlus_to_Plus(E,X) :- obs_v_label(E,X, notPlus), not vlabel(E,X, 0), not vlabel(E,X,-1).";
 
-pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{V@2,(E,X,V) : err(flip(E,X,V)) }.";
+pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "#minimize{ 1,(E,X) : flip_node_sign_Plus_to_0(E,X);
+                                                             2,(E,X) : flip_node_sign_Plus_to_Minus(E,X);
+                                                             1,(E,X) : flip_node_sign_Minus_to_0(E,X);
+                                                             2,(E,X) : flip_node_sign_Minus_to_Plus(E,X);
+                                                             1,(E,X) : flip_node_sign_0_to_Plus(E,X);
+                                                             1,(E,X) : flip_node_sign_0_to_Minus(E,X);
+                                                             2,(E,X) : flip_node_sign_notMinus_to_Minus(E,X);
+                                                             2,(E,X) : flip_node_sign_notPlus_to_Plus(E,X)
+                                                           }.";
 
 pub const PRG_KEEP_INPUTS: &'static str = "
 % keep observed input variation
@@ -205,7 +210,16 @@ forbidden(E,V,T) :- input(E,V), obs_v_label(E,V,S), sign(S), sign(T), S!=T.
 forbidden(E,V, 1) :- input(E,V), obs_v_label(E,V,notPlus).
 forbidden(E,V,-1) :- input(E,V), obs_v_label(E,V,notMinus).";
 
-pub const PRG_SHOW_ERRORS: &'static str = "#show err/1.";
+pub const PRG_SHOW_ERRORS: &'static str = "
+#show flip_node_sign_Plus_to_0/2.
+#show flip_node_sign_Plus_to_Minus/2.
+#show flip_node_sign_Minus_to_0/2.
+#show flip_node_sign_Minus_to_Plus/2.
+#show flip_node_sign_0_to_Plus/2.
+#show flip_node_sign_0_to_Minus/2.
+#show flip_node_sign_notMinus_to_Minus/2.
+#show flip_node_sign_notPlus_to_Plus/2.
+";
 pub const PRG_SHOW_LABELS: &'static str = "#show vlabel(X,or(V),S) : vlabel(X,or(V),S).";
 pub const PRG_SHOW_REPAIRS: &'static str = "#show remedge/3.
 #show addedge/3.

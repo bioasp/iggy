@@ -259,7 +259,7 @@ fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting
     for mic in mics {
         if oldmic != mic {
             println!("\nmic {}:", count);
-            print!("    ");
+            print!("  ");
             for e in mic.clone() {
                 let node = into_node_id(&e).unwrap();
                 print!("{} ", node);
@@ -288,7 +288,8 @@ fn compute_scenfit_labelings(
         print_labels(labels);
         println!();
         println!(" Repairs: ");
-        for fix in repairs {
+        for r in repairs {
+            let fix = into_repair(&r).unwrap();
             println!("  {}", fix);
         }
         println!();
@@ -312,7 +313,8 @@ fn compute_mcos_labelings(
         print_labels(labels);
         println!();
         println!(" Repairs: ");
-        for fix in repairs {
+        for r in repairs {
+            let fix = into_repair(&r).unwrap();
             println!("  {}", fix);
         }
         println!();
@@ -333,7 +335,7 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
             }
         };
 
-        println!(" {} = {}", node.string().unwrap(), sign);
+        println!("  {} = {}", node.string().unwrap(), sign);
     }
 }
 

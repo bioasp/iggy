@@ -36,7 +36,7 @@ impl ToSymbol for NodeSign {
         })
     }
 }
-type ProfileId = String;
+pub type ProfileId = String;
 
 #[derive(ToSymbol)]
 pub struct Input<'a> {

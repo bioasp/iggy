@@ -1,7 +1,7 @@
 pub mod cif_parser;
+use cif_parser::EdgeSign;
 use cif_parser::Graph;
 pub mod profile_parser;
-use cif_parser::EdgeSign;
 use clingo::add_facts;
 use clingo::Control;
 use clingo::ExternalFunctionHandler;
@@ -15,6 +15,7 @@ use clingo::Symbol;
 use clingo::SymbolType;
 use clingo::ToSymbol;
 use clingo_derive::*;
+use profile_parser::ProfileId;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
@@ -85,16 +86,44 @@ pub enum CheckResult {
     Inconsistent(Vec<String>),
 }
 pub enum RepairOp {
-    Add(ObsELabel),
-    Remove(ObsELabel),
-    Flip(ObsELabel),
+    AddEdge(ObsELabel),
+    RemoveEdge(ObsELabel),
+    FlipEdgeDirection(ObsELabel),
+    FlipNodeSign(ProfileId, NodeId, Direction),
+    NewInfluence(ProfileId, NodeId, EdgeSign),
 }
 impl fmt::Display for RepairOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RepairOp::Add(e) => write!(f, "add: {}", e),
-            RepairOp::Remove(e) => write!(f, "remove: {}", e),
-            RepairOp::Flip(e) => write!(f, "flip direction: {}", e),
+            RepairOp::AddEdge(e) => write!(f, "add edge: {}", e),
+            RepairOp::RemoveEdge(e) => write!(f, "remove edge: {}", e),
+            RepairOp::FlipEdgeDirection(e) => write!(f, "flip direction: {}", e),
+            RepairOp::FlipNodeSign(_e, n, Direction::PlusToMinus) => {
+                write!(f, "flip {}: + to -", n)
+            }
+            RepairOp::FlipNodeSign(_e, n, Direction::PlusToZero) => write!(f, "flip {}: + to 0", n),
+            RepairOp::FlipNodeSign(_e, n, Direction::ZeroToMinus) => {
+                write!(f, "flip {}: 0 to -", n)
+            }
+            RepairOp::FlipNodeSign(_e, n, Direction::ZeroToPlus) => write!(f, "flip {}: 0 to +", n),
+            RepairOp::FlipNodeSign(_e, n, Direction::MinusToPlus) => {
+                write!(f, "flip {}: - to +", n)
+            }
+            RepairOp::FlipNodeSign(_e, n, Direction::MinusToZero) => {
+                write!(f, "flip {}: - to 0", n)
+            }
+            RepairOp::FlipNodeSign(_e, n, Direction::NotPlusToPlus) => {
+                write!(f, "flip {}: notPlus to +", n)
+            }
+            RepairOp::FlipNodeSign(_e, n, Direction::NotMinusToMinus) => {
+                write!(f, "flip {}: notMinus to -", n)
+            }
+            RepairOp::NewInfluence(_e, n, EdgeSign::Plus) => {
+                write!(f, "new increasing influence on: {}", n)
+            }
+            RepairOp::NewInfluence(_e, n, EdgeSign::Minus) => {
+                write!(f, "new decreasing influence on: {}", n)
+            }
         }
     }
 }
@@ -436,7 +465,7 @@ pub fn get_scenfit_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
+) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<Symbol>)>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -532,7 +561,7 @@ pub fn get_mcos_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<String>)>, Error> {
+) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<Symbol>)>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -711,6 +740,16 @@ pub fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
         }
     }
 }
+pub enum Direction {
+    PlusToZero,
+    PlusToMinus,
+    MinusToZero,
+    MinusToPlus,
+    ZeroToPlus,
+    ZeroToMinus,
+    NotMinusToMinus,
+    NotPlusToPlus,
+}
 pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
     match symbol.name()? {
         "addedge" => {
@@ -723,7 +762,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
                 _ => panic!("unexpected EdgeSign"),
             };
 
-            Ok(RepairOp::Add(ObsELabel {
+            Ok(RepairOp::AddEdge(ObsELabel {
                 start,
                 target,
                 sign,
@@ -739,7 +778,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
                 _ => panic!("unexpected EdgeSign"),
             };
 
-            Ok(RepairOp::Remove(ObsELabel {
+            Ok(RepairOp::RemoveEdge(ObsELabel {
                 start,
                 target,
                 sign,
@@ -755,11 +794,87 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
                 _ => panic!("unexpected EdgeSign"),
             };
 
-            Ok(RepairOp::Flip(ObsELabel {
+            Ok(RepairOp::FlipEdgeDirection(ObsELabel {
                 start,
                 target,
                 sign,
             }))
+        }
+        "flip_node_sign_Plus_to_0" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::PlusToZero;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_Plus_to_Minus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::PlusToMinus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_Minus_to_0" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::MinusToZero;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_Minus_to_Plus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::MinusToPlus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_0_to_Plus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::ZeroToPlus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_0_to_Minus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::ZeroToMinus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_notMinus_to_Minus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::NotMinusToMinus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "flip_node_sign_notPlus_to_Plus" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let node = into_node_id(&arguments[1])?;
+            let direction = Direction::NotPlusToPlus;
+
+            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+        }
+        "new_influence" => {
+            let arguments = symbol.arguments()?;
+            let profile_id = arguments[0].string()?.to_string();
+            let target = into_node_id(&arguments[1])?;
+            let sign = match arguments[2].number() {
+                Ok(1) => EdgeSign::Plus,
+                Ok(-1) => EdgeSign::Minus,
+                _ => panic!("unexpected EdgeSign"),
+            };
+
+            Ok(RepairOp::NewInfluence(profile_id, target, sign))
         }
         _ => {
             panic!("unmatched symbol: {}", symbol.to_string()?);
@@ -1368,7 +1483,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
 /// and a vector of repair operations needed to make the labeling consistent
 fn extract_labels_repairs(
     symbols: &[Symbol],
-) -> Result<(Vec<(Symbol, Symbol)>, Vec<String>), Error> {
+) -> Result<(Vec<(Symbol, Symbol)>, Vec<Symbol>), Error> {
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
@@ -1381,17 +1496,38 @@ fn extract_labels_repairs(
                     vlabels.push((id.arguments()?[0], sign));
                 }
             }
-            "err" => {
-                err.push(symbol.to_string()?);
+            "flip_node_sign_Plus_to_0" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_Plus_to_Plus" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_Minus_to_0" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_Minus_to_Plus" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_0_to_Plus" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_0_to_Minus" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_notPlus_to_Plus" => {
+                err.push(*symbol);
+            }
+            "flip_node_sign_notMinus_to_Minus" => {
+                err.push(*symbol);
             }
             "addedge" => {
-                err.push(symbol.to_string()?);
+                err.push(*symbol);
             }
             "remedge" => {
-                err.push(symbol.to_string()?);
+                err.push(*symbol);
             }
             "new_influence" => {
-                err.push(symbol.to_string()?);
+                err.push(*symbol);
             }
             _ => {
                 panic!("unmatched symbol: {}", symbol.to_string()?);
