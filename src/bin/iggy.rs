@@ -258,9 +258,11 @@ fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting
     let mut oldmic = vec![];
     for mic in mics {
         if oldmic != mic {
-            println!("mic {}:", count);
+            println!("\nmic {}:", count);
+            print!("    ");
             for e in mic.clone() {
-                print!("{} ", e.to_string().unwrap());
+                let node = into_node_id(&e).unwrap();
+                print!("{} ", node);
             }
             println!();
             count += 1;

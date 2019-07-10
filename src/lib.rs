@@ -378,30 +378,9 @@ pub fn get_minimal_inconsistent_cores(
     }
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
-    let models = all_models(&mut handle)?;
-    models.iter().map(|model| extract_mics(model)).collect()
-
-    // ground_with_myefh(&mut ctl)?;
-    // let models = ctl.all_models()?;
-    // models.map(|model| extract_mics(&model.symbols)).collect()
-}
-
-fn all_models(handle: &mut SolveHandle) -> Result<Vec<Vec<Symbol>>, Error> {
-    let mut v = Vec::new();
-    loop {
-        handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
-                let symbols = model.symbols(ShowType::SHOWN)?;
-                v.push(symbols);
-            }
-            Ok(None) => {
-                return Ok(v);
-            }
-            Err(e) => Err(e)?,
-        }
-    }
+    ground_with_myefh(&mut ctl)?;
+    let models = ctl.all_models()?;
+    models.map(|model| extract_mics(&model.symbols)).collect()
 }
 
 /// returns the scenfit of data and model
@@ -715,7 +694,7 @@ fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
     Err(IggyError::new("Expected addedge(X) atom in the answer!"))?
 }
 
-fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
+pub fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
     match symbol.name()? {
         "or" => {
             let arguments = symbol.arguments()?;
@@ -1375,10 +1354,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
         match symbol.name()? {
             "active" => {
                 let id = symbol.arguments()?[0];
-                // only return or nodes
-                if id.name()? == "or" {
-                    mics.push(id);
-                }
+                mics.push(id);
             }
             _ => {
                 panic!("unmatched symbol: {}", symbol.to_string()?);
