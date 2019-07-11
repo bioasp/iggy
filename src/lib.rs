@@ -31,15 +31,15 @@ pub struct SETTING {
 }
 
 pub fn network_statistics(graph: &Graph) {
-    println!("\n# Network statistics");
-    println!("  OR nodes (species): {}", graph.or_nodes().len());
+    println!("\n# Network statistics\n");
+    println!("    OR nodes (species): {}", graph.or_nodes().len());
     println!(
-        "  AND nodes (complex regulation): {}",
+        "    AND nodes (complex regulation): {}",
         graph.and_nodes().len()
     );
-    println!("  Activations = {}", graph.activations().len());
-    println!("  Inhibitions = {}", graph.inhibitions().len());
-    println!("  Unknowns = {}", graph.unknowns().len());
+    println!("    Activations : {}", graph.activations().len());
+    println!("    Inhibitions : {}", graph.inhibitions().len());
+    println!("    Unknowns : {}", graph.unknowns().len());
     // println!("          Dual = {}", len(unspecified))
 }
 
@@ -260,7 +260,6 @@ fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
             let name = list.name()?;
             let arguments = list.arguments()?;
             if name == "conc" && arguments.len() == 2 {
-                // dbg!(list.to_string().unwrap());
                 if elem == arguments[1] {
                     Symbol::create_id("true", true)
                 } else {
@@ -268,8 +267,6 @@ fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
                 }
             } else {
                 if elem == list {
-                    // dbg!(list.to_string().unwrap());
-                    // dbg!(elem.to_string().unwrap());
                     Symbol::create_id("true", true)
                 } else {
                     Symbol::create_id("false", true)
@@ -278,8 +275,6 @@ fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
         }
         Ok(_) => {
             if elem == list {
-                // dbg!(list.to_string().unwrap());
-                // dbg!(elem.to_string().unwrap());
                 Symbol::create_id("true", true)
             } else {
                 Symbol::create_id("false", true)
@@ -300,10 +295,7 @@ impl ExternalFunctionHandler for MyEFH {
         if name == "member" && arguments.len() == 2 {
             let element = arguments[0];
             let list = arguments[1];
-            // dbg!(element.to_string().unwrap());
-            // dbg!(list.to_string().unwrap());
             let res = member(element, list)?;
-            // dbg!(res.to_string().unwrap());
             Ok(vec![res])
         } else {
             println!("name: {}", name);
@@ -704,7 +696,6 @@ pub fn get_predictions_under_scenfit(
 
 fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
-        // dbg!(a.to_string()?);
         if a.name()? == "addeddy" {
             let edge_end = a.arguments()?[0];
             return Symbol::create_function("edge_end", &[edge_end], true);
@@ -715,7 +706,6 @@ fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
 
 fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
     for a in symbols {
-        // dbg!(a.to_string()?);
         if a.name()? == "addedge" {
             return Ok(*a);
         }
@@ -1232,43 +1222,29 @@ pub fn get_opt_flip_edges(
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
-    // graph.print();
-    // profiles.print();
-    // inputs.print();
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
-    // print!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)?;
-    // print!("{}",PRG_BWD_PROP);
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
-    // print!("{}",PRG_ERROR_MEASURE);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-    // print!("{}",PRG_MIN_WEIGHTED_ERROR);
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
-    // print!("{}",PRG_KEEP_INPUTS);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
-        // print!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)?;
-        // print!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-        // print!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)?;
-        // print!("{}",PRG_ELEM_PATH);
     }
 
     ctl.add("base", &[], PRG_FLIP_EDGE_DIRECTIONS)?;
-    // print!("{}",PRG_FLIP_EDGE_DIRECTIONS);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-    // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
 
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
@@ -1295,45 +1271,30 @@ pub fn get_opt_repairs_flip_edges(
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
-    // graph.print();
-    // profiles.print();
-    // inputs.print();
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
-    // print!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)?;
-    // print!("{}",PRG_BWD_PROP);
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
-    // print!("{}",PRG_ERROR_MEASURE);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-    // print!("{}",PRG_MIN_WEIGHTED_ERROR);
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
-    // print!("{}",PRG_KEEP_INPUTS);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
-        // print!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)?;
-        // print!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-        // print!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)?;
-        // print!("{}",PRG_ELEM_PATH);
     }
 
     ctl.add("base", &[], PRG_FLIP_EDGE_DIRECTIONS)?;
-    // print!("{}",PRG_FLIP_EDGE_DIRECTIONS);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-    // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
     ctl.add("base", &[], PRG_SHOW_FLIP)?;
-    // print!("{}",PRG_SHOW_FLIP);
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
@@ -1353,43 +1314,29 @@ pub fn get_opt_remove_edges(
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
-    // graph.print();
-    // profiles.print();
-    // inputs.print();
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
-    // print!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)?;
-    // print!("{}",PRG_BWD_PROP);
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
-    // print!("{}",PRG_ERROR_MEASURE);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-    // print!("{}",PRG_MIN_WEIGHTED_ERROR);
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
-    // print!("{}",PRG_KEEP_INPUTS);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
-        // print!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)?;
-        // print!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-        // print!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)?;
-        // print!("{}",PRG_ELEM_PATH);
     }
 
     ctl.add("base", &[], PRG_REMOVE_EDGES)?;
-    // print!("{}",PRG_REMOVE_EDGES);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-    // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
 
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
@@ -1415,45 +1362,30 @@ pub fn get_opt_repairs_remove_edges(
     add_facts(&mut ctl, graph);
     add_facts(&mut ctl, profiles);
     add_facts(&mut ctl, inputs);
-    // graph.print();
-    // profiles.print();
-    // inputs.print();
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
-    // print!("{}",PRG_SIGN_CONS);
     ctl.add("base", &[], PRG_BWD_PROP)?;
-    // print!("{}",PRG_BWD_PROP);
 
     ctl.add("base", &[], PRG_ERROR_MEASURE)?;
-    // print!("{}",PRG_ERROR_MEASURE);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_ERROR)?;
-    // print!("{}",PRG_MIN_WEIGHTED_ERROR);
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
-    // print!("{}",PRG_KEEP_INPUTS);
 
     if setting.os {
         ctl.add("base", &[], PRG_ONE_STATE)?;
-        // print!("{}",PRG_ONE_STATE);
     }
     if setting.fp {
         ctl.add("base", &[], PRG_FWD_PROP)?;
-        // print!("{}",PRG_FWD_PROP);
     }
     if setting.fc {
         ctl.add("base", &[], PRG_FOUNDEDNESS)?;
-        // print!("{}",PRG_FOUNDEDNESS);
     }
     if setting.ep {
         ctl.add("base", &[], PRG_ELEM_PATH)?;
-        // print!("{}",PRG_ELEM_PATH);
     }
 
     ctl.add("base", &[], PRG_REMOVE_EDGES)?;
-    // print!("{}",PRG_REMOVE_EDGES);
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
-    // print!("{}",PRG_MIN_WEIGHTED_REPAIRS);
     ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
-    // print!("{}",PRG_SHOW_REPAIRS);
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;

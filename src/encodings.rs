@@ -385,19 +385,19 @@ pub const PRG_MIN_ADDED_INFLUENCES: &'static str = "
          }.";
 
 pub const PRG_MIN_WEIGHTED_ERROR: &'static str = "
-#minimize{ 0,notfalse : not false;
-           1,(E,X)    : flip_node_sign_Plus_to_0(E,X);
-           2,(E,X)    : flip_node_sign_Plus_to_Minus(E,X);
-           1,(E,X)    : flip_node_sign_Minus_to_0(E,X);
-           2,(E,X)    : flip_node_sign_Minus_to_Plus(E,X);
-           1,(E,X)    : flip_node_sign_0_to_Plus(E,X);
-           1,(E,X)    : flip_node_sign_0_to_Minus(E,X);
-           2,(E,X)    : flip_node_sign_notMinus_to_Minus(E,X);
-           2,(E,X)    : flip_node_sign_notPlus_to_Plus(E,X)
+#minimize{ 0@2,notfalse : not false;
+           1@2,(E,X)    : flip_node_sign_Plus_to_0(E,X);
+           2@2,(E,X)    : flip_node_sign_Plus_to_Minus(E,X);
+           1@2,(E,X)    : flip_node_sign_Minus_to_0(E,X);
+           2@2,(E,X)    : flip_node_sign_Minus_to_Plus(E,X);
+           1@2,(E,X)    : flip_node_sign_0_to_Plus(E,X);
+           1@2,(E,X)    : flip_node_sign_0_to_Minus(E,X);
+           2@2,(E,X)    : flip_node_sign_notMinus_to_Minus(E,X);
+           2@2,(E,X)    : flip_node_sign_notPlus_to_Plus(E,X)
          }.";
 
 pub const PRG_MIN_WEIGHTED_REPAIRS: &'static str = "
-#minimize{ 0,notfalse : not false;
+#minimize{ 0@1,notfalse : not false;
            1@1, U,V,S : remedge(U,V,S);
            2@1, U,V,S : addedge(U,V,S);
            2@1, V     : addeddy(V) 

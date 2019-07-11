@@ -206,7 +206,7 @@ fn get_setting(opt: &Opt) -> SETTING {
 }
 
 fn observation_statistics(profile: &Profile, graph: &Graph) {
-    println!("\n# Observations statistics");
+    println!("\n# Observations statistics\n");
     let p = profile.clone();
     let tmp = [
         p.input, p.plus, p.minus, p.zero, p.notplus, p.notminus, p.min, p.max,
@@ -244,17 +244,17 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     }
     let not_in_model = not_in_model;
 
-    println!(" unobserved nodes     : {}", unobserved.len());
-    println!(" observed nodes       : {}", observed.len());
-    println!("  inputs                : {}", profile.input.len());
-    println!("  +                     : {}", profile.plus.len());
-    println!("  -                     : {}", profile.minus.len());
-    println!("  0                     : {}", profile.zero.len());
-    println!("  notPlus               : {}", profile.notplus.len());
-    println!("  notMinus              : {}", profile.notminus.len());
-    println!("  Min                   : {}", profile.min.len());
-    println!("  Max                   : {}", profile.max.len());
-    println!("  observed not in model : {}", not_in_model.len());
+    println!("    unobserved nodes     : {}", unobserved.len());
+    println!("    observed nodes       : {}", observed.len());
+    println!("     inputs                : {}", profile.input.len());
+    println!("     +                     : {}", profile.plus.len());
+    println!("     -                     : {}", profile.minus.len());
+    println!("     0                     : {}", profile.zero.len());
+    println!("     notPlus               : {}", profile.notplus.len());
+    println!("     notMinus              : {}", profile.notminus.len());
+    println!("     Min                   : {}", profile.min.len());
+    println!("     Max                   : {}", profile.max.len());
+    println!("     observed not in model : {}", not_in_model.len());
 }
 
 fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting: &SETTING) {
@@ -299,7 +299,7 @@ fn compute_scenfit_labelings(
         println!(" Repairs: ");
         for r in repairs {
             let fix = into_repair(&r).unwrap();
-            println!("  {}", fix);
+            println!("    {}", fix);
         }
         println!();
     }
@@ -344,36 +344,36 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
             }
         };
 
-        println!("  {} = {}", node.string().unwrap(), sign);
+        println!("    {} = {}", node.string().unwrap(), sign);
     }
 }
 
 fn print_predictions(predictions: &Predictions) {
     // if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
     for node in &predictions.increase {
-        println!(" {} = +", node);
+        println!("    {} = +", node);
     }
     for node in &predictions.decrease {
-        println!(" {} = -", node);
+        println!("    {} = -", node);
     }
     for node in &predictions.no_change {
-        println!(" {} = 0", node);
+        println!("    {} = 0", node);
     }
     for node in &predictions.no_increase {
-        println!(" {} = notPlus", node);
+        println!("    {} = notPlus", node);
     }
     for node in &predictions.no_decrease {
-        println!(" {} = notMinus", node);
+        println!("    {} = notMinus", node);
     }
     for node in &predictions.change {
-        println!(" {} = CHANGE", node);
+        println!("    {} = CHANGE", node);
     }
 
     println!();
-    println!(" predicted +        = {}", predictions.increase.len());
-    println!(" predicted -        = {}", predictions.decrease.len());
-    println!(" predicted 0        = {}", predictions.no_change.len());
-    println!(" predicted notPlus  = {}", predictions.no_increase.len());
-    println!(" predicted notMinus = {}", predictions.no_decrease.len());
-    println!(" predicted CHANGE   = {}", predictions.change.len());
+    println!("    predicted +        = {}", predictions.increase.len());
+    println!("    predicted -        = {}", predictions.decrease.len());
+    println!("    predicted 0        = {}", predictions.no_change.len());
+    println!("    predicted notPlus  = {}", predictions.no_increase.len());
+    println!("    predicted notMinus = {}", predictions.no_decrease.len());
+    println!("    predicted CHANGE   = {}", predictions.change.len());
 }

@@ -140,7 +140,7 @@ fn main() {
         Some(RepairMode::OptGraph) => {
             print!("\nComputing repair through add/removing edges ... ");
             if setting.ep {
-                print!("\n   using greedy method ... ");
+                print!("\n    using greedy method ... ");
                 let (scenfit, repair_score, redges) =
                     get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
 
@@ -273,14 +273,14 @@ fn main() {
                 }
             }
         };
-        println!("done.");
+
         let mut count = 0;
         for r in repairs {
             count += 1;
             println!("\nRepair {}: ", count);
             for e in r {
                 let repair_op = into_repair(&e).unwrap();
-                println!("       {}", repair_op);
+                println!("    {}", repair_op);
             }
         }
     }
