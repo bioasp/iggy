@@ -4,9 +4,9 @@ title: iggy
 tagline: Tools for consistency based analysis of influence graphs and observed systems behavior
 ---
 
-### Sign Consistency on Influence Graphs - Diagnosis, Repair, Prediction
+## Sign Consistency on Influence Graphs - Diagnosis, Repair, Prediction
 
-# `iggy` + `opt_graph` [![DOI](https://zenodo.org/badge/5393/bioasp/iggy.png)](http://dx.doi.org/10.5281/zenodo.19042)
+# `iggy` + `opt_graph`
 
 `iggy` and `opt_graph` are tools for consistency based analysis of influence graphs and observed systems behavior (signed changes between two measured states). For many (biological) systems are knowledge bases available that describe the interaction of its components in terms of causal networks, boolean networks and influence graphs where edges indicate either positive or negative effect of one node upon another.
 
@@ -21,6 +21,7 @@ You can download the [iggy user guide](https://bioasp.github.io/iggy/guide/guide
 
 Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
 
+
 ## Compile yourself
 
 Clone the git repository:
@@ -29,6 +30,7 @@ Clone the git repository:
 	cargo build --release
 
 The executables can be found under `./target/release/`
+
 
 ## Iggy
 
@@ -41,32 +43,31 @@ For more options you can ask for help as follows:
     $ iggy -h
     iggy 2.0.0
     Sven Thiele <sthiele78@gmail.com>
-    Iggy confronts interaction graph models with observations of (signed) changes between two measured states 
-    (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal 
-    repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. 
+    Iggy confronts interaction graph models with observations of (signed) changes between two measured states
+    (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal
+    repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g.
     increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
     USAGE:
         iggy [FLAGS] [OPTIONS] --network <networkfile>
 
     FLAGS:
-        -a, --autoinputs                 Declare nodes with indegree 0 as inputs
-            --depmat                     Combine multiple states, a change must be explained by an elementary path from an
-                                         input
-            --elempath                   Every change must be explained by an elementary path from an input
-            --founded_constraints_off    Disable foundedness constraints
-            --fwd_propagation_off        Disable forward propagation constraints
-        -h, --help                       Prints help information
-            --mics                       Compute minimal inconsistent cores
-            --scenfit                    Compute scenfit of the data, default is mcos
-        -p, --show_predictions           Show predictions
-        -V, --version                    Prints version information
+        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+            --depmat                    Combine multiple states, a change must be explained by an
+                                        elementary path from an input
+            --elempath                  Every change must be explained by an elementary path from an input
+            --founded_constraints_off   Disable foundedness constraints
+            --fwd_propagation_off       Disable forward propagation constraints
+        -h, --help                      Prints help information
+            --mics                      Compute minimal inconsistent cores
+            --scenfit                   Compute scenfit of the data, default is mcos
+        -p, --show_predictions          Show predictions
+        -V, --version                   Prints version information
 
     OPTIONS:
-        -l, --show_labelings <max_labelings>    Show max_labelings labelings, default is OFF, 0=all
-        -n, --network <networkfile>             Influence graph in CIF format
-        -o, --observations <observationfile>    Observations in bioquali format
-
+        -l, --show_labelings <max_labelings>   Show max_labelings labelings, default is OFF, 0=all
+        -n, --network <networkfile>            Influence graph in CIF format
+        -o, --observations <observationfile>   Observations in bioquali format
 
 
 ## Opt_graph
@@ -80,8 +81,8 @@ For more options you can ask for help as follows:
     $ opt_graph -h
     opt_graph 2.0.0
     Sven Thiele <sthiele78@gmail.com>
-    Opt-graph confronts interaction graph models with observations of (signed) changes between two measured 
-    states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number 
+    Opt-graph confronts interaction graph models with observations of (signed) changes between two measured
+    states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number
     of edges in the given network.
 
     USAGE:
@@ -103,7 +104,6 @@ For more options you can ask for help as follows:
         -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
                                                            flip = flip direction of edges
-
 
 
 
