@@ -91,6 +91,37 @@ line 8 states that `grb2_sos` is initially on the maximum level, this means it c
     pi3k          = MAX
 
 
+### Consistency notions
+
+The Iggy tools implement different constraints that inform the consistency notion under which the analysis are perform. In other words what is considere a consistent behaviour of a system. The defaults are 
+ + All observed changes must be explained by an predecessor.
+
+    This is the basic constraint that must always hold.
+   
+ + All observed changes must be explained by an input.
+
+    You can turn this off with the flag `--founded_constraints_off`.
+
+ + 0-change must be explained.
+
+   You can turn this constraint off with the flag `--fwd_propagation_off`.
+
+Additionaly you can turn on the following constraint:
+  + An elementary path from an input must exist to explain changes.
+   You can turn this constraint on with the flag `--elempath`.
+
+With the flag `--depmat` you can turn on a consistency notion that is used for the *dependency matrix*. This notion includes the *elementary path* constraint.
+
+For more information on the consistency notion see: 
+
+ * [Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies](http://dx.doi.org/10.1186/s12859-015-0733-7),
+Sven Thiele, Luca Cerone, Julio Saez-Rodriguez, Anne Siegel, Carito Guziołowski, and Steffen Klamt, *BMC Bioinformatics*, 16(345), 2015.
+
+ * [Sign consistency methods to reason over the transitional behavior of dynamic systems](https://sthiele.github.io/scm/)
+
+For more information on the dependency matrix see:
+ * [A methodology for the structural and functional analysis of signaling and regulatory networks](doi:http://dx.doi.org/10.1186/1471-2105-7-56), Klamt S, Saez-Rodriguez J, Lindquist J, Simeoni L, Gilles E., BMC Bioinforma. 2006; 7(1):56. 
+
 ## Iggy
 
 `iggy` performs consistency checks for an interaction model and a data profile. 
@@ -139,9 +170,9 @@ For more options you can ask for help as follows:
         -o, --observations <observationfile>   Observations in bioquali format
 
 
-### Compute *mcos* or *scenfit* and predictions under inconsistency
+### Compute minimal correction sets (mcos) or *scenfit* and predictions under inconsistency
 
-`iggy` implements two measures for inconsistency *mcos* and *scenfit*. While *mcos* measures the minimal number of observations that cannot be explained, *scenfit* measures a minimal number of changes to the model to re-establish the mutual consistency between model and data.
+`iggy` implements two measures for inconsistency *minimal correction sets (mcos)* and *scenfit*. While *mcos* measures the minimal number of observations that cannot be explained, *scenfit* measures a minimal number of changes to the model to re-establish the mutual consistency between model and data.
 The default in iggy is *mcos* but *scenfit* can be used with the option `--scenfit`.
 
 With the option `--show_labelings, -l N` `iggy` computes at most `N` such labelings and repairs that are consistent.
@@ -365,8 +396,10 @@ Here the predictions say that
         predicted notMinus = 1
         predicted CHANGE   = 1
 
+For more information on minimal correction sets *mcos* see:
 
-
+* [Detecting and Removing  Inconsistencies between Experimental Data and Signaling Network Topologies Using Integer Linear Programming on Interaction Graphs.](doi:http://dx.doi.org/10.1371/journal.pcbi.1003204)
+Melas IN, Samaga R, Alexopoulos LG, Klamt S. , PLoS Comput Biol. 2013; 9(9):1003204.
 ### Compute minimal inconsistent cores `--mics`
 
 Iggy computes minimal inconsistent cores *mics* for inconsistent model and data.
@@ -451,6 +484,11 @@ To compute the minimal inconsistent cores use the flag `--mics` as follows:
     mic 13:
         YCR065W YOL116W YKR099W YGL073W YBR279W YGL025C YDR448W YDR392W YIR023W YLR451W YBR112C YBL093C YMR021C YGL237C YMR037C YKL015W YJR060W YGL043W YCR093W YDL106C YGL255W YER108C YHL025W YFL031W YDR123C YDL170W YOR363C YJL176C YIL101C YCR097W YKL062W YHR119W YGL166W YMR043W YOL051W YPL075W YKL038W YOL108C YGL209W YBL021C YPL082C YOR344C YKR206W YER161C YNR052C YER169W YBR289W YDR034C YDR216W YNL314W YGL013C YDR423C YFR034C YDR421W YMR070W YBR049C YBR297W YKL032C YOR290C YGR288W YCR084C YOR358W YMR042W YML007W YHL027W YGL254W YLR098C YOR230W YML099C YOR140W YOL067C YDR176W YDL056W YML010W YER040W YDR043C YHR152W YEL009C YLR014C 
 
+For more information on minimal inconsistent cores see:
+
+ * [Detecting Inconsistencies in Large Biological Networks with Answer Set Programming](http://dx.doi.org/10.1017/S1471068410000554),
+Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
+*Theory and Practice of Logic Programming*, 11(2-3), pages 323-360, 2011.
 
 ## Opt_graph
 `opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments.
@@ -570,3 +608,7 @@ For more options you can ask for help as follows:
         remove edge: mek1 -> stat5ab_py 
         add edge: !ras_gap -> gab1_ps 
         add edge: !ras_gap -> gab1_ps 
+
+For more information on *OptGraph* see:
+
+* [Designing optimal experiments to discriminate interaction graph models](https://doi.org/10.1109/TCBB.2018.2812184), Sven Thiele, Sandra Heise, Wiebke Hessenkemper, Hannes Bongartz, Melissa Fensky, Fred Schaper, Steffen Klamt, *IEEE/ACM Trans. Comput. Biol. Bioinform*, 16(3), 2019.
