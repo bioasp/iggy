@@ -10,6 +10,11 @@
 
 [**Download precompiled binaries for 64bit linux and macos on the release page.**](https://github.com/bioasp/iggy/releases)
 
+You can download the [iggy user guide](https://bioasp.github.io/iggy/guide/guide.pdf).
+
+Sample files available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+
+
 ## Compile yourself
 
 Clone the git repository:
@@ -94,6 +99,4 @@ For more options you can ask for help as follows:
                                                            flip = flip direction of edges
 
 
-## Samples
 
-Sample files available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
