@@ -371,6 +371,7 @@ Here the predictions say that
 
 Iggy computes minimal inconsistent cores *mics* for inconsistent model and data.
 The *mics* are connected parts of the model and indicate unreliable data or missing reactions. 
+To compute the minimal inconsistent cores use the flag `--mics` as follows:
 
     $ iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
     _____________________________________________________________________
@@ -492,3 +493,80 @@ For more options you can ask for help as follows:
                                                             flip = flip direction of edges
 
 
+### Example
+
+    opt_graph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph
+    _____________________________________________________________________
+
+    + DepMat combines multiple states.
+    + An elementary path from an input must exist to explain changes.
+    _____________________________________________________________________
+
+    Reading network model from "data/in_silico_HEK293/v1_comp_BN.cif".
+
+    # Network statistics
+
+        OR nodes (species): 23
+        AND nodes (complex regulation): 12
+        Activations : 47
+        Inhibitions : 12
+        Unknowns : 0
+
+    Reading observations from in_silico_HEK293/prior_data/first_response_mek1_up.txt.
+
+    Reading observations from in_silico_HEK293/prior_data/first_response_pi3k_down.txt.
+
+    Reading observations from in_silico_HEK293/prior_data/first_response_pi3k_mek1_down.txt.
+
+    Computing repair through add/removing edges ... 
+        using greedy method ... done.
+
+    The network and data can reach a scenfit of 0.
+
+    Repair 1: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: mek1 -> gab1_ps 
+        add edge: mek1 -> gab1_ps 
+
+    Repair 2: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: !grb2_sos -> gab1_ps 
+        add edge: !grb2_sos -> gab1_ps 
+
+    Repair 3: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: akt -> gab1_ps 
+        add edge: akt -> gab1_ps 
+
+    Repair 4: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: mtorc2 -> gab1_ps 
+        add edge: mtorc2 -> gab1_ps 
+
+    Repair 5: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: mtorc1 -> gab1_ps 
+        add edge: mtorc1 -> gab1_ps 
+
+    Repair 6: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: erk -> gab1_ps 
+        add edge: erk -> gab1_ps 
+
+    Repair 7: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: !gab1_bras_py -> gab1_ps 
+        add edge: !gab1_bras_py -> gab1_ps 
+
+    Repair 8: 
+        remove edge: !mek1 -> shp2 
+        remove edge: mek1 -> stat5ab_py 
+        add edge: !ras_gap -> gab1_ps 
+        add edge: !ras_gap -> gab1_ps 
