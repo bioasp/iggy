@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## v2.0.0 - 2019
+## v2.0.0 - 2019, Jul 12
 Rewrite in rust.
 
 ## v1.4.3 - 2019, Mar 1
