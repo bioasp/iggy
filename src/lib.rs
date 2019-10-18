@@ -1565,25 +1565,30 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
         }
     }
     for i in &increase {
-        let index = no_decrease.iter().position(|x| *x == *i).unwrap();
-        no_decrease.remove(index);
-
-        let index = change.iter().position(|x| *x == *i).unwrap();
-        change.remove(index);
+        if let Some(index) = no_decrease.iter().position(|x| *x == *i) {
+            no_decrease.remove(index);
+        }
+        if let Some(index) = change.iter().position(|x| *x == *i) {
+            change.remove(index);
+        }
     }
+
     for i in &decrease {
-        let index = no_increase.iter().position(|x| *x == *i).unwrap();
-        no_increase.remove(index);
-
-        let index = change.iter().position(|x| *x == *i).unwrap();
-        change.remove(index);
+        if let Some(index) = no_increase.iter().position(|x| *x == *i) {
+            no_increase.remove(index);
+        }
+        if let Some(index) = change.iter().position(|x| *x == *i) {
+            change.remove(index);
+        }
     }
-    for i in &no_change {
-        let index = no_increase.iter().position(|x| *x == *i).unwrap();
-        no_increase.remove(index);
 
-        let index = no_decrease.iter().position(|x| *x == *i).unwrap();
-        no_decrease.remove(index);
+    for i in &no_change {
+        if let Some(index) = no_increase.iter().position(|x| *x == *i) {
+            no_increase.remove(index);
+        }
+        if let Some(index) = no_decrease.iter().position(|x| *x == *i) {
+            no_decrease.remove(index);
+        }
     }
 
     Ok(Predictions {

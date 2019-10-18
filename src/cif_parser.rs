@@ -203,6 +203,35 @@ pub enum Expression {
     Negated(String),
     Unknown(String),
 }
-mod cif {
-    include!(concat!(env!("OUT_DIR"), "/cif_grammar.rs"));
-}
+
+peg::parser! {grammar cif() for str {
+    use super::Statement;
+    use super::Expression;
+    use super::SNode::List;
+    use super::SNode::Single;
+
+    rule whitespace() = quiet!{[' ' | '\t']+}
+
+    pub rule statement() -> Statement
+        = whitespace()* s:exprlist() whitespace()+ "->" whitespace()+ t:ident() {
+            if s.len() == 1 {
+                let expr = s.clone().pop().unwrap();
+                Statement{ start : Single(expr) ,target : t.to_string() }
+            }
+            else {
+                Statement{ start : List(s),target : t.to_string() }
+            }
+        }
+
+    pub rule ident() -> &'input str
+        = $(['a'..='z' | 'A'..='Z' | '0'..='9' | '_' | ':' | '-' | '[' | ']']*)
+
+    pub rule expr() -> Expression
+        = "!" whitespace()* s:ident() { Expression::Negated(s.to_string()) }
+        / "?" whitespace()* s:ident() { Expression::Unknown(s.to_string()) }
+        / s:ident() { Expression::Plain(s.to_string()) }
+
+    pub rule exprlist() -> Vec<Expression>
+        = l:expr() whitespace()* "&" whitespace()* r:exprlist() { let mut a = r.clone(); a.push(l); a }
+        / s:expr() { vec![s] }
+}}

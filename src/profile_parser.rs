@@ -192,6 +192,29 @@ pub enum PStatement {
     Max(String),
 }
 
-mod profile {
-    include!(concat!(env!("OUT_DIR"), "/profile_grammar.rs"));
-}
+peg::parser! {grammar profile() for str {
+    use super::PStatement;
+    use super::PStatement::Input as OtherInput;
+    use super::PStatement::Plus;
+    use super::PStatement::Minus;
+    use super::PStatement::Zero;
+    use super::PStatement::NotPlus;
+    use super::PStatement::NotMinus;
+    use super::PStatement::Min;
+    use super::PStatement::Max;
+
+    rule whitespace() = quiet!{[' ' | '\t']+}
+
+    pub rule statement() -> PStatement
+        = s:ident() whitespace()+ "=" whitespace()+ "input" { OtherInput(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "+" { Plus(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "-" { Minus(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "0" { Zero(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "notPlus" { NotPlus(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "notMinus" { NotMinus(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "MIN" { Min(s.to_string()) }
+        / s:ident() whitespace()+ "=" whitespace()+ "MAX" { Max(s.to_string()) }
+
+    pub rule ident() -> &'input str
+        = $(['a'..='z' | 'A'..='Z' | '0'..='9' | '_' | ':' | '-' | '[' | ']']*)
+}}
