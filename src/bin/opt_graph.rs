@@ -203,12 +203,9 @@ fn main() {
                                 max_repairs,
                             )
                             .unwrap();
-                            for r in removes {
-                                let mut repair = r;
-                                for e in new_edges.iter() {
-                                    repair.push(*e);
-                                }
-                                repairs.push(repair)
+
+                            for i in removes {
+                                repairs.push(i);
                             }
                         }
                         repairs

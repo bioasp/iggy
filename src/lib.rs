@@ -704,13 +704,14 @@ fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, Error> {
     Err(IggyError::new("Expected addeddy(X) atom in the answer!"))?
 }
 
-fn extract_addedge(symbols: &[Symbol]) -> Result<Symbol, Error> {
+fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase, Error> {
+    let mut ret = FactBase::new();
     for a in symbols {
         if a.name()? == "addedge" {
-            return Ok(*a);
+            ret.insert(a);
         }
     }
-    Err(IggyError::new("Expected addedge(X) atom in the answer!"))?
+    Ok(ret)
 }
 
 pub fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
@@ -878,7 +879,6 @@ pub fn get_opt_add_remove_edges_greedy(
     profiles: &FactBase,
     inputs: &FactBase,
 ) -> Result<(i64, i64, std::vec::Vec<FactBase>), Error> {
-    // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
@@ -909,15 +909,23 @@ pub fn get_opt_add_remove_edges_greedy(
 
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
-    // let mut dedges = vec![];
 
     while !fedges.is_empty() {
-        // sys.stdout.flush()
         let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
+
+        if oscenfit == 0 && oedges.len() * 2 >= (orepscore - 1) as usize {
+            // early return
+            let tuple = (oedges, oscenfit, orepscore);
+            if !tedges.contains(&tuple) && oscenfit == bscenfit && orepscore == brepscore {
+                tedges.push(tuple);
+            }
+            continue;
+        }
 
         // extend till no better solution can be found
 
         let mut end = true; // assume this time it's the end
+
         let mut ctl = Control::new(vec![
             "--opt-strategy=5".to_string(),
             "--opt-mode=optN".to_string(),
@@ -952,8 +960,8 @@ pub fn get_opt_add_remove_edges_greedy(
                         let cost = model.cost()?;
 
                         let nscenfit = cost[0];
-                        let nrepscore = cost[1] + (2 * oedges.len() as i64);
-                        // dbg!((nscenfit,nrepscore));
+                        let nrepscore = cost[1];
+
                         if nscenfit < oscenfit || nrepscore < orepscore {
                             // better score or more that 1 scenfit
                             let nend = extract_addeddy(&symbols).unwrap();
@@ -965,7 +973,6 @@ pub fn get_opt_add_remove_edges_greedy(
                                 "--opt-strategy=5".to_string(),
                                 "--opt-mode=optN".to_string(),
                                 "--project".to_string(),
-                                // "--quiet=1".to_string(),
                             ])?;
                             add_facts(&mut ctl2, graph);
                             add_facts(&mut ctl2, profiles);
@@ -995,8 +1002,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                         if model.optimality_proven()? {
                                             let symbols2 = model.symbols(ShowType::SHOWN)?;
                                             let n2scenfit = model.cost()?[0];
-                                            let n2repscore =
-                                                model.cost()?[1] + (2 * oedges.len() as i64);
+                                            let n2repscore = model.cost()?[1];
 
                                             if n2scenfit < oscenfit || n2repscore < orepscore {
                                                 // better score or more that 1 scenfit
@@ -1009,16 +1015,12 @@ pub fn get_opt_add_remove_edges_greedy(
                                                         brepscore = n2repscore
                                                     }
                                                 }
-                                                let mut nedges = oedges.clone();
-                                                let nedge = extract_addedge(&symbols2).unwrap();
-                                                nedges.insert(&nedge);
+
+                                                let nedges = extract_addedges(&symbols2).unwrap();
 
                                                 let tuple = (nedges.clone(), n2scenfit, n2repscore);
-                                                if !fedges.contains(&tuple)
-                                                // && !dedges.contains(&nedges)
-                                                {
+                                                if !fedges.contains(&tuple) {
                                                     fedges.push(tuple);
-                                                    // dedges.push(nedges);
                                                 }
                                                 end = false;
                                             }
@@ -1066,7 +1068,6 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     scenfit: i64,
     repair_score: i64,
     max_solutions: u32,
-    // setting: &SETTING,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
@@ -1095,6 +1096,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
+
     let models = ctl.optimal_models()?;
     models
         .map(|model| extract_repairs(&model.symbols))
