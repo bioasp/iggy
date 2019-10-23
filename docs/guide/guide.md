@@ -1,4 +1,4 @@
-# Iggy - User Guide (version 2.0.0)
+# Iggy - User Guide (version 2.0.1)
 
 Sven Thiele
 
@@ -565,48 +565,40 @@ For more options you can ask for help as follows:
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: mek1 -> gab1_ps 
-        add edge: mek1 -> gab1_ps 
 
     Repair 2: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: !grb2_sos -> gab1_ps 
         add edge: !grb2_sos -> gab1_ps 
 
     Repair 3: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: akt -> gab1_ps 
-        add edge: akt -> gab1_ps 
 
     Repair 4: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: mtorc2 -> gab1_ps 
         add edge: mtorc2 -> gab1_ps 
 
     Repair 5: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: mtorc1 -> gab1_ps 
-        add edge: mtorc1 -> gab1_ps 
 
     Repair 6: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: erk -> gab1_ps 
         add edge: erk -> gab1_ps 
 
     Repair 7: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: !gab1_bras_py -> gab1_ps 
-        add edge: !gab1_bras_py -> gab1_ps 
 
     Repair 8: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: !ras_gap -> gab1_ps 
         add edge: !ras_gap -> gab1_ps 
 
 For more information on *OptGraph* see:
