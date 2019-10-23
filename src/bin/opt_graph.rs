@@ -18,40 +18,40 @@ use structopt::StructOpt;
 struct Opt {
     /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
-    networkfile: PathBuf,
+    network_file: PathBuf,
 
     /// Directory of observations in bioquali format
     #[structopt(short = "o", long = "observations", parse(from_os_str))]
-    observationdir: PathBuf,
+    observations_dir: PathBuf,
 
     /// Disable forward propagation constraints
-    #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[structopt(long = "founded_constraints_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[structopt(long = "elempath")]
+    #[structopt(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[structopt(long = "depmat")]
+    #[structopt(long)]
     depmat: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[structopt(short = "a", long = "autoinputs")]
-    autoinputs: bool,
+    #[structopt(short = "a", long)]
+    auto_inputs: bool,
 
-    /// Show max_repairs repairs, default is OFF, 0=all
-    #[structopt(short = "r", long = "show_repairs")]
+    /// Show max-repairs repairs, default is OFF, 0=all
+    #[structopt(short = "r", long = "show-repairs")]
     max_repairs: Option<u32>,
 
     /// Repair mode: remove = remove edges (default),
     ///              optgraph = add + remove edges,
     ///              flip = flip direction of edges
-    #[structopt(short = "m", long = "repair_mode")]
+    #[structopt(short = "m", long)]
     repair_mode: Option<RepairMode>,
 }
 
@@ -89,13 +89,13 @@ fn main() {
     let opt = Opt::from_args();
     let setting = get_setting(&opt);
 
-    println!("Reading network model from {:?}.", opt.networkfile);
-    let f = File::open(opt.networkfile).unwrap();
+    println!("Reading network model from {:?}.", opt.network_file);
+    let f = File::open(opt.network_file).unwrap();
     let ggraph = cif_parser::read(&f).unwrap();
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
-    let paths = fs::read_dir(opt.observationdir).unwrap();
+    let paths = fs::read_dir(opt.observations_dir).unwrap();
 
     let profiles = paths
         .fold(Some(FactBase::new()), |acc, path| {
@@ -124,7 +124,7 @@ fn main() {
         .unwrap();
 
     let new_inputs = {
-        if opt.autoinputs {
+        if opt.auto_inputs {
             print!("\nComputing input nodes ...");
             let new_inputs = guess_inputs(&graph).unwrap();
             println!(" done.");

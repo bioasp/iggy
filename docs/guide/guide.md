@@ -1,4 +1,4 @@
-# Iggy - User Guide (version 2.0.0)
+# Iggy - User Guide (version 2.1.0)
 
 Sven Thiele
 
@@ -100,11 +100,11 @@ The Iggy tools implement different constraints that inform the consistency notio
    
  + All observed changes must be explained by an input.
 
-    You can turn this off with the flag `--founded_constraints_off`.
+    You can turn this off with the flag `--founded-constraints-off`.
 
  + 0-change must be explained.
 
-   You can turn this constraint off with the flag `--fwd_propagation_off`.
+   You can turn this constraint off with the flag `--fwd-propagation-off`.
 
 Additionaly you can turn on the following constraint:
   + An elementary path from an input must exist to explain changes.
@@ -148,26 +148,26 @@ For more options you can ask for help as follows:
     weak predictions (e.g., the value of a node increases or remains unchanged
 
     USAGE:
-        iggy [FLAGS] [OPTIONS] --network <networkfile>
+        iggy [FLAGS] [OPTIONS] --network <network-file>
 
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained
                                         by an elementary path from an input
             --elempath                  Every change must be explained by an elementary
                                         path from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
             --mics                      Compute minimal inconsistent cores
             --scenfit                   Compute scenfit of the data, default is mcos
-        -p, --show_predictions          Show predictions
+        -p, --show-predictions          Show predictions
         -V, --version                   Prints version information
     OPTIONS:
-        -l, --show_labelings <max_labelings>   Show max_labelings labelings, default is OFF,
-                                                0=all
-        -n, --network <networkfile>            Influence graph in CIF format
-        -o, --observations <observationfile>   Observations in bioquali format
+        -l, --show-labelings <max-labelings>     Show max-labelings labelings, default is OFF,
+                                                 0=all
+        -n, --network <network-file>             Influence graph in CIF format
+        -o, --observations <observations-file>   Observations in bioquali format
 
 
 ### Compute minimal correction sets (mcos) or *scenfit* and predictions under inconsistency
@@ -175,9 +175,9 @@ For more options you can ask for help as follows:
 `iggy` implements two measures for inconsistency *minimal correction sets (mcos)* and *scenfit*. While *mcos* measures the minimal number of observations that cannot be explained, *scenfit* measures a minimal number of changes to the model to re-establish the mutual consistency between model and data.
 The default in iggy is *mcos* but *scenfit* can be used with the option `--scenfit`.
 
-With the option `--show_labelings, -l N` `iggy` computes at most `N` such labelings and repairs that are consistent.
+With the option `--show-labelings, -l N` `iggy` computes at most `N` such labelings and repairs that are consistent.
 
-With the flag `--show_predictions, -p` `iggy` computes predictions under inconsistencies.
+With the flag `--show-predictions, -p` `iggy` computes predictions under inconsistencies.
 More precisely the behaviors of the system that are invariant also under the minimal repairs.
 
 `iggy` presents the results of its analysis as text output.
@@ -511,22 +511,22 @@ For more options you can ask for help as follows:
     (or adding) a minimal number of edges in the given network
 
     USAGE:
-        opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
+        opt_graph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained by 
                                         an elementary path from an input
             --elempath                  Every change must be explained by an elementary path 
                                         from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
         -V, --version                   Prints version information
     OPTIONS:
-        -r, --show_repairs <max_repairs>      Show max_repairs repairs, default is OFF, 0=all
-        -n, --network <networkfile>           Influence graph in CIF format
-        -o, --observations <observationdir>   Directory of observations in bioquali format
-        -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
+        -r, --show-repairs <max-repairs>        Show max-repairs repairs, default is OFF, 0=all
+        -n, --network <network-file>            Influence graph in CIF format
+        -o, --observations <observations-dir>   Directory of observations in bioquali format
+        -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
                                                             optgraph = add + remove edges,
                                                             flip = flip direction of edges
 
@@ -565,48 +565,40 @@ For more options you can ask for help as follows:
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: mek1 -> gab1_ps 
-        add edge: mek1 -> gab1_ps 
 
     Repair 2: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: !grb2_sos -> gab1_ps 
         add edge: !grb2_sos -> gab1_ps 
 
     Repair 3: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: akt -> gab1_ps 
-        add edge: akt -> gab1_ps 
 
     Repair 4: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: mtorc2 -> gab1_ps 
         add edge: mtorc2 -> gab1_ps 
 
     Repair 5: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: mtorc1 -> gab1_ps 
-        add edge: mtorc1 -> gab1_ps 
 
     Repair 6: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: erk -> gab1_ps 
         add edge: erk -> gab1_ps 
 
     Repair 7: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
         add edge: !gab1_bras_py -> gab1_ps 
-        add edge: !gab1_bras_py -> gab1_ps 
 
     Repair 8: 
         remove edge: !mek1 -> shp2 
         remove edge: mek1 -> stat5ab_py 
-        add edge: !ras_gap -> gab1_ps 
         add edge: !ras_gap -> gab1_ps 
 
 For more information on *OptGraph* see:

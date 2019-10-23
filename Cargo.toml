@@ -1,6 +1,6 @@
 [package]
 name = "iggy"
-version = "2.0.1"
+version = "2.1.0"
 authors = ["Sven Thiele <sthiele78@gmail.com>"]
 description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
 readme = "README.md"
@@ -13,7 +13,7 @@ edition = "2018"
 clingo = "0.4.3"
 clingo-derive = "*"
 termion = "1"
-structopt = "0.2"
+structopt = "0.3"
 failure = "0.1"
 failure_derive = "0.1"
 peg = "0.6"

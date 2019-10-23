@@ -23,46 +23,46 @@ use iggy::*;
 struct Opt {
     /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
-    networkfile: PathBuf,
+    network_file: PathBuf,
 
     /// Observations in bioquali format
     #[structopt(short = "o", long = "observations", parse(from_os_str))]
-    observationfile: Option<PathBuf>,
+    observations_file: Option<PathBuf>,
 
     /// Disable forward propagation constraints
-    #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[structopt(long = "founded_constraints_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[structopt(long = "elempath")]
+    #[structopt(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[structopt(long = "depmat")]
+    #[structopt(long)]
     depmat: bool,
 
     /// Compute minimal inconsistent cores
-    #[structopt(long = "mics")]
+    #[structopt(long)]
     mics: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[structopt(short = "a", long = "autoinputs")]
-    autoinputs: bool,
+    #[structopt(short = "a", long)]
+    auto_inputs: bool,
 
     /// Compute scenfit of the data, default is mcos
-    #[structopt(long = "scenfit")]
+    #[structopt(long)]
     scenfit: bool,
 
-    /// Show max_labelings labelings, default is OFF, 0=all
-    #[structopt(short = "l", long = "show_labelings")]
+    /// Show max-labelings labelings, default is OFF, 0=all
+    #[structopt(short = "l", long = "show-labelings")]
     max_labelings: Option<u32>,
 
     /// Show predictions
-    #[structopt(short = "p", long = "show_predictions")]
+    #[structopt(short = "p", long)]
     show_predictions: bool,
 }
 
@@ -70,14 +70,14 @@ fn main() {
     let opt = Opt::from_args();
     let setting = get_setting(&opt);
 
-    println!("Reading network model from {:?}.", opt.networkfile);
-    let f = File::open(opt.networkfile).unwrap();
+    println!("Reading network model from {:?}.", opt.network_file);
+    let f = File::open(opt.network_file).unwrap();
     let ggraph = cif_parser::read(&f).unwrap();
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
     let profile = {
-        if let Some(observationfile) = opt.observationfile {
+        if let Some(observationfile) = opt.observations_file {
             println!("\nReading observations from {:?}.", observationfile);
             let f = File::open(observationfile).unwrap();
             let pprofile = profile_parser::read(&f, "x1").unwrap();
@@ -100,7 +100,7 @@ fn main() {
     };
 
     let new_inputs = {
-        if opt.autoinputs {
+        if opt.auto_inputs {
             print!("\nComputing input nodes ...");
             let new_inputs = guess_inputs(&graph).unwrap();
             println!(" done.");
