@@ -139,7 +139,7 @@ The typical usage of `iggy` is:
 For more options you can ask for help as follows:
 
     $ iggy -h
-    iggy 2.0.0
+    iggy 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Iggy confronts interaction graph models with observations of (signed) changes between
     two measured states (including uncertain observations). Iggy discovers inconsistencies
@@ -504,7 +504,7 @@ For more options you can ask for help as follows:
 
 
     $ opt_graph -h
-    opt_graph 2.0.0
+    opt_graph 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Opt-graph confronts interaction graph models with observations of (signed) changes between 
     two measured states. Opt-graph computes networks fitting the observation data by removing 
