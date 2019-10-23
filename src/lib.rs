@@ -265,12 +265,10 @@ fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
                 } else {
                     member(elem, arguments[0])
                 }
+            } else if elem == list {
+                Symbol::create_id("true", true)
             } else {
-                if elem == list {
-                    Symbol::create_id("true", true)
-                } else {
-                    Symbol::create_id("false", true)
-                }
+                Symbol::create_id("false", true)
             }
         }
         Ok(_) => {
@@ -1010,10 +1008,8 @@ pub fn get_opt_add_remove_edges_greedy(
                                                     bscenfit = n2scenfit; // update bscenfit
                                                     brepscore = n2repscore;
                                                 }
-                                                if n2scenfit == bscenfit {
-                                                    if n2repscore < brepscore {
-                                                        brepscore = n2repscore
-                                                    }
+                                                if n2scenfit == bscenfit && n2repscore < brepscore {
+                                                    brepscore = n2repscore;
                                                 }
 
                                                 let nedges = extract_addedges(&symbols2).unwrap();

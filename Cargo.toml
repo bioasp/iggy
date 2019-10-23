@@ -10,8 +10,8 @@ publish = false
 edition = "2018"
 
 [dependencies]
-clingo = { path ="../clingo-rs" , version="0.5.0" }
-clingo-derive = { path ="../clingo_derive" , version="*" }
+clingo = "0.4.3"
+clingo-derive = "*"
 termion = "1"
 structopt = "0.2"
 failure = "0.1"

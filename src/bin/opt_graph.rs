@@ -152,7 +152,7 @@ fn main() {
                 let (scenfit, repair_score) =
                     get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
                 println!("done.");
-                print!(
+                println!(
                     "\nThe network and data can reach a scenfit of {} with repairs of score {}",
                     scenfit, repair_score
                 );
@@ -176,7 +176,7 @@ fn main() {
             let (scenfit, repair_score) =
                 get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
             println!("done.");
-            print!(
+            println!(
                 "\nThe network and data can reach a scenfit of {} with {} removed edges.",
                 scenfit, repair_score
             );
@@ -185,11 +185,11 @@ fn main() {
     };
 
     // compute optimal repairs
-    if let Some(max_repairs) = opt.max_repairs {
-        let repairs = match opt.repair_mode {
-            Some(RepairMode::OptGraph) => {
-                if setting.ep {
-                    if repair_score > 0 {
+    if repair_score > 0 {
+        if let Some(max_repairs) = opt.max_repairs {
+            let repairs = match opt.repair_mode {
+                Some(RepairMode::OptGraph) => {
+                    if setting.ep {
                         let mut repairs = vec![];
                         for new_edges in redges {
                             //TODO return only max_repairs solutions
@@ -210,18 +210,6 @@ fn main() {
                         }
                         repairs
                     } else {
-                        let mut repairs = vec![];
-                        for new_edges in redges {
-                            let mut repair = vec![];
-                            for e in new_edges.iter() {
-                                repair.push(*e);
-                            }
-                            repairs.push(repair);
-                        }
-                        repairs
-                    }
-                } else {
-                    if repair_score > 0 {
                         get_opt_repairs_add_remove_edges(
                             &graph,
                             &profiles,
@@ -232,52 +220,38 @@ fn main() {
                             &setting,
                         )
                         .unwrap()
-                    } else {
-                        vec![]
                     }
                 }
-            }
-            Some(RepairMode::Flip) => {
-                if repair_score > 0 {
-                    get_opt_repairs_flip_edges(
-                        &graph,
-                        &profiles,
-                        &new_inputs,
-                        scenfit,
-                        repair_score,
-                        max_repairs,
-                        &setting,
-                    )
-                    .unwrap()
-                } else {
-                    vec![]
-                }
-            }
-            _ => {
-                if repair_score > 0 {
-                    get_opt_repairs_remove_edges(
-                        &graph,
-                        &profiles,
-                        &new_inputs,
-                        scenfit,
-                        repair_score,
-                        max_repairs,
-                        &setting,
-                    )
-                    .unwrap()
-                } else {
-                    vec![]
-                }
-            }
-        };
+                Some(RepairMode::Flip) => get_opt_repairs_flip_edges(
+                    &graph,
+                    &profiles,
+                    &new_inputs,
+                    scenfit,
+                    repair_score,
+                    max_repairs,
+                    &setting,
+                )
+                .unwrap(),
+                _ => get_opt_repairs_remove_edges(
+                    &graph,
+                    &profiles,
+                    &new_inputs,
+                    scenfit,
+                    repair_score,
+                    max_repairs,
+                    &setting,
+                )
+                .unwrap(),
+            };
 
-        let mut count = 0;
-        for r in repairs {
-            count += 1;
-            println!("\nRepair {}: ", count);
-            for e in r {
-                let repair_op = into_repair(&e).unwrap();
-                println!("    {}", repair_op);
+            let mut count = 0;
+            for r in repairs {
+                count += 1;
+                println!("\nRepair {}: ", count);
+                for e in r {
+                    let repair_op = into_repair(&e).unwrap();
+                    println!("    {}", repair_op);
+                }
             }
         }
     }
