@@ -41,7 +41,7 @@ Typical usage is:
 For more options you can ask for help as follows:
 
     $ iggy -h
-    iggy 2.0.0
+    iggy 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Iggy confronts interaction graph models with observations of (signed) changes between two measured states
     (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal
@@ -49,59 +49,59 @@ For more options you can ask for help as follows:
     increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
     USAGE:
-        iggy [FLAGS] [OPTIONS] --network <networkfile>
+        iggy [FLAGS] [OPTIONS] --network <network-file>
 
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained by an
                                         elementary path from an input
             --elempath                  Every change must be explained by an elementary path from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
             --mics                      Compute minimal inconsistent cores
             --scenfit                   Compute scenfit of the data, default is mcos
-        -p, --show_predictions          Show predictions
+        -p, --show-predictions          Show predictions
         -V, --version                   Prints version information
 
     OPTIONS:
-        -l, --show_labelings <max_labelings>   Show max_labelings labelings, default is OFF, 0=all
-        -n, --network <networkfile>            Influence graph in CIF format
-        -o, --observations <observationfile>   Observations in bioquali format
+        -l, --show-labelings <max-labelings>     Show max-labelings labelings, default is OFF, 0=all
+        -n, --network <network-file>             Influence graph in CIF format
+        -o, --observations <observations-file>   Observations in bioquali format
 
 
 ## Opt_graph
 
 Typical usage is:
 
-    $ opt_graph -n network.cif -o observations_dir/ --show_repairs 10
+    $ opt_graph -n network.cif -o observations_dir/ --show-repairs 10
 
 For more options you can ask for help as follows:
 
     $ opt_graph -h
-    opt_graph 2.0.0
+    opt_graph 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Opt-graph confronts interaction graph models with observations of (signed) changes between two measured
     states. Opt-graph computes networks fitting the observation data by removing (or adding) a minimal number
     of edges in the given network.
 
     USAGE:
-        opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
+        opt_graph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
 
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained by an                                elementary path from an input
             --elempath                  Every change must be explained by an elementary path from an                             input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
         -V, --version                   Prints version information
 
     OPTIONS:
-        -r, --show_repairs <max_repairs>      Show max_repairs repairs, default is OFF, 0=all
-        -n, --network <networkfile>           Influence graph in CIF format
-        -o, --observations <observationdir>   Directory of observations in bioquali format
-        -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
+        -r, --show-repairs <max-repairs>        Show max-repairs repairs, default is OFF, 0=all
+        -n, --network <network-file>            Influence graph in CIF format
+        -o, --observations <observations-dir>   Directory of observations in bioquali format
+        -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
                                                            flip = flip direction of edges
 
