@@ -137,27 +137,26 @@ fn main() {
 
     // compute opt scenfit repair scores
     let (scenfit, repair_score, redges) = match opt.repair_mode {
-        Some(RepairMode::OptGraph) => {
-            print!("\nComputing repair through add/removing edges ... ");
-            if setting.ep {
-                print!("\n    using greedy method ... ");
-                let (scenfit, repair_score, redges) =
-                    get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
+        Some(RepairMode::OptGraph) if setting.ep => {
+            println!("\nComputing repair through add/removing edges ... ");
+            print!("    using greedy method ... ");
+            let (scenfit, repair_score, redges) =
+                get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
 
-                println!("done.");
-                println!("\nThe network and data can reach a scenfit of {}.", scenfit);
-                (scenfit, repair_score, redges)
+            println!("done.");
+            println!("\nThe network and data can reach a scenfit of {}.", scenfit);
+            (scenfit, repair_score, redges)
             //   with {} removals and {} additions.", repairs, edges.len());
-            } else {
-                let (scenfit, repair_score) =
-                    get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
-                println!("done.");
-                println!(
-                    "\nThe network and data can reach a scenfit of {} with repairs of score {}",
-                    scenfit, repair_score
-                );
-                (scenfit, repair_score, vec![])
-            }
+        }
+        Some(RepairMode::OptGraph) if !setting.ep => {
+            let (scenfit, repair_score) =
+                get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
+            println!("done.");
+            println!(
+                "\nThe network and data can reach a scenfit of {} with repairs of score {}",
+                scenfit, repair_score
+            );
+            (scenfit, repair_score, vec![])
         }
         Some(RepairMode::Flip) => {
             print!("\nComputing repair through flipping edges ... ");
@@ -168,7 +167,6 @@ fn main() {
                 "\nThe network and data can reach a scenfit of {} with {} flipped edges",
                 scenfit, repair_score
             );
-
             (scenfit, repair_score, vec![])
         }
         _ => {
@@ -188,40 +186,37 @@ fn main() {
     if repair_score > 0 {
         if let Some(max_repairs) = opt.max_repairs {
             let repairs = match opt.repair_mode {
-                Some(RepairMode::OptGraph) => {
-                    if setting.ep {
-                        let mut repairs = vec![];
-                        for new_edges in redges {
-                            //TODO return only max_repairs solutions
-                            let removes = get_opt_repairs_add_remove_edges_greedy(
-                                &graph,
-                                &profiles,
-                                &new_inputs,
-                                &new_edges,
-                                scenfit,
-                                repair_score,
-                                max_repairs,
-                            )
-                            .unwrap();
-
-                            for i in removes {
-                                repairs.push(i);
-                            }
-                        }
-                        repairs
-                    } else {
-                        get_opt_repairs_add_remove_edges(
+                Some(RepairMode::OptGraph) if setting.ep => {
+                    let mut repairs = vec![];
+                    for new_edges in redges {
+                        //TODO return only max_repairs solutions
+                        let removes = get_opt_repairs_add_remove_edges_greedy(
                             &graph,
                             &profiles,
                             &new_inputs,
+                            &new_edges,
                             scenfit,
                             repair_score,
                             max_repairs,
-                            &setting,
                         )
-                        .unwrap()
+                        .unwrap();
+
+                        for i in removes {
+                            repairs.push(i);
+                        }
                     }
+                    repairs
                 }
+                Some(RepairMode::OptGraph) if !setting.ep => get_opt_repairs_add_remove_edges(
+                    &graph,
+                    &profiles,
+                    &new_inputs,
+                    scenfit,
+                    repair_score,
+                    max_repairs,
+                    &setting,
+                )
+                .unwrap(),
                 Some(RepairMode::Flip) => get_opt_repairs_flip_edges(
                     &graph,
                     &profiles,
@@ -249,7 +244,7 @@ fn main() {
                 count += 1;
                 println!("\nRepair {}: ", count);
                 for e in r {
-                    let repair_op = into_repair(&e).unwrap();
+                    let repair_op = into_repair(e).unwrap();
                     println!("    {}", repair_op);
                 }
             }

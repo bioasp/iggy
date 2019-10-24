@@ -270,7 +270,7 @@ fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting
             println!("\nmic {}:", count);
             print!("  ");
             for e in mic.clone() {
-                let node = into_node_id(&e).unwrap();
+                let node = into_node_id(e).unwrap();
                 print!("{} ", node);
             }
             println!();
@@ -298,7 +298,7 @@ fn compute_scenfit_labelings(
         println!();
         println!(" Repairs: ");
         for r in repairs {
-            let fix = into_repair(&r).unwrap();
+            let fix = into_repair(r).unwrap();
             println!("    {}", fix);
         }
         println!();
@@ -323,7 +323,7 @@ fn compute_mcos_labelings(
         println!();
         println!(" Repairs: ");
         for r in repairs {
-            let fix = into_repair(&r).unwrap();
+            let fix = into_repair(r).unwrap();
             println!("  {}", fix);
         }
         println!();
