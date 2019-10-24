@@ -23,6 +23,8 @@ use encodings::*;
 use failure::*;
 use std::fmt;
 
+type Labelings = Vec<(Symbol, Symbol)>;
+
 pub struct SETTING {
     pub os: bool,
     pub ep: bool,
@@ -144,21 +146,24 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
     let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
 
     handle.resume()?;
-    if let Ok(Some(model)) = handle.model() {
-        let atoms = model.symbols(ShowType::SHOWN)?;
-        if !atoms.is_empty() {
-            let mut v = vec![];
+    match handle.model() {
+        Ok(Some(model)) => {
+            let atoms = model.symbols(ShowType::SHOWN)?;
+            if atoms.is_empty() {
+                // close the solve handle
+                handle.close()?;
+                return Ok(CheckResult::Consistent);
+            }
 
+            let mut v = vec![];
             for atom in atoms {
                 let node = atom
                     .arguments()?
                     .get(1)
-                    .ok_or(IggyError::new("Expected atom with at least two arguments."))?
+                    .ok_or_else(|| IggyError::new("Expected atom with at least two arguments."))?
                     .arguments()?
                     .get(0)
-                    .ok_or(IggyError::new(
-                        "Expected function with at least one argument.",
-                    ))?
+                    .ok_or_else(|| IggyError::new("Expected function with at least one argument."))?
                     .to_string()?;
 
                 match atom.name()? {
@@ -210,13 +215,10 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult, Error> {
             //   .expect("Failed to get result from solve handle.");
             //     handle.close().expect("Failed to close solve handle.");
 
-            return Ok(CheckResult::Inconsistent(v));
+            Ok(CheckResult::Inconsistent(v))
         }
+        _ => panic!("Expected model!"),
     }
-
-    // close the solve handle
-    handle.close()?;
-    Ok(CheckResult::Consistent)
 }
 
 pub fn guess_inputs(graph: &FactBase) -> Result<FactBase, Error> {
@@ -259,12 +261,10 @@ fn member(elem: Symbol, list: Symbol) -> Result<Symbol, Error> {
         Ok(SymbolType::Function) => {
             let name = list.name()?;
             let arguments = list.arguments()?;
-            if name == "conc" && arguments.len() == 2 {
-                if elem == arguments[1] {
-                    Symbol::create_id("true", true)
-                } else {
-                    member(elem, arguments[0])
-                }
+            if name == "conc" && arguments.len() == 2 && elem != arguments[1] {
+                member(elem, arguments[0])
+            } else if name == "conc" && arguments.len() == 2 && elem == arguments[1] {
+                Symbol::create_id("true", true)
             } else if elem == list {
                 Symbol::create_id("true", true)
             } else {
@@ -455,7 +455,7 @@ pub fn get_scenfit_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<Symbol>)>, Error> {
+) -> Result<Vec<(Labelings, Vec<Symbol>)>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -551,7 +551,7 @@ pub fn get_mcos_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Vec<(Symbol, Symbol)>, Vec<Symbol>)>, Error> {
+) -> Result<Vec<(Labelings, Vec<Symbol>)>, Error> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -712,7 +712,7 @@ fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase, Error> {
     Ok(ret)
 }
 
-pub fn into_node_id(symbol: &Symbol) -> Result<NodeId, Error> {
+pub fn into_node_id(symbol: Symbol) -> Result<NodeId, Error> {
     match symbol.name()? {
         "or" => {
             let arguments = symbol.arguments()?;
@@ -739,12 +739,12 @@ pub enum Direction {
     NotMinusToMinus,
     NotPlusToPlus,
 }
-pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
+pub fn into_repair(symbol: Symbol) -> Result<RepairOp, Error> {
     match symbol.name()? {
         "addedge" => {
             let arguments = symbol.arguments()?;
-            let start = into_node_id(&arguments[0])?;
-            let target = into_node_id(&arguments[1])?;
+            let start = into_node_id(arguments[0])?;
+            let target = into_node_id(arguments[1])?;
             let sign = match arguments[2].number() {
                 Ok(1) => EdgeSign::Plus,
                 Ok(-1) => EdgeSign::Minus,
@@ -759,8 +759,8 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         }
         "remedge" => {
             let arguments = symbol.arguments()?;
-            let start = into_node_id(&arguments[0])?;
-            let target = into_node_id(&arguments[1])?;
+            let start = into_node_id(arguments[0])?;
+            let target = into_node_id(arguments[1])?;
             let sign = match arguments[2].number() {
                 Ok(1) => EdgeSign::Plus,
                 Ok(-1) => EdgeSign::Minus,
@@ -775,8 +775,8 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         }
         "flip" => {
             let arguments = symbol.arguments()?;
-            let start = into_node_id(&arguments[0])?;
-            let target = into_node_id(&arguments[1])?;
+            let start = into_node_id(arguments[0])?;
+            let target = into_node_id(arguments[1])?;
             let sign = match arguments[2].number() {
                 Ok(1) => EdgeSign::Plus,
                 Ok(-1) => EdgeSign::Minus,
@@ -792,7 +792,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_Plus_to_0" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::PlusToZero;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -800,7 +800,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_Plus_to_Minus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::PlusToMinus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -808,7 +808,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_Minus_to_0" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::MinusToZero;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -816,7 +816,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_Minus_to_Plus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::MinusToPlus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -824,7 +824,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_0_to_Plus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::ZeroToPlus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -832,7 +832,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_0_to_Minus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::ZeroToMinus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -840,7 +840,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_notMinus_to_Minus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::NotMinusToMinus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -848,7 +848,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "flip_node_sign_notPlus_to_Plus" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let node = into_node_id(&arguments[1])?;
+            let node = into_node_id(arguments[1])?;
             let direction = Direction::NotPlusToPlus;
 
             Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
@@ -856,7 +856,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, Error> {
         "new_influence" => {
             let arguments = symbol.arguments()?;
             let profile_id = arguments[0].string()?.to_string();
-            let target = into_node_id(&arguments[1])?;
+            let target = into_node_id(arguments[1])?;
             let sign = match arguments[2].number() {
                 Ok(1) => EdgeSign::Plus,
                 Ok(-1) => EdgeSign::Minus,
@@ -1134,8 +1134,6 @@ pub fn get_opt_add_remove_edges(
           elementary path constraint, use instead
           get_opt_add_remove_edges_greedy"
         );
-
-        // ctl.add("base", &[], PRG_ELEM_PATH)?;
     }
 
     ctl.add("base", &[], PRG_REMOVE_EDGES)?;
@@ -1411,9 +1409,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, Error> {
 
 /// Given a model this function returns a vector of pairs (node,label)
 /// and a vector of repair operations needed to make the labeling consistent
-fn extract_labels_repairs(
-    symbols: &[Symbol],
-) -> Result<(Vec<(Symbol, Symbol)>, Vec<Symbol>), Error> {
+fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<Symbol>), Error> {
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
@@ -1570,7 +1566,6 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
             change.remove(index);
         }
     }
-
     for i in &decrease {
         if let Some(index) = no_increase.iter().position(|x| *x == *i) {
             no_increase.remove(index);
@@ -1579,7 +1574,6 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
             change.remove(index);
         }
     }
-
     for i in &no_change {
         if let Some(index) = no_increase.iter().position(|x| *x == *i) {
             no_increase.remove(index);
@@ -1590,11 +1584,11 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, Error> {
     }
 
     Ok(Predictions {
-        increase: increase,
-        decrease: decrease,
-        no_change: no_change,
-        no_increase: no_increase,
-        no_decrease: no_decrease,
-        change: change,
+        increase,
+        decrease,
+        no_change,
+        no_increase,
+        no_decrease,
+        change,
     })
 }

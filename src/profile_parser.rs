@@ -137,7 +137,7 @@ pub fn read(file: &File, id: &str) -> Result<Profile, Error> {
     for line in file.lines() {
         let l1 = line?;
         let l = l1.trim();
-        if l.len() != 0 {
+        if !l.is_empty() {
             match profile::statement(&l) {
                 Ok(PStatement::Input(s)) => {
                     input.push(NodeId::Or(s));
