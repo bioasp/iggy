@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## v2.0.1 - 2019, Okt 23
+### Fixed
+- Fix bug that led to wrong results.
+
 ## v2.0.0 - 2019, Jul 12
 Rewrite in rust.
 
