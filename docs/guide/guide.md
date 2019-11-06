@@ -50,10 +50,10 @@ Lines in the `CIF` file specify a interaction between (multiple) source nodes an
     shp2                        ->  grb2_sos
     !mtor_inhibitor             ->  mtor
     ?jak2_p                     ->  stat5ab_py
-    !ras_gap&grb2_sos           ->  pi3k
-    akt&erk&mtor&pi3k           ->  mtorc1
+    !ras_gap & grb2_sos         ->  pi3k
+    akt & erk & mtor & pi3k     ->  mtorc1
     gab1_bras_py                ->  ras_gap
-    gab1_ps&jak2_p&pi3k         ->  gab1_bras_py
+    gab1_ps & jak2_p & pi3k     ->  gab1_bras_py
 
 In our influence graph models we have simple interactions like:
 in Line 1 for `shp2` *increases* `grb2_sos`

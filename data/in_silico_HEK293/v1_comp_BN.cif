@@ -1,30 +1,30 @@
-!mtor_inhibitor	->	mtor
-!mtor_inhibitor	->	mtorc1
-mtorc2&pi3k	->	akt
-mtorc1&pi3k	->	mtorc2
-!ras_gap&grb2_sos	->	mek1
-!ras_gap&grb2_sos	->	pi3k
-akt&erk&mtor&pi3k	->	mtorc1
-mek1	->	erk
-gab1_bras_py	->	ras_gap
-gab1_ps&jak2_p&pi3k&!shp2_ph	->	gab1_bras_py
-!shp2_ph	->	gab1_bpi3k_py
-shp2&gab1_bshp2_ph_py	->	shp2_ph
-gab1_ps&jak2_p&pi3k	->	gab1_bpi3k_py
-gab1_ps&jak2_p&pi3k	->	plcg
-gab1_ps&jak2_p&pi3k	->	gab1_bshp2_ph_py
+jak2_p	                            ->	pi3k
+plcg	                            ->	pi3k
+gab1_bpi3k_py	                    ->	pi3k
+!ras_gap & grb2_sos	                ->	pi3k
+plcg	                            ->	mek1
+!socs1 & pi3k	                    ->	mek1
+!ras_gap & grb2_sos	                ->	mek1
+shp2	                            ->	grb2_sos
+jak2_p & !erk                       ->  grb2_sos
+!mek1                               ->  shp2
+!socs3 & jak2_p	                    ->	shp2
+mek1                                ->  stat5ab_py
+jak2_p & !cis                       ->  stat5ab_py
+!mtor_inhibitor	                    ->	mtor
+plcg	                            ->	mtor
+!mtor_inhibitor	                    ->	mtorc1
+akt & erk & mtor & pi3k	            ->	mtorc1
+mtorc1 & pi3k	                    ->	mtorc2
+mtor	                            ->	mtorc2
+mtorc2 & pi3k	                    ->	akt
+mek1                            	->	erk
 
-shp2	->	grb2_sos
-!socs3&jak2_p	->	shp2
-!socs3&!socs1&depor	->	jak2_p
-mtor	->	mtorc2
-jak2_p	->	pi3k
-jak2_p&!cis    ->       stat5ab_py
-plcg	->	mek1
-plcg	->	pi3k
-plcg	->	mtor
-!socs1&pi3k	->	mek1
-gab1_bpi3k_py	->	pi3k
-jak2_p&!erk -> grb2_sos
-mek1 -> stat5ab_py
-!mek1 -> shp2
+!shp2_ph	                        ->	gab1_bpi3k_py
+gab1_ps & jak2_p & pi3k	            ->	gab1_bpi3k_py
+gab1_ps & jak2_p & pi3k & !shp2_ph	->	gab1_bras_py
+gab1_ps & jak2_p & pi3k	            ->	gab1_bshp2_ph_py
+!socs3 & !socs1 & depor	            ->	jak2_p
+gab1_ps & jak2_p & pi3k	            ->	plcg
+gab1_bras_py	                    ->	ras_gap
+shp2 & gab1_bshp2_ph_py	            ->	shp2_ph
