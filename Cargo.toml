@@ -9,12 +9,13 @@ repository = "https://github.com/bioasp/iggy"
 publish = false
 edition = "2018"
 
+[features]
+dynamic_linking = ["clingo/dynamic_linking"]
+
 [dependencies]
-clingo = "0.4.3"
-clingo-derive = "*"
-termion = "1"
+clingo = { version = "0.6", features = ["derive"], path = "../clingo-rs" }
 structopt = "0.3"
-failure = "0.1"
-failure_derive = "0.1"
+thiserror = "1.0"
+anyhow = "1.0"
 peg = "0.6"
 

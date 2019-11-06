@@ -1,5 +1,5 @@
 use clingo::FactBase;
-use failure::*;
+use thiserror::Error;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 use std::fs;
@@ -61,8 +61,8 @@ enum RepairMode {
     OptGraph,
     Flip,
 }
-#[derive(Debug, Fail)]
-#[fail(display = "ParseRepairModeError: {}", msg)]
+#[derive(Debug, Error)]
+#[error("ParseRepairModeError: {msg}")]
 pub struct ParseRepairModeError {
     pub msg: &'static str,
 }

@@ -1,9 +1,9 @@
 use crate::{FactBase, NodeId, ToSymbol};
 use clingo::*;
-use failure::*;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use anyhow::Result;
 
 #[derive(Debug, Clone)]
 pub struct Profile {
@@ -26,7 +26,7 @@ pub enum NodeSign {
     NotMinus,
 }
 impl ToSymbol for NodeSign {
-    fn symbol(&self) -> Result<Symbol, Error> {
+    fn symbol(&self) -> Result<Symbol, ClingoError> {
         Ok(match self {
             NodeSign::Plus => Symbol::create_number(1),
             NodeSign::Minus => Symbol::create_number(-1),
@@ -123,7 +123,7 @@ impl Profile {
     }
 }
 
-pub fn read(file: &File, id: &str) -> Result<Profile, Error> {
+pub fn read(file: &File, id: &str) -> Result<Profile> {
     let file = BufReader::new(file);
     let mut input = vec![];
     let mut plus = vec![];
