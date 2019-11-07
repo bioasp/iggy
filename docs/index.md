@@ -18,7 +18,6 @@ tagline: Tools for consistency based analysis of influence graphs and observed s
 
 You can download the [iggy user guide](https://bioasp.github.io/iggy/guide/guide.pdf).
 
-
 Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
 
 
@@ -26,8 +25,8 @@ Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/
 
 Clone the git repository:
 
-	git clone https://github.com/bioasp/iggy.git
-	cargo build --release
+    git clone https://github.com/bioasp/iggy.git
+    cargo build --release
 
 The executables can be found under `./target/release/`
 
@@ -36,11 +35,11 @@ The executables can be found under `./target/release/`
 
 Typical usage is:
 
-    $ iggy -n network.cif -o observation.obs -l 10 -p
+    > iggy -n network.cif -o observation.obs -l 10 -p
 
 For more options you can ask for help as follows:
 
-    $ iggy -h
+    > iggy -h
     iggy 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Iggy confronts interaction graph models with observations of (signed) changes between two measured states
@@ -74,11 +73,11 @@ For more options you can ask for help as follows:
 
 Typical usage is:
 
-    $ opt_graph -n network.cif -o observations_dir/ --show-repairs 10
+    > opt_graph -n network.cif -o observations_dir/ --show-repairs 10
 
 For more options you can ask for help as follows:
 
-    $ opt_graph -h
+    > opt_graph -h
     opt_graph 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Opt-graph confronts interaction graph models with observations of (signed) changes between two measured
@@ -106,14 +105,12 @@ For more options you can ask for help as follows:
                                                            flip = flip direction of edges
 
 
-
-
 ### Related publications
 
-* [*Designing optimal experiments to discriminate interaction graph models*](https://doi.org/10.1109/TCBB.2018.2812184), IEEE/ACM Trans. Comput. Biol. Bioinform, 16(3), 2019.
+- [*Designing optimal experiments to discriminate interaction graph models*](https://doi.org/10.1109/TCBB.2018.2812184), IEEE/ACM Trans. Comput. Biol. Bioinform, 16(3), 2019.
 
-* [*Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies*](http://dx.doi.org/10.1186/s12859-015-0733-7), BMC Bioinformatics, 2015.
+- [*Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies*](http://dx.doi.org/10.1186/s12859-015-0733-7), BMC Bioinformatics, 2015.
 
-* [*Repair and Prediction (under Inconsistency) in Large Biological Networks with Answer Set Programming*](http://aaai.org/ocs/index.php/KR/KR2010/paper/view/1334/1660), 12th International Conference on the Principles of Knowledge Representation and Reasoning, 2010.
+- [*Repair and Prediction (under Inconsistency) in Large Biological Networks with Answer Set Programming*](http://aaai.org/ocs/index.php/KR/KR2010/paper/view/1334/1660), 12th International Conference on the Principles of Knowledge Representation and Reasoning, 2010.
 
-* [*Directed random walks and constraint programming reveal active pathways in HGF signaling*](http://dx.doi.org/10.1111/febs.13580), FEBS Journal, 2015.
+- [*Directed random walks and constraint programming reveal active pathways in HGF signaling*](http://dx.doi.org/10.1111/febs.13580), FEBS Journal, 2015.

@@ -19,8 +19,8 @@ Sample files available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/do
 
 Clone the git repository:
 
-	git clone https://github.com/bioasp/iggy.git
-	cargo build --release
+    git clone https://github.com/bioasp/iggy.git
+    cargo build --release
 
 The executables can be found under `./target/release/`
 
@@ -28,7 +28,7 @@ The executables can be found under `./target/release/`
 
 Typical usage is:
 
-    $ iggy -n network.cif -o observation.obs -l 10 -p
+    > iggy -n network.cif -o observation.obs -l 10 -p
 
 For more options you can ask for help as follows:
 
@@ -62,12 +62,11 @@ For more options you can ask for help as follows:
         -o, --observations <observations-file>   Observations in bioquali format
 
 
-
 ## Opt_graph
 
 Typical usage is:
 
-    $ opt_graph -n network.cif -o observations_dir/ --show_repairs 10
+    > opt_graph -n network.cif -o observations_dir/ --show_repairs 10
 
 For more options you can ask for help as follows:
 
@@ -97,6 +96,3 @@ For more options you can ask for help as follows:
         -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
                                                            flip = flip direction of edges
-
-
-
