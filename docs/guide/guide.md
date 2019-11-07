@@ -4,7 +4,7 @@ Sven Thiele
 
 ## What are `iggy` and `opt_graph`
 
-`iggy` and `optgraph` are tools for consistency based analysis of influence graphs and
+`iggy` and `opt_graph` are tools for consistency based analysis of influence graphs and
  observed systems behavior (signed changes between two measured states).
 For many (biological) systems are knowledge bases available that describe the interaction
  of its components in terms of causal networks, boolean networks and influence graphs
@@ -57,7 +57,7 @@ Lines in the `CIF` file specify a interaction between (multiple) source nodes an
 In our influence graph models we have simple interactions like:
 in Line 1 for `shp2` *increases* `grb2_sos`
 and in Line 2 the `!` indicates that `mtor_inhibitor` tends to *decrease* `mtor`.
-in Line 3 the `?` indicates an unknown influence of `jak2_p` on `stat5ab_py`.
+In Line 3 the `?` indicates an unknown influence of `jak2_p` on `stat5ab_py`.
 Complex interactions can be composed with the `&` operator to model a combined influence of multiple sources on a tartget.
 In Line 4 an decrease in `ras_gap` with an increase in `grb2_sos` tend to increase `pi3k`.
 
