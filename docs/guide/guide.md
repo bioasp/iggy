@@ -20,9 +20,11 @@ In practice, this is used to identify unreliable data or to indicate missing rea
 `opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments.
 `opt_graph` computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
 
-You can download the precompiled binaries for 64bit linux and macos on the [release page](https://github.com/bioasp/iggy/releases).
+## Downloads
 
-Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+- You can find the precompiled binaries for 64bit linux and macOS on the [release page](https://github.com/bioasp/iggy/releases/latest).
+
+- Sample data [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
 
 ## Compile yourself
 

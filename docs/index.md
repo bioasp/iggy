@@ -14,11 +14,13 @@ tagline: Tools for consistency based analysis of influence graphs and observed s
 
 `opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments. `opt_graph` computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
 
- [**Download precompiled binaries for 64bit linux and macos on the release page.**](https://github.com/bioasp/iggy/releases)
+## Downloads
 
-You can download the [iggy user guide](https://bioasp.github.io/iggy/guide/guide.pdf).
+- precompiled binaries for 64bit linux and macOS can be found on the [release page](https://github.com/bioasp/iggy/releases/latest)
 
-Sample data is available here: [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+- [Iggy user guide](https://bioasp.github.io/iggy/guide/guide.html)
+
+- sample data [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
 
 
 ## Compile yourself
