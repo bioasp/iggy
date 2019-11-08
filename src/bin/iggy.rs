@@ -7,11 +7,11 @@ use structopt::StructOpt;
 use iggy::cif_parser;
 use iggy::cif_parser::Graph;
 
+use anyhow::Result;
 use iggy::profile_parser;
 use iggy::profile_parser::Profile;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
-use anyhow::Result;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).

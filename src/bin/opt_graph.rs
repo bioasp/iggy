@@ -1,5 +1,5 @@
+use anyhow::Result;
 use clingo::FactBase;
-use thiserror::Error;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 use std::fs;
@@ -7,7 +7,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
-use anyhow::Result;
+use thiserror::Error;
 
 /// Opt-graph confronts interaction graph models with observations of (signed) changes between
 /// two measured states.
@@ -121,7 +121,8 @@ fn main() -> Result<()> {
                 }
                 None => None,
             }
-        }).unwrap();
+        })
+        .unwrap();
 
     let new_inputs = {
         if opt.auto_inputs {

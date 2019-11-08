@@ -2,7 +2,9 @@ pub mod cif_parser;
 use cif_parser::EdgeSign;
 use cif_parser::Graph;
 pub mod profile_parser;
+use clingo::ClingoError;
 use clingo::Control;
+use clingo::ExternalError;
 use clingo::ExternalFunctionHandler;
 use clingo::FactBase;
 use clingo::Location;
@@ -13,16 +15,14 @@ use clingo::SolveMode;
 use clingo::Symbol;
 use clingo::SymbolType;
 use clingo::ToSymbol;
-use clingo::ClingoError;
-use clingo::ExternalError;
 use profile_parser::ProfileId;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
+use anyhow::Result;
 use encodings::*;
 use std::fmt;
 use thiserror::Error;
-use anyhow::Result;
 
 type Labelings = Vec<(Symbol, Symbol)>;
 
@@ -136,7 +136,7 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_CONTRADICTORY_OBS)?;
-    ctl.add_facts( profile);
+    ctl.add_facts(profile);
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -228,7 +228,7 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase> {
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_GUESS_INPUTS)?;
-    ctl.add_facts( graph);
+    ctl.add_facts(graph);
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -279,7 +279,7 @@ fn member(elem: Symbol, list: Symbol) -> Symbol {
                 Symbol::create_id("false", true).unwrap()
             }
         }
-        Err(e) => panic!("symbol_type() returned error: {}",e)
+        Err(e) => panic!("symbol_type() returned error: {}", e),
     }
 }
 
@@ -298,7 +298,9 @@ impl ExternalFunctionHandler for MyEFH {
             Ok(vec![res])
         } else {
             println!("name: {}", name);
-            Err(ExternalError{msg: "unknown external function!"})?
+            Err(ExternalError {
+                msg: "unknown external function!",
+            })
         }
     }
 }
@@ -339,7 +341,7 @@ fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<
                 }
             }
             Ok(None) => break,
-            Err(e) => Err(e)?,
+            Err(e) => return Err(e.into()),
         }
     }
     Ok(symbols)
@@ -367,7 +369,7 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>> {
                 }
             }
             Err(e) => {
-                Err(e)?;
+                return Err(e.into());
             }
         }
     }
@@ -388,9 +390,9 @@ pub fn get_minimal_inconsistent_cores(
         "--enum-mode=domRec".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_MICS)?;
 
     if setting.fp {
@@ -417,9 +419,9 @@ pub fn get_scenfit(
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -465,9 +467,9 @@ pub fn get_scenfit_labelings(
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -513,9 +515,9 @@ pub fn get_mcos(
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -561,9 +563,9 @@ pub fn get_mcos_labelings(
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -609,9 +611,9 @@ pub fn get_predictions_under_mcos(
         // format!("--opt-bound={}",opt)
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -658,9 +660,9 @@ pub fn get_predictions_under_scenfit(
         // format!("--opt-bound={}",opt)
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profile);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profile);
+    ctl.add_facts(inputs);
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -700,7 +702,7 @@ fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol> {
             return Ok(Symbol::create_function("edge_end", &[edge_end], true)?);
         }
     }
-    Err(IggyError::new("Expected addeddy(X) atom in the answer!"))?
+    Err(IggyError::new("Expected addeddy(X) atom in the answer!").into())
 }
 
 fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase> {
@@ -884,9 +886,9 @@ pub fn get_opt_add_remove_edges_greedy(
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -930,10 +932,10 @@ pub fn get_opt_add_remove_edges_greedy(
             "--opt-mode=optN".to_string(),
             "--project".to_string(),
         ])?;
-        ctl.add_facts( graph);
-        ctl.add_facts( profiles);
-        ctl.add_facts( inputs);
-        ctl.add_facts( &oedges);
+        ctl.add_facts(graph);
+        ctl.add_facts(profiles);
+        ctl.add_facts(inputs);
+        ctl.add_facts(&oedges);
 
         ctl.add("base", &[], PRG_SIGN_CONS)?;
         ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -973,11 +975,11 @@ pub fn get_opt_add_remove_edges_greedy(
                                 "--opt-mode=optN".to_string(),
                                 "--project".to_string(),
                             ])?;
-                            ctl2.add_facts( graph);
-                            ctl2.add_facts( profiles);
-                            ctl2.add_facts( inputs);
-                            ctl2.add_facts( &oedges);
-                            ctl2.add_facts( &f_end);
+                            ctl2.add_facts(graph);
+                            ctl2.add_facts(profiles);
+                            ctl2.add_facts(inputs);
+                            ctl2.add_facts(&oedges);
+                            ctl2.add_facts(&f_end);
 
                             ctl2.add("base", &[], PRG_SIGN_CONS)?;
                             ctl2.add("base", &[], PRG_BWD_PROP)?;
@@ -1024,7 +1026,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                         }
                                     }
                                     Ok(None) => break,
-                                    Err(e) => Err(e)?,
+                                    Err(e) => return Err(e.into()),
                                 }
                             }
                         }
@@ -1041,7 +1043,7 @@ pub fn get_opt_add_remove_edges_greedy(
                     }
                 }
                 Ok(None) => break,
-                Err(e) => Err(e)?,
+                Err(e) => return Err(e.into()),
             }
         }
     }
@@ -1074,10 +1076,10 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
-    ctl.add_facts( edges);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
+    ctl.add_facts(edges);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1109,9 +1111,9 @@ pub fn get_opt_add_remove_edges(
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1170,9 +1172,9 @@ pub fn get_opt_repairs_add_remove_edges(
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1216,9 +1218,9 @@ pub fn get_opt_flip_edges(
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1265,9 +1267,9 @@ pub fn get_opt_repairs_flip_edges(
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1308,9 +1310,9 @@ pub fn get_opt_remove_edges(
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1356,9 +1358,9 @@ pub fn get_opt_repairs_remove_edges(
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts( graph);
-    ctl.add_facts( profiles);
-    ctl.add_facts( inputs);
+    ctl.add_facts(graph);
+    ctl.add_facts(profiles);
+    ctl.add_facts(inputs);
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;

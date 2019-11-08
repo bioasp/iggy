@@ -1,9 +1,9 @@
 use crate::{FactBase, NodeId, ToSymbol};
+use anyhow::Result;
 use clingo::*;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
-use anyhow::Result;
 
 #[derive(Debug, Clone)]
 pub struct Profile {

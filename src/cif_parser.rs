@@ -1,9 +1,9 @@
 use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
+use anyhow::Result;
 use clingo::*;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
-use anyhow::Result;
 
 pub fn read(file: &File) -> Result<Graph> {
     let file = BufReader::new(file);
