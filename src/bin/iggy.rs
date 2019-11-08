@@ -11,6 +11,7 @@ use iggy::profile_parser;
 use iggy::profile_parser::Profile;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
+use anyhow::Result;
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -66,32 +67,31 @@ struct Opt {
     show_predictions: bool,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let opt = Opt::from_args();
     let setting = get_setting(&opt);
 
     println!("Reading network model from {:?}.", opt.network_file);
-    let f = File::open(opt.network_file).unwrap();
-    let ggraph = cif_parser::read(&f).unwrap();
+    let f = File::open(opt.network_file)?;
+    let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
     let profile = {
         if let Some(observationfile) = opt.observations_file {
             println!("\nReading observations from {:?}.", observationfile);
-            let f = File::open(observationfile).unwrap();
-            let pprofile = profile_parser::read(&f, "x1").unwrap();
+            let f = File::open(observationfile)?;
+            let pprofile = profile_parser::read(&f, "x1")?;
 
             observation_statistics(&pprofile, &ggraph);
             let profile = pprofile.to_facts();
 
-            if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+            if let Inconsistent(reasons) = check_observations(&profile)? {
                 println!("The following observations are contradictory. Please correct them!");
                 for r in reasons {
                     println!("{}", r);
                 }
             }
-
             profile
         } else {
             println!("\nEmpty observation data.");
@@ -102,7 +102,7 @@ fn main() {
     let new_inputs = {
         if opt.auto_inputs {
             print!("\nComputing input nodes ...");
-            let new_inputs = guess_inputs(&graph).unwrap();
+            let new_inputs = guess_inputs(&graph)?;
             println!(" done.");
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
@@ -113,7 +113,7 @@ fn main() {
 
     if opt.scenfit {
         print!("\nComputing scenfit of network and data ... ");
-        let scenfit = get_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
+        let scenfit = get_scenfit(&graph, &profile, &new_inputs, &setting)?;
         println!("done.");
 
         if scenfit == 0 {
@@ -132,7 +132,7 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under scenfit ... ");
                 let predictions =
-                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting).unwrap();
+                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
                 println!("done.");
                 println!("\n# Predictions:");
                 print_predictions(&predictions);
@@ -141,7 +141,7 @@ fn main() {
     } else {
         print!("\nComputing mcos of network and data ... ");
         io::stdout().flush().ok().expect("Could not flush stdout");
-        let mcos = get_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
+        let mcos = get_mcos(&graph, &profile, &new_inputs, &setting)?;
         println!("done.");
         if mcos == 0 {
             println!("\nThe network and data are consistent: mcos = 0.");
@@ -157,13 +157,14 @@ fn main() {
             if opt.show_predictions {
                 print!("\nCompute predictions under mcos ... ");
                 let predictions =
-                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting).unwrap();
+                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
                 println!("done.");
                 println!("\n# Predictions:");
                 print_predictions(&predictions);
             }
         }
     }
+    Ok(())
 }
 
 fn get_setting(opt: &Opt) -> SETTING {
@@ -178,7 +179,7 @@ fn get_setting(opt: &Opt) -> SETTING {
             fc: true,
         }
     } else {
-        println!(" + All observed changes must be explained by an predecessor.");
+        println!(" + All observed changes must be explained by a predecessor.");
         SETTING {
             os: true,
             ep: if opt.elempath {
