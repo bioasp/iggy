@@ -2,24 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+
 ## v2.1.0 - unreleased
 
-Use structopt 0.3
-Use clingo 0.6
+- use structopt 0.3
+- use clingo 0.6
 
 ## v2.0.1 - 2019, Okt 23
-
-### Fixed
 
 - Fix bug that led to wrong results.
 
 ## v2.0.0 - 2019, Jul 12
 
-Rewrite in rust.
+- rewrite in rust.
 
 ## v1.4.3 - 2019, Mar 1
 
-use pyasp 1.4.4
+- use pyasp 1.4.4
 
 ## v1.4.2 - 2018, Aug 16
 
