@@ -1,11 +1,11 @@
 use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
 use clingo::*;
-use failure::*;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use anyhow::Result;
 
-pub fn read(file: &File) -> Result<Graph, Error> {
+pub fn read(file: &File) -> Result<Graph> {
     let file = BufReader::new(file);
     let mut graph = Graph::empty();
     for line in file.lines() {
@@ -41,7 +41,7 @@ pub enum EdgeSign {
     Minus,
 }
 impl ToSymbol for EdgeSign {
-    fn symbol(&self) -> Result<Symbol, Error> {
+    fn symbol(&self) -> Result<Symbol, ClingoError> {
         Ok(match self {
             EdgeSign::Minus => Symbol::create_number(-1),
             EdgeSign::Plus => Symbol::create_number(1),
@@ -117,15 +117,15 @@ impl Graph {
                 for expr in l {
                     match expr {
                         Expression::Negated(s) => {
-                            inner = format!("!{}&{}", s, inner);
+                            inner = format!("!{} & {}", s, inner);
                             neg.push(s);
                         }
                         Expression::Plain(s) => {
-                            inner = format!("{}&{}", s, inner);
+                            inner = format!("{} & {}", s, inner);
                             pos.push(s);
                         }
                         Expression::Unknown(s) => {
-                            inner = format!("?{}&{}", s, inner);
+                            inner = format!("?{} & {}", s, inner);
                             unk.push(s);
                         }
                     }

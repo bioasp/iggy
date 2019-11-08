@@ -1,10 +1,10 @@
-# Iggy - User Guide (version 2.0.1)
+# Iggy - User Guide (version 2.1.0)
 
 Sven Thiele
 
-## What are `iggy` and `opt_graph` ?
+## What are `iggy` and `opt_graph`
 
-`iggy` and `optgraph` are tools for consistency based analysis of influence graphs and
+`iggy` and `opt_graph` are tools for consistency based analysis of influence graphs and
  observed systems behavior (signed changes between two measured states).
 For many (biological) systems are knowledge bases available that describe the interaction
  of its components in terms of causal networks, boolean networks and influence graphs
@@ -31,9 +31,7 @@ Clone the git repository:
     git clone https://github.com/bioasp/iggy.git
     cargo build --release
 
-
 The executables can be found under `./target/release/`
-
 
 
 ## Input Model + Data
@@ -50,17 +48,17 @@ Lines in the `CIF` file specify a interaction between (multiple) source nodes an
     shp2                        ->  grb2_sos
     !mtor_inhibitor             ->  mtor
     ?jak2_p                     ->  stat5ab_py
-    !ras_gap&grb2_sos           ->  pi3k
-    akt&erk&mtor&pi3k           ->  mtorc1
+    !ras_gap & grb2_sos         ->  pi3k
+    akt & erk & mtor & pi3k     ->  mtorc1
     gab1_bras_py                ->  ras_gap
-    gab1_ps&jak2_p&pi3k         ->  gab1_bras_py
+    gab1_ps & jak2_p & pi3k     ->  gab1_bras_py
 
-In our influence graph models we have simple interactions like:
+In our influence graph models, we have simple interactions like:
 in Line 1 for `shp2` *increases* `grb2_sos`
 and in Line 2 the `!` indicates that `mtor_inhibitor` tends to *decrease* `mtor`.
-in Line 3 the `?` indicates an unknown influence of `jak2_p` on `stat5ab_py`.
-Complex interactions can be composed with the `&` operator to model a combined influence of multiple sources on a tartget.
-In Line 4 an decrease in `ras_gap` with an increase in `grb2_sos` tend to increase `pi3k`.
+In Line 3 the `?` indicates an unknown influence of `jak2_p` on `stat5ab_py`.
+Complex interactions can be composed with the `&` operator to model a combined influence of multiple sources on a target.
+In Line 4 a decrease in `ras_gap` with an increase in `grb2_sos` tend to increase `pi3k`.
 
 
 ### Experimental data
@@ -71,7 +69,7 @@ The first line of the example below states that `depor` has been perturbed in th
 This means `depor` has been under the control of the experimentalist
  and its behavior must therefore not be explained.
 The behavior of a node can be either `+`, `-`, `0`, `notPlus`, `notMinus`.
-Line 2 states that an *increase* (`+`) was obeserved in `depor`,
+Line 2 states that an *increase* (`+`) was observed in `depor`,
  as it is declared an `input` this behavior has been caused by the experimentalist.
 Line 3 states that `stat5ab_py` has *decreased* (`-`) and
 line 4 states that `ras` has *not changed* (`0`).
@@ -79,7 +77,6 @@ Line 5 states that an *uncertain decrease* (`notPlus`) has been observed in `plc
 line 6 states that an *uncertain increase* (`notMinus`) has been observed in `mtorc1`.
 Line 7 states that `akt` is initially on the minimum level, this means it cannot further decrease, and
 line 8 states that `grb2_sos` is initially on the maximum level, this means it cannot further increase.
-
 
     depor         = input
     depor         = +
@@ -93,38 +90,41 @@ line 8 states that `grb2_sos` is initially on the maximum level, this means it c
 
 ### Consistency notions
 
-The Iggy tools implement different constraints that inform the consistency notion under which the analysis are perform. In other words what is considere a consistent behaviour of a system. The defaults are 
- + All observed changes must be explained by an predecessor.
+The Iggy tools implement different constraints that inform the consistency notion under which the analysis are perform. In other words, what is considered a consistent behavior of a system. The defaults are:
 
-    This is the basic constraint that must always hold.
-   
- + All observed changes must be explained by an input.
+- All observed changes must be explained by a predecessor.
 
-    You can turn this off with the flag `--founded_constraints_off`.
+    This basic constraint that must always hold.
 
- + 0-change must be explained.
+- All observed changes must be explained by an input.
 
-   You can turn this constraint off with the flag `--fwd_propagation_off`.
+    You can turn this off with the flag `--founded-constraints-off`.
 
-Additionaly you can turn on the following constraint:
-  + An elementary path from an input must exist to explain changes.
+- 0-change must be explained.
+
+   You can turn this constraint off with the flag `--fwd-propagation-off`.
+
+Additional you can turn on the following constraint:
+
+- An elementary path from an input must exist to explain changes.
    You can turn this constraint on with the flag `--elempath`.
 
 With the flag `--depmat` you can turn on a consistency notion that is used for the *dependency matrix*. This notion includes the *elementary path* constraint.
 
 For more information on the consistency notion see: 
 
- * [Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies](http://dx.doi.org/10.1186/s12859-015-0733-7),
+- [Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies](http://dx.doi.org/10.1186/s12859-015-0733-7),
 Sven Thiele, Luca Cerone, Julio Saez-Rodriguez, Anne Siegel, Carito Guziołowski, and Steffen Klamt, *BMC Bioinformatics*, 16(345), 2015.
 
- * [Sign consistency methods to reason over the transitional behavior of dynamic systems](https://sthiele.github.io/scm/)
+- [Sign consistency methods to reason over the transitional behavior of dynamic systems](https://sthiele.github.io/scm/)
 
 For more information on the dependency matrix see:
- * [A methodology for the structural and functional analysis of signaling and regulatory networks](doi:http://dx.doi.org/10.1186/1471-2105-7-56), Klamt S, Saez-Rodriguez J, Lindquist J, Simeoni L, Gilles E., BMC Bioinforma. 2006; 7(1):56. 
+
+- [A methodology for the structural and functional analysis of signaling and regulatory networks](doi:http://dx.doi.org/10.1186/1471-2105-7-56), Klamt S, Saez-Rodriguez J, Lindquist J, Simeoni L, Gilles E., BMC Bioinforma. 2006; 7(1):56.
 
 ## Iggy
 
-`iggy` performs consistency checks for an interaction model and a data profile. 
+`iggy` performs consistency checks for an interaction model and a data profile.
 It computes explanations (minimal inconsistent cores *mics*) for inconsistencies
  and suggests repairs for model and data.
 
@@ -133,13 +133,12 @@ The repairs re-establish the mutual consistency between model and data, and enab
 
 The typical usage of `iggy` is:
 
-    $ iggy -n network.cif -o observation.obs -l 10 -p
+    > iggy -n network.cif -o observation.obs -l 10 -p
 
+For more options, you can ask for help as follows:
 
-For more options you can ask for help as follows:
-
-    $ iggy -h
-    iggy 2.0.0
+    > iggy -h
+    iggy 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Iggy confronts interaction graph models with observations of (signed) changes between
     two measured states (including uncertain observations). Iggy discovers inconsistencies
@@ -148,26 +147,26 @@ For more options you can ask for help as follows:
     weak predictions (e.g., the value of a node increases or remains unchanged
 
     USAGE:
-        iggy [FLAGS] [OPTIONS] --network <networkfile>
+        iggy [FLAGS] [OPTIONS] --network <network-file>
 
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained
                                         by an elementary path from an input
             --elempath                  Every change must be explained by an elementary
                                         path from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
             --mics                      Compute minimal inconsistent cores
             --scenfit                   Compute scenfit of the data, default is mcos
-        -p, --show_predictions          Show predictions
+        -p, --show-predictions          Show predictions
         -V, --version                   Prints version information
     OPTIONS:
-        -l, --show_labelings <max_labelings>   Show max_labelings labelings, default is OFF,
-                                                0=all
-        -n, --network <networkfile>            Influence graph in CIF format
-        -o, --observations <observationfile>   Observations in bioquali format
+        -l, --show-labelings <max-labelings>     Show max-labelings labelings, default is OFF,
+                                                 0=all
+        -n, --network <network-file>             Influence graph in CIF format
+        -o, --observations <observations-file>   Observations in bioquali format
 
 
 ### Compute minimal correction sets (mcos) or *scenfit* and predictions under inconsistency
@@ -175,29 +174,29 @@ For more options you can ask for help as follows:
 `iggy` implements two measures for inconsistency *minimal correction sets (mcos)* and *scenfit*. While *mcos* measures the minimal number of observations that cannot be explained, *scenfit* measures a minimal number of changes to the model to re-establish the mutual consistency between model and data.
 The default in iggy is *mcos* but *scenfit* can be used with the option `--scenfit`.
 
-With the option `--show_labelings, -l N` `iggy` computes at most `N` such labelings and repairs that are consistent.
+With the option `--show-labelings, -l N` `iggy` computes at most `N` such labelings and repairs that are consistent.
 
-With the flag `--show_predictions, -p` `iggy` computes predictions under inconsistencies.
+With the flag `--show-predictions, -p` `iggy` computes predictions under inconsistencies.
 More precisely the behaviors of the system that are invariant also under the minimal repairs.
 
 `iggy` presents the results of its analysis as text output.
 The output of `iggy` can be redirected into a file using the `>` operator.
 For example to write the results shown below into the file `myfile.txt` type:
 
-    $ iggy -n network.cif -o observations.obs -l 10 -p > myfile.txt
+    > iggy -n network.cif -o observations.obs -l 10 -p > myfile.txt
 
 
 In the following we will dissect the output generated by `iggy`.
 The first 3 lines of the output state the constraints that have been used to analyze network and data.
-For our example it is the default setting with the following constraints.
+For our example, it is the default setting with the following constraints.
 For a deeper understanding of these constraints see~\cite{sthiele15}.
 
-    + All observed changes must be explained by an predecessor.
+    + All observed changes must be explained by a predecessor.
     + 0-change must be explained.
     + All observed changes must be explained by an input.
     _____________________________________________________________________
 
-Next follow some statistics on the input data.
+Next, follow some statistics on the input data.
 Line 4-5 tells us that the influence graph model given as `network.cif`
 consists of `18` species nodes and `4` complex nodes,
 with `19` edges with activating influence
@@ -242,13 +241,12 @@ that `4` nodes were observed as increased `+`,
          Max                   : 1
          observed not in model : 0
 
-
 Then follow the results of the consistency analysis.
 Line 14 tells us that network and data are inconsistent
 and that the size of a *minimal correction set* (`mcos`) is `2`.
 This means that at least `2` influences need to be added to restore consistency.
 For a deeper understanding of mcos see~\cite{samaga13a}.
-Further the output contains at most `10` consistent labeling including correction set.
+Further, the output contains at most `10` consistent labeling including correction set.
 This is because we choose to set the flag `--show_labelings 10`.
 In our example we have `4` possible labelings.
 Each labeling represents a consistent behavior of the model (given mcos the corrections).
@@ -263,7 +261,7 @@ which is currently not included in the model.
  here `mtorc1` does *increases* (`+`}).
 Please note that in this example both labelings are consistent under the same correction set.
 In another example more than one minimal correction set could exists.
-    
+
     The network and data are inconsistent: mcos = 2.
     
     Compute mcos labelings ... done.
@@ -355,8 +353,7 @@ In another example more than one minimal correction set could exists.
     
      Repairs: 
  
-
-Finally the prediction results are listed.
+Finally, the prediction results are listed.
 A prediction is a statement that hold under all labeling under all minimal repairs.
 For a formal definition of predictions see~\cite{sthiele15}.
 Here the predictions say that
@@ -398,18 +395,20 @@ Here the predictions say that
 
 For more information on minimal correction sets *mcos* see:
 
-* [Detecting and Removing  Inconsistencies between Experimental Data and Signaling Network Topologies Using Integer Linear Programming on Interaction Graphs.](doi:http://dx.doi.org/10.1371/journal.pcbi.1003204)
+- [Detecting and Removing  Inconsistencies between Experimental Data and Signaling Network Topologies Using Integer Linear Programming on Interaction Graphs.](doi:http://dx.doi.org/10.1371/journal.pcbi.1003204)
 Melas IN, Samaga R, Alexopoulos LG, Klamt S. , PLoS Comput Biol. 2013; 9(9):1003204.
+
+
 ### Compute minimal inconsistent cores `--mics`
 
 Iggy computes minimal inconsistent cores *mics* for inconsistent model and data.
-The *mics* are connected parts of the model and indicate unreliable data or missing reactions. 
+The *mics* are connected parts of the model and indicate unreliable data or missing reactions.
 To compute the minimal inconsistent cores use the flag `--mics` as follows:
 
-    $ iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
+    > iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
     _____________________________________________________________________
 
-    + All observed changes must be explained by an predecessor.
+    + All observed changes must be explained by a predecessor.
     + 0-change must be explained.
     + All observed changes must be explained by an input.
     _____________________________________________________________________
@@ -486,47 +485,46 @@ To compute the minimal inconsistent cores use the flag `--mics` as follows:
 
 For more information on minimal inconsistent cores see:
 
- * [Detecting Inconsistencies in Large Biological Networks with Answer Set Programming](http://dx.doi.org/10.1017/S1471068410000554),
+- [Detecting Inconsistencies in Large Biological Networks with Answer Set Programming](http://dx.doi.org/10.1017/S1471068410000554),
 Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
 *Theory and Practice of Logic Programming*, 11(2-3), pages 323-360, 2011.
 
+
 ## Opt_graph
+
 `opt_graph` confronts interaction graph models with observed systems behavior from multiple experiments.
 `opt_graph` computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.
 
 Typical usage is:
 
+    > opt_graph -n network.cif -o observations_dir/ --show_repairs 10
 
-    $ opt_graph -n network.cif -o observations_dir/ --show_repairs 10
+For more options, you can ask for help as follows:
 
-
-For more options you can ask for help as follows:
-
-
-    $ opt_graph -h
-    opt_graph 2.0.0
+    > opt_graph -h
+    opt_graph 2.1.0
     Sven Thiele <sthiele78@gmail.com>
     Opt-graph confronts interaction graph models with observations of (signed) changes between 
     two measured states. Opt-graph computes networks fitting the observation data by removing 
     (or adding) a minimal number of edges in the given network
 
     USAGE:
-        opt_graph [FLAGS] [OPTIONS] --network <networkfile> --observations <observationdir>
+        opt_graph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
     FLAGS:
-        -a, --autoinputs                Declare nodes with indegree 0 as inputs
+        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
             --depmat                    Combine multiple states, a change must be explained by 
                                         an elementary path from an input
             --elempath                  Every change must be explained by an elementary path 
                                         from an input
-            --founded_constraints_off   Disable foundedness constraints
-            --fwd_propagation_off       Disable forward propagation constraints
+            --founded-constraints-off   Disable foundedness constraints
+            --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
         -V, --version                   Prints version information
     OPTIONS:
-        -r, --show_repairs <max_repairs>      Show max_repairs repairs, default is OFF, 0=all
-        -n, --network <networkfile>           Influence graph in CIF format
-        -o, --observations <observationdir>   Directory of observations in bioquali format
-        -m, --repair_mode <repair_mode>       Repair mode: remove = remove edges (default),
+        -r, --show-repairs <max-repairs>        Show max-repairs repairs, default is OFF, 0=all
+        -n, --network <network-file>            Influence graph in CIF format
+        -o, --observations <observations-dir>   Directory of observations in bioquali format
+        -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
                                                             optgraph = add + remove edges,
                                                             flip = flip direction of edges
 
@@ -603,4 +601,4 @@ For more options you can ask for help as follows:
 
 For more information on *OptGraph* see:
 
-* [Designing optimal experiments to discriminate interaction graph models](https://doi.org/10.1109/TCBB.2018.2812184), Sven Thiele, Sandra Heise, Wiebke Hessenkemper, Hannes Bongartz, Melissa Fensky, Fred Schaper, Steffen Klamt, *IEEE/ACM Trans. Comput. Biol. Bioinform*, 16(3), 2019.
+- [Designing optimal experiments to discriminate interaction graph models](https://doi.org/10.1109/TCBB.2018.2812184), Sven Thiele, Sandra Heise, Wiebke Hessenkemper, Hannes Bongartz, Melissa Fensky, Fred Schaper, Steffen Klamt, *IEEE/ACM Trans. Comput. Biol. Bioinform*, 16(3), 2019.

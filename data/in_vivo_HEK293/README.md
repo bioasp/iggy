@@ -9,7 +9,7 @@ This directory contains the files used in the 'in vivo' study presented in the p
 
 To create the model candidates used in the 'in vivo study' call:
 
-    opt_graph -n gold_comp_BN.cif -o Wildtype_data --depmat --repair_mode optgraph -r 0
+    opt_graph -n gold_comp_BN.cif -o Wildtype_data --depmat --repair-mode optgraph -r 0
 
 old version call:
 

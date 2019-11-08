@@ -1,5 +1,5 @@
 use clingo::FactBase;
-use failure::*;
+use thiserror::Error;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 use std::fs;
@@ -7,6 +7,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
+use anyhow::Result;
 
 /// Opt-graph confronts interaction graph models with observations of (signed) changes between
 /// two measured states.
@@ -18,40 +19,40 @@ use structopt::StructOpt;
 struct Opt {
     /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
-    networkfile: PathBuf,
+    network_file: PathBuf,
 
     /// Directory of observations in bioquali format
     #[structopt(short = "o", long = "observations", parse(from_os_str))]
-    observationdir: PathBuf,
+    observations_dir: PathBuf,
 
     /// Disable forward propagation constraints
-    #[structopt(long = "fwd_propagation_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[structopt(long = "founded_constraints_off", conflicts_with = "depmat")]
+    #[structopt(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[structopt(long = "elempath")]
+    #[structopt(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[structopt(long = "depmat")]
+    #[structopt(long)]
     depmat: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[structopt(short = "a", long = "autoinputs")]
-    autoinputs: bool,
+    #[structopt(short = "a", long)]
+    auto_inputs: bool,
 
-    /// Show max_repairs repairs, default is OFF, 0=all
-    #[structopt(short = "r", long = "show_repairs")]
+    /// Show max-repairs repairs, default is OFF, 0=all
+    #[structopt(short = "r", long = "show-repairs")]
     max_repairs: Option<u32>,
 
     /// Repair mode: remove = remove edges (default),
     ///              optgraph = add + remove edges,
     ///              flip = flip direction of edges
-    #[structopt(short = "m", long = "repair_mode")]
+    #[structopt(short = "m", long)]
     repair_mode: Option<RepairMode>,
 }
 
@@ -61,8 +62,8 @@ enum RepairMode {
     OptGraph,
     Flip,
 }
-#[derive(Debug, Fail)]
-#[fail(display = "ParseRepairModeError: {}", msg)]
+#[derive(Debug, Error)]
+#[error("ParseRepairModeError: {msg}")]
 pub struct ParseRepairModeError {
     pub msg: &'static str,
 }
@@ -85,17 +86,17 @@ impl FromStr for RepairMode {
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     let opt = Opt::from_args();
     let setting = get_setting(&opt);
 
-    println!("Reading network model from {:?}.", opt.networkfile);
-    let f = File::open(opt.networkfile).unwrap();
-    let ggraph = cif_parser::read(&f).unwrap();
+    println!("Reading network model from {:?}.", opt.network_file);
+    let f = File::open(opt.network_file)?;
+    let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
     network_statistics(&ggraph);
 
-    let paths = fs::read_dir(opt.observationdir).unwrap();
+    let paths = fs::read_dir(opt.observations_dir)?;
 
     let profiles = paths
         .fold(Some(FactBase::new()), |acc, path| {
@@ -120,13 +121,12 @@ fn main() {
                 }
                 None => None,
             }
-        })
-        .unwrap();
+        }).unwrap();
 
     let new_inputs = {
-        if opt.autoinputs {
+        if opt.auto_inputs {
             print!("\nComputing input nodes ...");
-            let new_inputs = guess_inputs(&graph).unwrap();
+            let new_inputs = guess_inputs(&graph)?;
             println!(" done.");
             println!("  new inputs : {}", new_inputs.len());
             new_inputs
@@ -141,7 +141,7 @@ fn main() {
             println!("\nComputing repair through add/removing edges ... ");
             print!("    using greedy method ... ");
             let (scenfit, repair_score, redges) =
-                get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs).unwrap();
+                get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs)?;
 
             println!("done.");
             println!("\nThe network and data can reach a scenfit of {}.", scenfit);
@@ -150,7 +150,7 @@ fn main() {
         }
         Some(RepairMode::OptGraph) if !setting.ep => {
             let (scenfit, repair_score) =
-                get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
+                get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
             println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with repairs of score {}",
@@ -161,7 +161,7 @@ fn main() {
         Some(RepairMode::Flip) => {
             print!("\nComputing repair through flipping edges ... ");
             let (scenfit, repair_score) =
-                get_opt_flip_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
+                get_opt_flip_edges(&graph, &profiles, &new_inputs, &setting)?;
             println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with {} flipped edges",
@@ -172,7 +172,7 @@ fn main() {
         _ => {
             print!("\nComputing repair through removing edges ... ");
             let (scenfit, repair_score) =
-                get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting).unwrap();
+                get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
             println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with {} removed edges.",
@@ -198,8 +198,7 @@ fn main() {
                             scenfit,
                             repair_score,
                             max_repairs,
-                        )
-                        .unwrap();
+                        )?;
 
                         for i in removes {
                             repairs.push(i);
@@ -235,8 +234,7 @@ fn main() {
                     repair_score,
                     max_repairs,
                     &setting,
-                )
-                .unwrap(),
+                )?,
             };
 
             let mut count = 0;
@@ -244,12 +242,13 @@ fn main() {
                 count += 1;
                 println!("\nRepair {}: ", count);
                 for e in r {
-                    let repair_op = into_repair(e).unwrap();
+                    let repair_op = into_repair(e)?;
                     println!("    {}", repair_op);
                 }
             }
         }
     }
+    Ok(())
 }
 
 fn get_setting(opt: &Opt) -> SETTING {
@@ -264,7 +263,7 @@ fn get_setting(opt: &Opt) -> SETTING {
             fc: true,
         }
     } else {
-        println!(" + All observed changes must be explained by an predecessor.");
+        println!(" + All observed changes must be explained by a predecessor.");
         SETTING {
             os: true,
             ep: if opt.elempath {

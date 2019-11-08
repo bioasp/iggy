@@ -20,7 +20,7 @@ This folder contains the input data used for planning the experiments presented 
 
 To create the model candidates used in the 'in silico study' call:
 
-    opt_graph -n v1_comp_BN.cif -o prior_data --depmat --repair_mode optgraph -r 0
+    opt_graph -n v1_comp_BN.cif -o prior_data --depmat --repair-mode optgraph -r 0
 
 old version call:
 
