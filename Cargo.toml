@@ -13,7 +13,7 @@ edition = "2018"
 dynamic_linking = ["clingo/dynamic_linking"]
 
 [dependencies]
-clingo = { version = "0.6", features = ["derive"], path = "../clingo-rs" }
+clingo = { version = "0.6", features = ["derive"], git = "https://github.com/potassco/clingo-rs", branch = "wip" }
 structopt = "0.3"
 thiserror = "1.0"
 anyhow = "1.0"

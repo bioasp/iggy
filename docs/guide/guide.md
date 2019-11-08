@@ -31,7 +31,6 @@ Clone the git repository:
     git clone https://github.com/bioasp/iggy.git
     cargo build --release
 
-
 The executables can be found under `./target/release/`
 
 
@@ -135,7 +134,6 @@ The repairs re-establish the mutual consistency between model and data, and enab
 The typical usage of `iggy` is:
 
     > iggy -n network.cif -o observation.obs -l 10 -p
-
 
 For more options, you can ask for help as follows:
 
@@ -242,7 +240,6 @@ that `4` nodes were observed as increased `+`,
          Min                   : 1
          Max                   : 1
          observed not in model : 0
-
 
 Then follow the results of the consistency analysis.
 Line 14 tells us that network and data are inconsistent
@@ -356,7 +353,6 @@ In another example more than one minimal correction set could exists.
     
      Repairs: 
  
-
 Finally, the prediction results are listed.
 A prediction is a statement that hold under all labeling under all minimal repairs.
 For a formal definition of predictions see~\cite{sthiele15}.
@@ -401,6 +397,7 @@ For more information on minimal correction sets *mcos* see:
 
 - [Detecting and Removing  Inconsistencies between Experimental Data and Signaling Network Topologies Using Integer Linear Programming on Interaction Graphs.](doi:http://dx.doi.org/10.1371/journal.pcbi.1003204)
 Melas IN, Samaga R, Alexopoulos LG, Klamt S. , PLoS Comput Biol. 2013; 9(9):1003204.
+
 
 ### Compute minimal inconsistent cores `--mics`
 
@@ -491,6 +488,7 @@ For more information on minimal inconsistent cores see:
 - [Detecting Inconsistencies in Large Biological Networks with Answer Set Programming](http://dx.doi.org/10.1017/S1471068410000554),
 Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
 *Theory and Practice of Logic Programming*, 11(2-3), pages 323-360, 2011.
+
 
 ## Opt_graph
 
