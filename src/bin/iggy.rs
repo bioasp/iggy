@@ -10,6 +10,8 @@ use iggy::cif_parser::Graph;
 use anyhow::Result;
 use iggy::profile_parser;
 use iggy::profile_parser::Profile;
+use iggy::profile_parser::Observation;
+use iggy::profile_parser::NodeSign;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 
@@ -206,57 +208,68 @@ fn get_setting(opt: &Opt) -> SETTING {
     setting
 }
 
+fn find_node_in_observations(observations: &[Observation], node_id: &NodeId) -> bool {
+    for obs in observations {
+        if obs.node == *node_id {return true;}
+    }
+    false
+}
+fn find_node_in_nodes(nodes: &[NodeId], node_id: &NodeId) -> bool {
+    for node in nodes {
+        if *node == *node_id {return true;}
+    }
+    false
+}
+
 fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("\n# Observations statistics\n");
-    let p = profile.clone();
-    let tmp = [
-        p.input, p.plus, p.minus, p.zero, p.notplus, p.notminus, p.min, p.max,
-    ];
-    let mut observed = tmp.iter().fold(vec![], |mut acc, x| {
-        for n in x {
-            acc.push(n.clone());
-        }
-        acc
-    });
-    observed.dedup();
-    let observed = observed;
 
-    // TODO: replace with unobserved.drain_filter
-    let mut unobserved = graph.or_nodes().to_owned();
-    let mut i = 0;
-    while i != unobserved.len() {
-        if observed.contains(&unobserved[i]) {
-            let _val = unobserved.remove(i);
-        } else {
-            i += 1;
+    let model_nodes = graph.or_nodes();
+    let mut unobserved = model_nodes.len();
+    for node in model_nodes {
+        if find_node_in_observations(&profile.observations, node) {
+            unobserved -= 1;
         }
     }
-    let unobserved = unobserved;
+    let observed = model_nodes.len() - unobserved;
 
-    // TODO: replace with observed.drain_filter
-    let mut not_in_model = observed.clone();
-    let mut i = 0;
-    while i != not_in_model.len() {
-        if graph.or_nodes().contains(&not_in_model[i]) {
-            let _val = not_in_model.remove(i);
-        } else {
-            i += 1;
+    let mut plus = 0;
+    let mut minus = 0;
+    let mut zero = 0;
+    let mut not_plus = 0;
+    let mut not_minus = 0;
+    for obs in &profile.observations {
+        match obs.sign {
+            NodeSign::Plus => plus +=1,
+            NodeSign::Minus => minus +=1,
+            NodeSign::Zero => zero +=1,
+            NodeSign::NotPlus => not_plus +=1,
+            NodeSign::NotMinus => not_minus +=1,
         }
     }
-    let not_in_model = not_in_model;
 
-    println!("    unobserved nodes     : {}", unobserved.len());
-    println!("    observed nodes       : {}", observed.len());
-    println!("     inputs                : {}", profile.input.len());
-    println!("     +                     : {}", profile.plus.len());
-    println!("     -                     : {}", profile.minus.len());
-    println!("     0                     : {}", profile.zero.len());
-    println!("     notPlus               : {}", profile.notplus.len());
-    println!("     notMinus              : {}", profile.notminus.len());
-    println!("     Min                   : {}", profile.min.len());
-    println!("     Max                   : {}", profile.max.len());
-    println!("     observed not in model : {}", not_in_model.len());
+    let mut not_in_model = profile.observations.len();
+    for obs in &profile.observations {
+        if find_node_in_nodes(model_nodes, &obs.node) {
+            not_in_model -= 1;
+        }
+    }
+
+    println!("    observed model nodes:   {}", observed);
+    println!("    unobserved model nodes: {}", unobserved);
+    println!("    observed not in model:  {}", not_in_model);
+    println!("    inputs:                 {}", profile.inputs.len());
+    println!("    MIN:                    {}", profile.min.len());
+    println!("    MAX:                    {}", profile.max.len());
+
+    println!("    observations:           {}", profile.observations.len());
+    println!("      +:                    {}", plus);
+    println!("      -:                    {}", minus);
+    println!("      0:                    {}", zero);
+    println!("      NotPlus:              {}", not_plus);
+    println!("      NotMinus:             {}", not_minus);
 }
+    
 
 fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
@@ -337,11 +350,11 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
             "1" => "+",
             "-1" => "-",
             "0" => "0",
-            "notPlus" => "notPlus",
-            "notMinus" => "notMinus",
+            "notPlus" => "NotPlus",
+            "notMinus" => "NotMinus",
             "change" => "CHANGE",
             x => {
-                panic!("Unknown Change: {}", x);
+                panic!("Unknown change: {}", x);
             }
         };
 
@@ -349,32 +362,29 @@ fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
     }
 }
 
-fn print_predictions(predictions: &Predictions) {
-    // if len(p.arg(1)) > maxsize : maxsize = len(p.arg(1))
-    for node in &predictions.increase {
-        println!("    {} = +", node);
+fn print_predictions(predictions: &[Prediction]) {
+    let mut plus = 0;
+    let mut minus = 0;
+    let mut zero = 0;
+    let mut not_plus = 0;
+    let mut not_minus = 0;
+    let mut change = 0;
+    for pred in predictions {
+        println!("    {}", pred);
+        match pred.behavior {
+            Behavior::Plus => plus+=1,
+            Behavior::Minus => minus+=1,
+            Behavior::Zero => zero+=1,
+            Behavior::NotPlus => not_plus+=1,
+            Behavior::NotMinus => not_minus+=1,
+            Behavior::Change => change+=1,
+        }
     }
-    for node in &predictions.decrease {
-        println!("    {} = -", node);
-    }
-    for node in &predictions.no_change {
-        println!("    {} = 0", node);
-    }
-    for node in &predictions.no_increase {
-        println!("    {} = notPlus", node);
-    }
-    for node in &predictions.no_decrease {
-        println!("    {} = notMinus", node);
-    }
-    for node in &predictions.change {
-        println!("    {} = CHANGE", node);
-    }
-
     println!();
-    println!("    predicted +        = {}", predictions.increase.len());
-    println!("    predicted -        = {}", predictions.decrease.len());
-    println!("    predicted 0        = {}", predictions.no_change.len());
-    println!("    predicted notPlus  = {}", predictions.no_increase.len());
-    println!("    predicted notMinus = {}", predictions.no_decrease.len());
-    println!("    predicted CHANGE   = {}", predictions.change.len());
+    println!("    predicted +        = {}", plus);
+    println!("    predicted -        = {}", minus);
+    println!("    predicted 0        = {}", zero);
+    println!("    predicted NotPlus  = {}", not_plus);
+    println!("    predicted NotMinus = {}", not_minus);
+    println!("    predicted CHANGE   = {}", change);
 }

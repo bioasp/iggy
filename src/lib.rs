@@ -40,9 +40,9 @@ pub fn network_statistics(graph: &Graph) {
         "    AND nodes (complex regulation): {}",
         graph.and_nodes().len()
     );
-    println!("    Activations : {}", graph.activations().len());
-    println!("    Inhibitions : {}", graph.inhibitions().len());
-    println!("    Unknowns : {}", graph.unknowns().len());
+    println!("    Activations: {}", graph.activations().len());
+    println!("    Inhibitions: {}", graph.inhibitions().len());
+    println!("    Unknowns:    {}", graph.unknowns().len());
     // println!("          Dual = {}", len(unspecified))
 }
 
@@ -1507,22 +1507,43 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
     }
     Ok(rep)
 }
-pub struct Predictions {
-    pub increase: Vec<String>,
-    pub decrease: Vec<String>,
-    pub no_change: Vec<String>,
-    pub no_increase: Vec<String>,
-    pub no_decrease: Vec<String>,
-    pub change: Vec<String>,
-}
+type Predictions = Vec<Prediction>;
 
+#[derive(Debug, Copy, Clone)]
+pub enum Behavior {
+    Plus,
+    Minus,
+    Zero,
+    NotPlus,
+    NotMinus,
+    Change,
+}
+impl fmt::Display for Behavior {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Behavior::Plus => write!(f, "+"),
+            Behavior::Minus => write!(f, "-"),
+            Behavior::Zero => write!(f, "0"),
+            Behavior::NotPlus => write!(f, "NotPlus"),
+            Behavior::NotMinus => write!(f, "NotMinus"),
+            Behavior::Change => write!(f, "change"),
+        }
+    }
+}
+pub struct Prediction {
+    pub node: String,
+    pub behavior: Behavior
+}
+impl fmt::Display for Prediction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} = {}",self.node, self.behavior)
+    }
+}
 /// Given a model this function returns a vector of pairs (node,label)
 fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
-    let mut increase = Vec::new();
-    let mut decrease = Vec::new();
-    let mut no_change = Vec::new();
-    let mut no_increase = Vec::new();
-    let mut no_decrease = Vec::new();
+    let mut predictions = Vec::new();
+    let mut not_plus = Vec::new();
+    let mut not_minus = Vec::new();
     let mut change = Vec::new();
 
     for symbol in symbols {
@@ -1533,19 +1554,19 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
                 if id.name()? == "or" {
                     match symbol.arguments()?[2].to_string()?.as_ref() {
                         "1" => {
-                            increase.push(id.arguments()?[0].string()?.to_string());
+                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Plus});
                         }
                         "-1" => {
-                            decrease.push(id.arguments()?[0].string()?.to_string());
+                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Minus});
                         }
                         "0" => {
-                            no_change.push(id.arguments()?[0].string()?.to_string());
+                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Zero});
                         }
                         "notPlus" => {
-                            no_increase.push(id.arguments()?[0].string()?.to_string());
+                            not_plus.push(id.arguments()?[0].string()?.to_string());
                         }
                         "notMinus" => {
-                            no_decrease.push(id.arguments()?[0].string()?.to_string());
+                            not_minus.push(id.arguments()?[0].string()?.to_string());
                         }
                         "change" => {
                             change.push(id.arguments()?[0].string()?.to_string());
@@ -1561,37 +1582,26 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
             }
         }
     }
-    for i in &increase {
-        if let Some(index) = no_decrease.iter().position(|x| *x == *i) {
-            no_decrease.remove(index);
+    for pred in &predictions {
+        if let Some(index) = not_minus.iter().position(|x| *x == *pred.node ) {
+            not_minus.remove(index);
         }
-        if let Some(index) = change.iter().position(|x| *x == *i) {
+        if let Some(index) = not_plus.iter().position(|x| *x == *pred.node) {
+            not_plus.remove(index);
+        }
+        if let Some(index) = change.iter().position(|x| *x == *pred.node) {
             change.remove(index);
         }
     }
-    for i in &decrease {
-        if let Some(index) = no_increase.iter().position(|x| *x == *i) {
-            no_increase.remove(index);
-        }
-        if let Some(index) = change.iter().position(|x| *x == *i) {
-            change.remove(index);
-        }
+    for node in not_minus {
+        predictions.push(Prediction{ node, behavior: Behavior::NotMinus});
     }
-    for i in &no_change {
-        if let Some(index) = no_increase.iter().position(|x| *x == *i) {
-            no_increase.remove(index);
-        }
-        if let Some(index) = no_decrease.iter().position(|x| *x == *i) {
-            no_decrease.remove(index);
-        }
+    for node in not_plus {
+        predictions.push(Prediction{ node, behavior: Behavior::NotPlus});       
+    }
+    for node in change {
+        predictions.push(Prediction{ node, behavior: Behavior::Change});        
     }
 
-    Ok(Predictions {
-        increase,
-        decrease,
-        no_change,
-        no_increase,
-        no_decrease,
-        change,
-    })
+    Ok(predictions)
 }

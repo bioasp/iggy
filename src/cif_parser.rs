@@ -205,10 +205,6 @@ pub enum Expression {
 }
 
 peg::parser! {grammar cif() for str {
-    use super::Statement;
-    use super::Expression;
-    use super::SNode::List;
-    use super::SNode::Single;
 
     rule whitespace() = quiet!{[' ' | '\t']+}
 
@@ -216,10 +212,10 @@ peg::parser! {grammar cif() for str {
         = whitespace()* s:exprlist() whitespace()+ "->" whitespace()+ t:ident() {
             if s.len() == 1 {
                 let expr = s.clone().pop().unwrap();
-                Statement{ start : Single(expr) ,target : t.to_string() }
+                Statement{ start : SNode::Single(expr) ,target : t.to_string() }
             }
             else {
-                Statement{ start : List(s),target : t.to_string() }
+                Statement{ start : SNode::List(s),target : t.to_string() }
             }
         }
 

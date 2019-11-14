@@ -8,16 +8,17 @@ use std::io::BufReader;
 #[derive(Debug, Clone)]
 pub struct Profile {
     id: ProfileId,
-    pub input: Vec<NodeId>,
-    pub plus: Vec<NodeId>,
-    pub minus: Vec<NodeId>,
-    pub zero: Vec<NodeId>,
-    pub notplus: Vec<NodeId>,
-    pub notminus: Vec<NodeId>,
+    pub inputs: Vec<NodeId>,
     pub min: Vec<NodeId>,
     pub max: Vec<NodeId>,
+    pub observations : Vec<Observation>,
 }
-
+#[derive(Debug, Clone)]
+pub struct Observation {
+    pub node: NodeId,
+    pub sign: NodeSign,
+}
+#[derive(Debug, Copy, Clone)]
 pub enum NodeSign {
     Plus,
     Minus,
@@ -66,45 +67,17 @@ pub struct IsMax<'a> {
 impl Profile {
     pub fn to_facts(&self) -> FactBase {
         let mut facts = FactBase::new();
-        for node in &self.plus {
-            facts.insert(&ObsVLabel {
-                profile: &self.id,
-                node,
-                sign: NodeSign::Plus,
-            });
-        }
-        for node in &self.minus {
-            facts.insert(&ObsVLabel {
-                profile: &self.id,
-                node,
-                sign: NodeSign::Minus,
-            });
-        }
-        for node in &self.zero {
-            facts.insert(&ObsVLabel {
-                profile: &self.id,
-                node,
-                sign: NodeSign::Zero,
-            });
-        }
-        for node in &self.notplus {
-            facts.insert(&ObsVLabel {
-                profile: &self.id,
-                node,
-                sign: NodeSign::NotPlus,
-            });
-        }
-        for node in &self.notminus {
-            facts.insert(&ObsVLabel {
-                profile: &self.id,
-                node,
-                sign: NodeSign::NotMinus,
-            });
-        }
-        for node in &self.input {
+        for node in &self.inputs {
             facts.insert(&Input {
                 profile: &self.id,
                 node,
+            });
+        }
+        for obs in &self.observations {
+            facts.insert(&ObsVLabel {
+                profile: &self.id,
+                node: &obs.node,
+                sign: obs.sign,
             });
         }
         for node in &self.min {
@@ -125,12 +98,8 @@ impl Profile {
 
 pub fn read(file: &File, id: &str) -> Result<Profile> {
     let file = BufReader::new(file);
-    let mut input = vec![];
-    let mut plus = vec![];
-    let mut minus = vec![];
-    let mut zero = vec![];
-    let mut notplus = vec![];
-    let mut notminus = vec![];
+    let mut inputs = vec![];
+    let mut observations = vec![];
     let mut min = vec![];
     let mut max = vec![];
 
@@ -140,22 +109,22 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
         if !l.is_empty() {
             match profile::statement(&l) {
                 Ok(PStatement::Input(s)) => {
-                    input.push(NodeId::Or(s));
+                    inputs.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Plus(s)) => {
-                    plus.push(NodeId::Or(s));
+                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Plus});
                 }
                 Ok(PStatement::Minus(s)) => {
-                    minus.push(NodeId::Or(s));
+                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Minus});
                 }
                 Ok(PStatement::Zero(s)) => {
-                    zero.push(NodeId::Or(s));
+                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Zero});
                 }
                 Ok(PStatement::NotPlus(s)) => {
-                    notplus.push(NodeId::Or(s));
+                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::NotPlus});
                 }
                 Ok(PStatement::NotMinus(s)) => {
-                    notminus.push(NodeId::Or(s));
+                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::NotMinus});
                 }
                 Ok(PStatement::Min(s)) => {
                     min.push(NodeId::Or(s));
@@ -169,12 +138,8 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
     }
     Ok(Profile {
         id: id.to_string(),
-        input,
-        plus,
-        minus,
-        zero,
-        notplus,
-        notminus,
+        inputs,
+        observations,
         min,
         max,
     })
