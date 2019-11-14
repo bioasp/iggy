@@ -1526,7 +1526,7 @@ impl fmt::Display for Behavior {
             Behavior::Zero => write!(f, "0"),
             Behavior::NotPlus => write!(f, "NotPlus"),
             Behavior::NotMinus => write!(f, "NotMinus"),
-            Behavior::Change => write!(f, "change"),
+            Behavior::Change => write!(f, "CHANGE"),
         }
     }
 }
