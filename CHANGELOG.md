@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## v2.1.0 - unreleased
+## v2.1.0 - 2020, Jan 3
 
 - use structopt 0.3
 - use clingo 0.6
