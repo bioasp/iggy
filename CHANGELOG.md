@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 
+## v2.1.1 - 2020, Mar 11
+
+- show predictions and labelings also on consistent data
+
 ## v2.1.0 - 2020, Jan 3
 
 - use structopt 0.3
