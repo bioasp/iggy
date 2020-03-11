@@ -84,8 +84,10 @@ For more options you can ask for help as follows:
 
     FLAGS:
         -a, --auto-inputs               Declare nodes with indegree 0 as inputs
-            --depmat                    Combine multiple states, a change must be explained by an                                elementary path from an input
-            --elempath                  Every change must be explained by an elementary path from an                             input
+            --depmat                    Combine multiple states, a change must be explained by an
+                                        elementary path from an input
+            --elempath                  Every change must be explained by an elementary path from an
+                                        input
             --founded-constraints-off   Disable foundedness constraints
             --fwd-propagation-off       Disable forward propagation constraints
         -h, --help                      Prints help information
