@@ -42,7 +42,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: "$IGGY_GITHUB_DEPLOY_OAUTH_TOKEN"
+    secure: $IGGY_GITHUB_DEPLOY_OAUTH_TOKEN
   file: ${PACKAGE}
   skip_cleanup: true
   on:
