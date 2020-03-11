@@ -147,7 +147,6 @@ fn main() -> Result<()> {
         println!("done.");
         if mcos == 0 {
             println!("\nThe network and data are consistent: mcos = 0.");
-
         } else {
             println!("\nThe network and data are inconsistent: mcos = {}.", mcos);
 
