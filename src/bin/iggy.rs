@@ -128,17 +128,17 @@ fn main() -> Result<()> {
             if opt.mics {
                 compute_mics(&graph, &profile, &new_inputs, &setting);
             }
-            if let Some(max_labelings) = opt.max_labelings {
-                compute_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
-            }
-            if opt.show_predictions {
-                print!("\nCompute predictions under scenfit ... ");
-                let predictions =
-                    get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
-                println!("done.");
-                println!("\n# Predictions:");
-                print_predictions(&predictions);
-            }
+        }
+        if let Some(max_labelings) = opt.max_labelings {
+            compute_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
+        }
+        if opt.show_predictions {
+            print!("\nCompute predictions ... ");
+            let predictions =
+                get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
+            println!("done.");
+            println!("\n# Predictions:");
+            print_predictions(&predictions);
         }
     } else {
         print!("\nComputing mcos of network and data ... ");
@@ -147,23 +147,24 @@ fn main() -> Result<()> {
         println!("done.");
         if mcos == 0 {
             println!("\nThe network and data are consistent: mcos = 0.");
+
         } else {
             println!("\nThe network and data are inconsistent: mcos = {}.", mcos);
 
             if opt.mics {
                 compute_mics(&graph, &profile, &new_inputs, &setting);
             }
-            if let Some(max_labelings) = opt.max_labelings {
-                compute_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
-            }
-            if opt.show_predictions {
-                print!("\nCompute predictions under mcos ... ");
-                let predictions =
-                    get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
-                println!("done.");
-                println!("\n# Predictions:");
-                print_predictions(&predictions);
-            }
+        }
+        if let Some(max_labelings) = opt.max_labelings {
+            compute_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
+        }
+        if opt.show_predictions {
+            print!("\nCompute predictions ... ");
+            let predictions =
+                get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
+            println!("done.");
+            println!("\n# Predictions:");
+            print_predictions(&predictions);
         }
     }
     Ok(())
