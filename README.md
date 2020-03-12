@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/bioasp/iggy.svg?branch=master)](https://travis-ci.org/bioasp/iggy)
+[![Build Status](https://github.com/bioasp/iggy)](https://github.com/bioasp/iggy/workflows/ci-test/badge.svg)
 
 # `iggy` + `opt_graph`
 
