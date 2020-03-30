@@ -137,7 +137,7 @@ fn main() -> Result<()> {
             let predictions =
                 get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
             println!("done.");
-            println!("\n# Predictions:");
+            println!("\n# Predictions\n");
             print_predictions(&predictions);
         }
     } else {
@@ -162,7 +162,7 @@ fn main() -> Result<()> {
             let predictions =
                 get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
             println!("done.");
-            println!("\n# Predictions:");
+            println!("\n# Predictions\n");
             print_predictions(&predictions);
         }
     }
