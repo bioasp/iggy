@@ -15,7 +15,7 @@ use thiserror::Error;
 /// number of edges in the given network.
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "opt_graph")]
+#[structopt(name = "optgraph")]
 struct Opt {
     /// Influence graph in CIF format
     #[structopt(short = "n", long = "network", parse(from_os_str))]
