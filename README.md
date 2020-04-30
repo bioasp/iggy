@@ -10,11 +10,11 @@
 
 ## Downloads
 
-- precompiled binaries for 64bit linux and macOS can be found on the [release page](https://github.com/bioasp/iggy/releases/latest)
+- Precompiled binaries for 64bit linux and macOS can be found on the [release page](https://github.com/bioasp/iggy/releases/latest)
 
 - [Iggy user guide](https://bioasp.github.io/iggy/guide/guide.html)
 
-- sample data [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
+- Sample data [demo_data.tar.gz](https://bioasp.github.io/iggy/downloads/demo_data.tar.gz)
 
 ## Compile yourself
 
@@ -62,7 +62,6 @@ For more options you can ask for help as follows:
         -n, --network <network-file>             Influence graph in CIF format
         -o, --observations <observations-file>   Observations in bioquali format
 
-
 ## Optgraph
 
 Typical usage is:
@@ -79,7 +78,7 @@ For more options you can ask for help as follows:
     of edges in the given network.
 
     USAGE:
-        opt_graph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
+        optgraph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
 
     FLAGS:
         -a, --auto-inputs               Declare nodes with indegree 0 as inputs

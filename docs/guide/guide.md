@@ -35,7 +35,6 @@ Clone the git repository:
 
 The executables can be found under `./target/release/`
 
-
 ## Input Model + Data
 
 `iggy` and `optgraph` work with two kinds of data.
@@ -110,7 +109,7 @@ Additional you can turn on the following constraint:
 
 With the flag `--depmat` you can turn on a consistency notion that is used for the *dependency matrix*. This notion includes the *elementary path* constraint.
 
-For more information on the consistency notion see: 
+For more information on the consistency notion see:
 
 - [Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies](http://dx.doi.org/10.1186/s12859-015-0733-7),
 Sven Thiele, Luca Cerone, Julio Saez-Rodriguez, Anne Siegel, Carito Guziołowski, and Steffen Klamt, *BMC Bioinformatics*, 16(345), 2015.
@@ -210,7 +209,7 @@ and `1` edge with `Unknown`  influence.
         Inhibitions: 6
         Unknowns:    1
 
-The following *observations statistics* tells us that the experimental data given as `observation.obs` consist of `14` observations from which all are nodes of the model. This leaves `4` nodes of the model unobserved. Further there are `0` observations of species that are not in the model. 
+The following *observations statistics* tells us that the experimental data given as `observation.obs` consist of `14` observations from which all are nodes of the model. This leaves `4` nodes of the model unobserved. Further there are `0` observations of species that are not in the model.
 The experimental conditions has `2` perturbations marked as `input` nodes,
 and `1` node were observed with a *minimum level* `MIN` (resp. *maximum level* `MAX`).
 From the 14 observations `4` nodes were observed as increased `+`,
@@ -235,7 +234,6 @@ From the 14 observations `4` nodes were observed as increased `+`,
           0:                    7
           NotPlus:              1
           NotMinus:             1
-
 
 Then follow the results of the consistency analysis.
 Network and data are inconsistent
