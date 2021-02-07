@@ -68,7 +68,6 @@ For more options you can ask for help as follows:
         -n, --network <network-file>             Influence graph in CIF format
         -o, --observations <observations-file>   Observations in bioquali format
 
-
 ## Optgraph
 
 Typical usage is:
@@ -103,7 +102,6 @@ For more options you can ask for help as follows:
         -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
                                                            optgraph = add + remove edges,
                                                            flip = flip direction of edges
-
 
 ### Related publications
 
