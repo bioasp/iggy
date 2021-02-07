@@ -3,7 +3,7 @@ use cif_parser::EdgeSign;
 use cif_parser::Graph;
 pub mod profile_parser;
 use clingo::{
-    ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
+    AllModels, ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
     OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
 };
 use profile_parser::ProfileId;
@@ -372,7 +372,7 @@ pub fn get_minimal_inconsistent_cores(
     profile: &FactBase,
     inputs: &FactBase,
     setting: &SETTING,
-) -> Result<Vec<Vec<Symbol>>> {
+) -> Result<Mics> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         "0".to_string(),
@@ -392,10 +392,30 @@ pub fn get_minimal_inconsistent_cores(
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
-    let models = ctl.all_models()?;
-    models.map(|model| extract_mics(&model.symbols)).collect()
+    Ok(Mics(ctl))
 }
-
+pub struct Mics(Control);
+impl Mics {
+    pub fn iter(&mut self) -> Result<MicsIterator> {
+        Ok(MicsIterator(self.0.all_models()?))
+    }
+}
+pub struct MicsIterator<'a>(AllModels<'a>);
+impl<'a> Iterator for MicsIterator<'a> {
+    type Item = Vec<Symbol>;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.next() {
+            None => None,
+            Some(model) => {
+                let extract = extract_mics(&model.symbols);
+                match extract {
+                    Ok(x) => Some(x),
+                    _ => None,
+                }
+            }
+        }
+    }
+}
 /// returns the scenfit of data and model
 pub fn get_scenfit(
     graph: &FactBase,
