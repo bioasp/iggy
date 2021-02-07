@@ -272,23 +272,19 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
 }
 
 fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting: &SETTING) {
-    print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-    io::stdout().flush().ok().expect("Could not flush stdout");
-    let mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
-    println!("done.");
+    println!("\nComputing minimal inconsistent cores (mic\'s) ... ");
+    let mut mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
 
-    let mut count = 1;
     let mut oldmic = vec![];
-    for mic in mics {
+    for (count, mic) in mics.iter().unwrap().enumerate() {
         if oldmic != mic {
-            println!("\nmic {}:", count);
+            println!("\nmic {}:", count + 1);
             print!("  ");
             for e in mic.clone() {
                 let node = into_node_id(e).unwrap();
                 print!("{} ", node);
             }
             println!();
-            count += 1;
             oldmic = mic;
         }
     }
@@ -301,14 +297,11 @@ fn compute_scenfit_labelings(
     number: u32,
     setting: &SETTING,
 ) {
-    print!("\nCompute scenfit labelings ... ");
+    println!("\nCompute scenfit labelings ... ");
     let mut models = get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
-    let models_iter = models.iter().unwrap();
 
-    let mut count = 1;
-    for (labels, repairs) in models_iter {
-        println!("Labeling {}:", count);
-        count += 1;
+    for (count, (labels, repairs)) in models.iter().unwrap().enumerate() {
+        println!("Labeling {}:", count + 1);
         print_labels(labels);
         println!();
         println!(" Repairs: ");
@@ -327,13 +320,11 @@ fn compute_mcos_labelings(
     number: u32,
     setting: &SETTING,
 ) {
-    print!("\nCompute mcos labelings ... ");
+    println!("\nCompute mcos labelings ... ");
     let mut models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
-    let models_iter = models.iter().unwrap();
-    let mut count = 1;
-    for (labels, repairs) in models_iter {
-        println!("Labeling {}:", count);
-        count += 1;
+
+    for (count, (labels, repairs)) in models.iter().unwrap().enumerate() {
+        println!("Labeling {}:", count + 1);
         print_labels(labels);
         println!();
         println!(" Repairs: ");
