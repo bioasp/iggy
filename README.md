@@ -1,6 +1,4 @@
-[![Build Status](https://github.com/bioasp/iggy/workflows/CI%20Test/badge.svg)](https://github.com/bioasp/iggy)
-
-# `iggy` + `optgraph`
+# `iggy` + `optgraph` [![Build Status](https://github.com/bioasp/iggy/workflows/CI%20Test/badge.svg)](https://github.com/bioasp/iggy)
 
 `iggy` and `optgraph` are tools for consistency based analysis of influence graphs and observed systems behavior (signed changes between two measured states). For many (biological) systems are knowledge bases available that describe the interaction of its components in terms of causal networks, boolean networks and influence graphs where edges indicate either positive or negative effect of one node upon another.
 
