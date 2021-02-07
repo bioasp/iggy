@@ -2,19 +2,10 @@ pub mod cif_parser;
 use cif_parser::EdgeSign;
 use cif_parser::Graph;
 pub mod profile_parser;
-use clingo::ClingoError;
-use clingo::Control;
-use clingo::ExternalError;
-use clingo::ExternalFunctionHandler;
-use clingo::FactBase;
-use clingo::Location;
-use clingo::Part;
-use clingo::ShowType;
-use clingo::SolveHandle;
-use clingo::SolveMode;
-use clingo::Symbol;
-use clingo::SymbolType;
-use clingo::ToSymbol;
+use clingo::{
+    ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
+    OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
+};
 use profile_parser::ProfileId;
 
 /// This module contains the queries which can be asked to the model and data.
@@ -458,7 +449,7 @@ pub fn get_scenfit_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Labelings, Vec<Symbol>)>> {
+) -> Result<LabelsRepair> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -495,12 +486,30 @@ pub fn get_scenfit_labelings(
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
-    let models = ctl.optimal_models()?;
-    models
-        .map(|model| extract_labels_repairs(&model.symbols))
-        .collect()
+    Ok(LabelsRepair(ctl))
 }
-
+pub struct LabelsRepair(Control);
+impl LabelsRepair {
+    pub fn iter(&mut self) -> Result<LabelsRepairIterator> {
+        Ok(LabelsRepairIterator(self.0.optimal_models()?))
+    }
+}
+pub struct LabelsRepairIterator<'a>(OptimalModels<'a>);
+impl<'a> Iterator for LabelsRepairIterator<'a> {
+    type Item = (Labelings, Vec<Symbol>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.0.next() {
+            None => None,
+            Some(model) => {
+                let extract = extract_labels_repairs(&model.symbols);
+                match extract {
+                    Ok(x) => Some(x),
+                    _ => None,
+                }
+            }
+        }
+    }
+}
 /// returns the mcos of data and model
 pub fn get_mcos(
     graph: &FactBase,
@@ -554,7 +563,7 @@ pub fn get_mcos_labelings(
     inputs: &FactBase,
     number: u32,
     setting: &SETTING,
-) -> Result<Vec<(Labelings, Vec<Symbol>)>> {
+) -> Result<LabelsRepair> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -591,11 +600,7 @@ pub fn get_mcos_labelings(
 
     // ground & solve
     ground_with_myefh(&mut ctl)?;
-    let models = ctl.optimal_models()?;
-
-    models
-        .map(|model| extract_labels_repairs(&model.symbols))
-        .collect()
+    Ok(LabelsRepair(ctl))
 }
 pub fn get_predictions_under_mcos(
     graph: &FactBase,
@@ -1532,11 +1537,11 @@ impl fmt::Display for Behavior {
 }
 pub struct Prediction {
     pub node: String,
-    pub behavior: Behavior
+    pub behavior: Behavior,
 }
 impl fmt::Display for Prediction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} = {}",self.node, self.behavior)
+        write!(f, "{} = {}", self.node, self.behavior)
     }
 }
 /// Given a model this function returns a vector of pairs (node,label)
@@ -1554,13 +1559,22 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
                 if id.name()? == "or" {
                     match symbol.arguments()?[2].to_string()?.as_ref() {
                         "1" => {
-                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Plus});
+                            predictions.push(Prediction {
+                                node: id.arguments()?[0].string()?.to_string(),
+                                behavior: Behavior::Plus,
+                            });
                         }
                         "-1" => {
-                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Minus});
+                            predictions.push(Prediction {
+                                node: id.arguments()?[0].string()?.to_string(),
+                                behavior: Behavior::Minus,
+                            });
                         }
                         "0" => {
-                            predictions.push(Prediction{ node: id.arguments()?[0].string()?.to_string(), behavior: Behavior::Zero});
+                            predictions.push(Prediction {
+                                node: id.arguments()?[0].string()?.to_string(),
+                                behavior: Behavior::Zero,
+                            });
                         }
                         "notPlus" => {
                             not_plus.push(id.arguments()?[0].string()?.to_string());
@@ -1583,7 +1597,7 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
         }
     }
     for pred in &predictions {
-        if let Some(index) = not_minus.iter().position(|x| *x == *pred.node ) {
+        if let Some(index) = not_minus.iter().position(|x| *x == *pred.node) {
             not_minus.remove(index);
         }
         if let Some(index) = not_plus.iter().position(|x| *x == *pred.node) {
@@ -1594,13 +1608,22 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
         }
     }
     for node in not_minus {
-        predictions.push(Prediction{ node, behavior: Behavior::NotMinus});
+        predictions.push(Prediction {
+            node,
+            behavior: Behavior::NotMinus,
+        });
     }
     for node in not_plus {
-        predictions.push(Prediction{ node, behavior: Behavior::NotPlus});       
+        predictions.push(Prediction {
+            node,
+            behavior: Behavior::NotPlus,
+        });
     }
     for node in change {
-        predictions.push(Prediction{ node, behavior: Behavior::Change});        
+        predictions.push(Prediction {
+            node,
+            behavior: Behavior::Change,
+        });
     }
 
     Ok(predictions)

@@ -9,9 +9,7 @@ use iggy::cif_parser::Graph;
 
 use anyhow::Result;
 use iggy::profile_parser;
-use iggy::profile_parser::Profile;
-use iggy::profile_parser::Observation;
-use iggy::profile_parser::NodeSign;
+use iggy::profile_parser::{NodeSign, Observation, Profile};
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 
@@ -159,8 +157,7 @@ fn main() -> Result<()> {
         }
         if opt.show_predictions {
             print!("\nCompute predictions ... ");
-            let predictions =
-                get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
+            let predictions = get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
             println!("done.");
             println!("\n# Predictions\n");
             print_predictions(&predictions);
@@ -210,13 +207,17 @@ fn get_setting(opt: &Opt) -> SETTING {
 
 fn find_node_in_observations(observations: &[Observation], node_id: &NodeId) -> bool {
     for obs in observations {
-        if obs.node == *node_id {return true;}
+        if obs.node == *node_id {
+            return true;
+        }
     }
     false
 }
 fn find_node_in_nodes(nodes: &[NodeId], node_id: &NodeId) -> bool {
     for node in nodes {
-        if *node == *node_id {return true;}
+        if *node == *node_id {
+            return true;
+        }
     }
     false
 }
@@ -240,11 +241,11 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     let mut not_minus = 0;
     for obs in &profile.observations {
         match obs.sign {
-            NodeSign::Plus => plus +=1,
-            NodeSign::Minus => minus +=1,
-            NodeSign::Zero => zero +=1,
-            NodeSign::NotPlus => not_plus +=1,
-            NodeSign::NotMinus => not_minus +=1,
+            NodeSign::Plus => plus += 1,
+            NodeSign::Minus => minus += 1,
+            NodeSign::Zero => zero += 1,
+            NodeSign::NotPlus => not_plus += 1,
+            NodeSign::NotMinus => not_minus += 1,
         }
     }
 
@@ -269,7 +270,6 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     println!("      NotPlus:              {}", not_plus);
     println!("      NotMinus:             {}", not_minus);
 }
-    
 
 fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting: &SETTING) {
     print!("\nComputing minimal inconsistent cores (mic\'s) ... ");
@@ -302,10 +302,11 @@ fn compute_scenfit_labelings(
     setting: &SETTING,
 ) {
     print!("\nCompute scenfit labelings ... ");
-    let models = get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
-    println!("done.");
+    let mut models = get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let models_iter = models.iter().unwrap();
+
     let mut count = 1;
-    for (labels, repairs) in models {
+    for (labels, repairs) in models_iter {
         println!("Labeling {}:", count);
         count += 1;
         print_labels(labels);
@@ -327,10 +328,10 @@ fn compute_mcos_labelings(
     setting: &SETTING,
 ) {
     print!("\nCompute mcos labelings ... ");
-    let models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
-    println!("done.");
+    let mut models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let models_iter = models.iter().unwrap();
     let mut count = 1;
-    for (labels, repairs) in models {
+    for (labels, repairs) in models_iter {
         println!("Labeling {}:", count);
         count += 1;
         print_labels(labels);
@@ -372,12 +373,12 @@ fn print_predictions(predictions: &[Prediction]) {
     for pred in predictions {
         println!("    {}", pred);
         match pred.behavior {
-            Behavior::Plus => plus+=1,
-            Behavior::Minus => minus+=1,
-            Behavior::Zero => zero+=1,
-            Behavior::NotPlus => not_plus+=1,
-            Behavior::NotMinus => not_minus+=1,
-            Behavior::Change => change+=1,
+            Behavior::Plus => plus += 1,
+            Behavior::Minus => minus += 1,
+            Behavior::Zero => zero += 1,
+            Behavior::NotPlus => not_plus += 1,
+            Behavior::NotMinus => not_minus += 1,
+            Behavior::Change => change += 1,
         }
     }
     println!();

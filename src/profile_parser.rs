@@ -11,7 +11,7 @@ pub struct Profile {
     pub inputs: Vec<NodeId>,
     pub min: Vec<NodeId>,
     pub max: Vec<NodeId>,
-    pub observations : Vec<Observation>,
+    pub observations: Vec<Observation>,
 }
 #[derive(Debug, Clone)]
 pub struct Observation {
@@ -112,19 +112,34 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
                     inputs.push(NodeId::Or(s));
                 }
                 Ok(PStatement::Plus(s)) => {
-                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Plus});
+                    observations.push(Observation {
+                        node: NodeId::Or(s),
+                        sign: NodeSign::Plus,
+                    });
                 }
                 Ok(PStatement::Minus(s)) => {
-                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Minus});
+                    observations.push(Observation {
+                        node: NodeId::Or(s),
+                        sign: NodeSign::Minus,
+                    });
                 }
                 Ok(PStatement::Zero(s)) => {
-                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::Zero});
+                    observations.push(Observation {
+                        node: NodeId::Or(s),
+                        sign: NodeSign::Zero,
+                    });
                 }
                 Ok(PStatement::NotPlus(s)) => {
-                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::NotPlus});
+                    observations.push(Observation {
+                        node: NodeId::Or(s),
+                        sign: NodeSign::NotPlus,
+                    });
                 }
                 Ok(PStatement::NotMinus(s)) => {
-                    observations.push(Observation{ node : NodeId::Or(s), sign: NodeSign::NotMinus});
+                    observations.push(Observation {
+                        node: NodeId::Or(s),
+                        sign: NodeSign::NotMinus,
+                    });
                 }
                 Ok(PStatement::Min(s)) => {
                     min.push(NodeId::Or(s));
