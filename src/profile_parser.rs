@@ -1,6 +1,8 @@
 use crate::{FactBase, NodeId, ToSymbol};
 use anyhow::Result;
 use clingo::*;
+use serde::{Serialize, Serializer};
+use std::fmt;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -16,29 +18,57 @@ pub struct Profile {
 #[derive(Debug, Clone)]
 pub struct Observation {
     pub node: NodeId,
-    pub sign: NodeSign,
+    pub behavior: Behavior,
 }
+pub type ProfileId = String;
 #[derive(Debug, Copy, Clone)]
-pub enum NodeSign {
+pub enum Behavior {
     Plus,
     Minus,
     Zero,
     NotPlus,
     NotMinus,
+    Change,
 }
-impl ToSymbol for NodeSign {
+impl fmt::Display for Behavior {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Behavior::Plus => write!(f, "+"),
+            Behavior::Minus => write!(f, "-"),
+            Behavior::Zero => write!(f, "0"),
+            Behavior::NotPlus => write!(f, "notPlus"),
+            Behavior::NotMinus => write!(f, "notMinus"),
+            Behavior::Change => write!(f, "CHANGE"),
+        }
+    }
+}
+impl Serialize for Behavior {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Behavior::Plus => serializer.serialize_str("+"),
+            Behavior::Minus => serializer.serialize_str("-"),
+            Behavior::Zero => serializer.serialize_str("0"),
+            Behavior::NotPlus => serializer.serialize_str("notPlus"),
+            Behavior::NotMinus => serializer.serialize_str("notMinus"),
+            Behavior::Change => serializer.serialize_str("CHANGE"),
+        }
+    }
+}
+impl ToSymbol for Behavior {
     fn symbol(&self) -> Result<Symbol, ClingoError> {
         Ok(match self {
-            NodeSign::Plus => Symbol::create_number(1),
-            NodeSign::Minus => Symbol::create_number(-1),
-            NodeSign::Zero => Symbol::create_number(0),
-            NodeSign::NotPlus => Symbol::create_id("notPlus", true).unwrap(),
-            NodeSign::NotMinus => Symbol::create_id("notMinus", true).unwrap(),
+            Behavior::Plus => Symbol::create_number(1),
+            Behavior::Minus => Symbol::create_number(-1),
+            Behavior::Zero => Symbol::create_number(0),
+            Behavior::NotPlus => Symbol::create_id("notPlus", true).unwrap(),
+            Behavior::NotMinus => Symbol::create_id("notMinus", true).unwrap(),
+            Behavior::Change => Symbol::create_id("change", true).unwrap(),
         })
     }
 }
-pub type ProfileId = String;
-
 #[derive(ToSymbol)]
 pub struct Input<'a> {
     profile: &'a ProfileId,
@@ -49,7 +79,7 @@ pub struct Input<'a> {
 pub struct ObsVLabel<'a> {
     profile: &'a ProfileId,
     node: &'a NodeId,
-    sign: NodeSign,
+    behavior: Behavior,
 }
 
 #[derive(ToSymbol)]
@@ -77,7 +107,7 @@ impl Profile {
             facts.insert(&ObsVLabel {
                 profile: &self.id,
                 node: &obs.node,
-                sign: obs.sign,
+                behavior: obs.behavior,
             });
         }
         for node in &self.min {
@@ -114,31 +144,32 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
                 Ok(PStatement::Plus(s)) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-                        sign: NodeSign::Plus,
+
+                        behavior: Behavior::Plus,
                     });
                 }
                 Ok(PStatement::Minus(s)) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-                        sign: NodeSign::Minus,
+                        behavior: Behavior::Minus,
                     });
                 }
                 Ok(PStatement::Zero(s)) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-                        sign: NodeSign::Zero,
+                        behavior: Behavior::Zero,
                     });
                 }
                 Ok(PStatement::NotPlus(s)) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-                        sign: NodeSign::NotPlus,
+                        behavior: Behavior::NotPlus,
                     });
                 }
                 Ok(PStatement::NotMinus(s)) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-                        sign: NodeSign::NotMinus,
+                        behavior: Behavior::NotMinus,
                     });
                 }
                 Ok(PStatement::Min(s)) => {

@@ -1,6 +1,7 @@
 use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
 use anyhow::Result;
 use clingo::*;
+use serde::Serialize;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -36,6 +37,7 @@ struct Vertex {
     node: NodeId,
 }
 // #[derive(ToSymbol)]
+#[derive(Debug, Clone, Serialize)]
 pub enum EdgeSign {
     Plus,
     Minus,
@@ -63,6 +65,27 @@ pub struct Graph {
     n_edges: Vec<(NodeId, NodeId)>,
     u_edges: Vec<(NodeId, NodeId)>,
 }
+
+#[derive(Serialize, Debug)]
+pub struct NetworkStatistics {
+    or_nodes: usize,
+    and_nodes: usize,
+    activations: usize,
+    inhibitions: usize,
+    unknowns: usize,
+}
+impl NetworkStatistics {
+    pub fn print(&self) {
+        println!("\n## Network statistics\n");
+        println!("- OR nodes (species): {}", self.or_nodes);
+        println!("- AND nodes (complex regulation): {}", self.and_nodes);
+        println!("- Activations: {}", self.activations);
+        println!("- Inhibitions: {}", self.inhibitions);
+        println!("- Unknowns:    {}", self.unknowns);
+        // println!("          Dual = {}", len(unspecified))
+    }
+}
+
 impl Graph {
     pub fn empty() -> Graph {
         Graph {
@@ -132,7 +155,7 @@ impl Graph {
                 }
                 let andnode = NodeId::And(inner);
                 self.and_nodes.push(andnode.clone());
-                self.p_edges.push((andnode.clone(), targetnode.clone()));
+                self.p_edges.push((andnode.clone(), targetnode));
 
                 for node in pos {
                     let startnode = NodeId::Or(node);
@@ -183,6 +206,15 @@ impl Graph {
         }
         facts
     }
+    pub fn statistics(&self) -> NetworkStatistics {
+        NetworkStatistics {
+            or_nodes: self.or_nodes().len(),
+            and_nodes: self.and_nodes().len(),
+            activations: self.activations().len(),
+            inhibitions: self.inhibitions().len(),
+            unknowns: self.unknowns().len(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -204,7 +236,7 @@ pub enum Expression {
     Unknown(String),
 }
 
-peg::parser! {grammar cif() for str {
+peg::parser! { grammar cif() for str {
 
     rule whitespace() = quiet!{[' ' | '\t']+}
 
@@ -228,6 +260,6 @@ peg::parser! {grammar cif() for str {
         / s:ident() { Expression::Plain(s.to_string()) }
 
     pub rule exprlist() -> Vec<Expression>
-        = l:expr() whitespace()* "&" whitespace()* r:exprlist() { let mut a = r.clone(); a.push(l); a }
+        = l:expr() whitespace()* "&" whitespace()* r:exprlist() { let mut a = r; a.push(l); a }
         / s:expr() { vec![s] }
 }}

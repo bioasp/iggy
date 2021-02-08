@@ -54,6 +54,10 @@ struct Opt {
     ///              flip = flip direction of edges
     #[structopt(short = "m", long)]
     repair_mode: Option<RepairMode>,
+
+    /// Print JSON output
+    #[structopt(long)]
+    json: bool,
 }
 
 #[derive(Debug)]
@@ -94,7 +98,10 @@ fn main() -> Result<()> {
     let f = File::open(opt.network_file)?;
     let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
-    network_statistics(&ggraph);
+    let network_statistics = ggraph.statistics();
+    if !opt.json {
+        network_statistics.print();
+    }
 
     let paths = fs::read_dir(opt.observations_dir)?;
 
@@ -239,7 +246,7 @@ fn main() -> Result<()> {
             };
 
             let mut count = 0;
-            for r in repairs {
+            for r in &repairs {
                 count += 1;
                 println!("\nRepair {}: ", count);
                 for e in r {

@@ -1,15 +1,18 @@
+use anyhow::Result;
 use clingo::FactBase;
+use log::{info, warn};
+use serde::Serialize;
 use std::fs::File;
-use std::io::{self, Write};
 use std::path::PathBuf;
+use stderrlog;
 use structopt::StructOpt;
 
 use iggy::cif_parser;
 use iggy::cif_parser::Graph;
-
-use anyhow::Result;
 use iggy::profile_parser;
-use iggy::profile_parser::{NodeSign, Observation, Profile};
+
+use iggy::profile_parser::{Behavior, Observation, Profile};
+
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
 
@@ -65,112 +68,212 @@ struct Opt {
     /// Show predictions
     #[structopt(short = "p", long)]
     show_predictions: bool,
+
+    /// Print JSON output
+    #[structopt(long)]
+    json: bool,
 }
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
+    if opt.json {
+        println!("{{");
+    } else {
+        println!("# Iggy Report");
+    }
     let setting = get_setting(&opt);
+    stderrlog::new()
+        .module(module_path!())
+        .verbosity(2)
+        .init()
+        .unwrap();
 
-    println!("Reading network model from {:?}.", opt.network_file);
-    let f = File::open(opt.network_file)?;
+    info!("Reading network model ...");
+    if opt.json {
+        println!("\"Network file\":{:?}", opt.network_file);
+    } else {
+        println!("\nNetwork file: {:?}", opt.network_file);
+    }
+    let f = File::open(&opt.network_file)?;
     let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
-    network_statistics(&ggraph);
+    let network_statistics = ggraph.statistics();
+    if opt.json {
+        let serialized = serde_json::to_string(&network_statistics).unwrap();
+        println!(",\"Network Statistics\":{}", serialized);
+    } else {
+        network_statistics.print();
+    }
 
     let profile = {
-        if let Some(observationfile) = opt.observations_file {
-            println!("\nReading observations from {:?}.", observationfile);
-            let f = File::open(observationfile)?;
+        if let Some(observationfile) = &opt.observations_file {
+            info!("Reading observations ...");
+            if opt.json {
+                println!(",\"Observation file\":{:?}", observationfile);
+            } else {
+                println!("\nObservation file: {:?}", observationfile);
+            }
+            let f = File::open(&observationfile)?;
             let pprofile = profile_parser::read(&f, "x1")?;
 
-            observation_statistics(&pprofile, &ggraph);
+            let observations_statistics = observations_statistics(&pprofile, &ggraph);
+            if opt.json {
+                let serialized = serde_json::to_string(&observations_statistics).unwrap();
+                println!(",\"Observations Statistics\":{}", serialized);
+            } else {
+                observations_statistics.print();
+            }
             let profile = pprofile.to_facts();
 
+            info!("Checking observations ...");
             if let Inconsistent(reasons) = check_observations(&profile)? {
-                println!("The following observations are contradictory. Please correct them!");
+                warn!("The following observations are contradictory. Please correct them!");
                 for r in reasons {
-                    println!("{}", r);
+                    warn!("{}", r);
                 }
             }
             profile
         } else {
-            println!("\nEmpty observation data.");
+            warn!("Empty observation data.");
             FactBase::new()
         }
     };
 
     let new_inputs = {
         if opt.auto_inputs {
-            print!("\nComputing input nodes ...");
+            info!("Computing input nodes ...");
             let new_inputs = guess_inputs(&graph)?;
-            println!(" done.");
-            println!("  new inputs : {}", new_inputs.len());
+            let x = new_inputs
+                .iter()
+                .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap())
+                ;
+            if opt.json {
+                let y : Vec<NodeId> = x.collect();
+                let serialized = serde_json::to_string(&y).unwrap();
+                print!(",\"Computed inputs\":{}", serialized);
+            } else {
+                println!("\nnodes computed as inputs: {}", new_inputs.len());
+                for y in x.map(|x|match x { NodeId::And(node)=>node,NodeId::Or(node)=>node}) {
+                    println!("- {}", y);
+                }
+                println!()
+            }
             new_inputs
         } else {
             FactBase::new()
         }
     };
-
+    if ! opt.json {
+        println!("## Analysis Results\n");
+    }
     if opt.scenfit {
-        print!("\nComputing scenfit of network and data ... ");
+        info!("Computing scenfit of network and data ...");
         let scenfit = get_scenfit(&graph, &profile, &new_inputs, &setting)?;
-        println!("done.");
 
         if scenfit == 0 {
-            println!("\nThe network and data are consistent: scenfit = 0.");
+            info!("The network and data are consistent");
+            if opt.json {
+                println!(",\"scenfit\":0");
+            } else {
+                println!("scenfit: 0");
+            }
         } else {
-            println!(
-                "\nThe network and data are inconsistent: scenfit = {}.",
-                scenfit
-            );
+            info!("The network and data are inconsistent");
+            if opt.json {
+                println!(",\"scenfit\":{}", scenfit);
+            } else {
+                println!("scenfit: {}", scenfit);
+            }
             if opt.mics {
-                compute_mics(&graph, &profile, &new_inputs, &setting);
+                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
+                    .unwrap();
+                if opt.json {
+                    print_json_mics(mics);
+                } else {
+                    print_mics(mics);
+                }
             }
         }
         if let Some(max_labelings) = opt.max_labelings {
-            compute_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
+            let l = get_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting)
+                .unwrap();
+            if opt.json {
+                print_json_labelings(l);
+            } else {
+                print_labelings(l);
+            }
         }
         if opt.show_predictions {
-            print!("\nCompute predictions ... ");
+            info!("Compute predictions ...");
             let predictions =
                 get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
-            println!("done.");
-            println!("\n# Predictions\n");
-            print_predictions(&predictions);
+
+            if opt.json {
+                let serialized = serde_json::to_string(&predictions).unwrap();
+                println!(",\"Predictions\":{}", serialized);
+            } else {
+                print_predictions(&predictions);
+            }
         }
     } else {
-        print!("\nComputing mcos of network and data ... ");
-        io::stdout().flush().ok().expect("Could not flush stdout");
+        info!("Computing mcos of network and data ...");
         let mcos = get_mcos(&graph, &profile, &new_inputs, &setting)?;
-        println!("done.");
         if mcos == 0 {
-            println!("\nThe network and data are consistent: mcos = 0.");
+            info!("The network and data are consistent");
+            if opt.json {
+                println!(",\"mcos\":0");
+            } else {
+                println!("mcos: 0");
+            }
         } else {
-            println!("\nThe network and data are inconsistent: mcos = {}.", mcos);
-
+            info!("The network and data are inconsistent");
+            if opt.json {
+                println!(",\"mcos\":{}", mcos);
+            } else {
+                println!("mcos: {}", mcos);
+            }
             if opt.mics {
-                compute_mics(&graph, &profile, &new_inputs, &setting);
+                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
+                    .unwrap();
+                if opt.json {
+                    print_json_mics(mics);
+                } else {
+                    print_mics(mics);
+                }
             }
         }
         if let Some(max_labelings) = opt.max_labelings {
-            compute_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting);
+            let l =
+                get_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting).unwrap();
+            if opt.json {
+                print_json_labelings(l);
+            } else {
+                print_labelings(l);
+            }
         }
         if opt.show_predictions {
-            print!("\nCompute predictions ... ");
+            info!("Compute predictions ...");
             let predictions = get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
-            println!("done.");
-            println!("\n# Predictions\n");
-            print_predictions(&predictions);
+            if opt.json {
+                let serialized = serde_json::to_string(&predictions).unwrap();
+                println!(",\"Predictions\":{}", serialized);
+            } else {
+                print_predictions(&predictions);
+            }
         }
+    }
+    if opt.json {
+        print!("}}");
     }
     Ok(())
 }
 
 fn get_setting(opt: &Opt) -> SETTING {
-    println!("_____________________________________________________________________\n");
     let setting = if opt.depmat {
-        println!(" + DepMat combines multiple states.");
-        println!(" + An elementary path from an input must exist to explain changes.");
+        if !opt.json {
+            println!("\n- DepMat combines multiple states");
+            println!("- An elementary path from an input must exist to explain changes");
+        }
         SETTING {
             os: false,
             ep: true,
@@ -178,11 +281,15 @@ fn get_setting(opt: &Opt) -> SETTING {
             fc: true,
         }
     } else {
-        println!(" + All observed changes must be explained by a predecessor.");
+        if !opt.json {
+            println!("\n- All observed changes must be explained by a predecessor");
+        }
         SETTING {
             os: true,
             ep: if opt.elempath {
-                println!(" + An elementary path from an input must exist to explain changes.");
+                if !opt.json {
+                    println!("- An elementary path from an input must exist to explain changes");
+                }
                 true
             } else {
                 false
@@ -190,18 +297,21 @@ fn get_setting(opt: &Opt) -> SETTING {
             fp: if opt.fwd_propagation_off {
                 false
             } else {
-                println!(" + 0-change must be explained.");
+                if !opt.json {
+                    println!("- 0-change must be explained.");
+                }
                 true
             },
             fc: if opt.founded_constraints_off {
                 false
             } else {
-                println!(" + All observed changes must be explained by an input.");
+                if !opt.json {
+                    println!("- All observed changes must be explained by an input");
+                }
                 true
             },
         }
     };
-    println!("_____________________________________________________________________\n");
     setting
 }
 
@@ -221,10 +331,40 @@ fn find_node_in_nodes(nodes: &[NodeId], node_id: &NodeId) -> bool {
     }
     false
 }
+#[derive(Serialize, Debug)]
+struct ObservationsStatistics {
+    observed: usize,     // observed nodes of the model
+    unobserved: usize,   // unobserved nodes of the model
+    not_in_model: usize, // observations without node in the model
+    inputs: usize,       // number of inputs
+    min: usize,          // number of MIN
+    max: usize,          // number of MAX
+    observations: usize, // total number of observations
+    plus: usize,         // number of + observations
+    minus: usize,        // number of - observations
+    zero: usize,         // number of 0 observations
+    not_plus: usize,     // number of NOT + observations
+    not_minus: usize,    // number of NOT - observations
+}
+impl ObservationsStatistics {
+    fn print(&self) {
+        println!("\n## Observations statistics\n");
+        println!("- Observed model nodes:   {}", self.observed);
+        println!("- Unobserved model nodes: {}", self.unobserved);
+        println!("- Observed not in model:  {}", self.not_in_model);
+        println!("- Inputs:                 {}", self.inputs);
+        println!("- MIN:                    {}", self.min);
+        println!("- MAX:                    {}", self.max);
 
-fn observation_statistics(profile: &Profile, graph: &Graph) {
-    println!("\n# Observations statistics\n");
-
+        println!("- Observations:           {}", self.observations);
+        println!("  - +:                    {}", self.plus);
+        println!("  - -:                    {}", self.minus);
+        println!("  - 0:                    {}", self.zero);
+        println!("  - notPlus:              {}", self.not_plus);
+        println!("  - notMinus:             {}", self.not_minus);
+    }
+}
+fn observations_statistics(profile: &Profile, graph: &Graph) -> ObservationsStatistics {
     let model_nodes = graph.or_nodes();
     let mut unobserved = model_nodes.len();
     for node in model_nodes {
@@ -240,12 +380,13 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
     let mut not_plus = 0;
     let mut not_minus = 0;
     for obs in &profile.observations {
-        match obs.sign {
-            NodeSign::Plus => plus += 1,
-            NodeSign::Minus => minus += 1,
-            NodeSign::Zero => zero += 1,
-            NodeSign::NotPlus => not_plus += 1,
-            NodeSign::NotMinus => not_minus += 1,
+        match obs.behavior {
+            Behavior::Plus => plus += 1,
+            Behavior::Minus => minus += 1,
+            Behavior::Zero => zero += 1,
+            Behavior::NotPlus => not_plus += 1,
+            Behavior::NotMinus => not_minus += 1,
+            Behavior::Change => panic!("Behavior Change not supported in observation"),
         }
     }
 
@@ -255,29 +396,26 @@ fn observation_statistics(profile: &Profile, graph: &Graph) {
             not_in_model -= 1;
         }
     }
-
-    println!("    observed model nodes:   {}", observed);
-    println!("    unobserved model nodes: {}", unobserved);
-    println!("    observed not in model:  {}", not_in_model);
-    println!("    inputs:                 {}", profile.inputs.len());
-    println!("    MIN:                    {}", profile.min.len());
-    println!("    MAX:                    {}", profile.max.len());
-
-    println!("    observations:           {}", profile.observations.len());
-    println!("      +:                    {}", plus);
-    println!("      -:                    {}", minus);
-    println!("      0:                    {}", zero);
-    println!("      NotPlus:              {}", not_plus);
-    println!("      NotMinus:             {}", not_minus);
+    ObservationsStatistics {
+        observed,
+        unobserved,
+        not_in_model,
+        inputs: profile.inputs.len(),
+        min: profile.min.len(),
+        max: profile.max.len(),
+        observations: profile.observations.len(),
+        plus,
+        minus,
+        zero,
+        not_plus,
+        not_minus,
+    }
 }
 
-fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting: &SETTING) {
-    println!("\nComputing minimal inconsistent cores (mic\'s) ... ");
-    let mut mics = get_minimal_inconsistent_cores(&graph, &profile, &inputs, &setting).unwrap();
-
+fn print_mics(mut mics: Mics) {
     let mut oldmic = vec![];
     for (count, mic) in mics.iter().unwrap().enumerate() {
-        if oldmic != mic {
+        if oldmic != *mic {
             println!("\nmic {}:", count + 1);
             print!("  ");
             for e in mic.clone() {
@@ -289,68 +427,66 @@ fn compute_mics(graph: &FactBase, profile: &FactBase, inputs: &FactBase, setting
         }
     }
 }
+fn print_json_mics(mut mics: Mics) {
+    println!(",\"mics\":[");
 
-fn compute_scenfit_labelings(
-    graph: &FactBase,
-    profile: &FactBase,
-    inputs: &FactBase,
-    number: u32,
-    setting: &SETTING,
-) {
-    println!("\nCompute scenfit labelings ... ");
-    let mut models = get_scenfit_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let mut iter = mics.iter().unwrap();
+    if let Some(mic) = iter.next() {
+        let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
+        let serialized = serde_json::to_string(&nodes).unwrap();
+        println!("{}", serialized);
+        let mut oldmic = mic;
 
-    for (count, (labels, repairs)) in models.iter().unwrap().enumerate() {
-        println!("Labeling {}:", count + 1);
-        print_labels(labels);
-        println!();
-        println!(" Repairs: ");
-        for r in repairs {
-            let fix = into_repair(r).unwrap();
-            println!("    {}", fix);
-        }
-        println!();
-    }
-}
-
-fn compute_mcos_labelings(
-    graph: &FactBase,
-    profile: &FactBase,
-    inputs: &FactBase,
-    number: u32,
-    setting: &SETTING,
-) {
-    println!("\nCompute mcos labelings ... ");
-    let mut models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
-
-    for (count, (labels, repairs)) in models.iter().unwrap().enumerate() {
-        println!("Labeling {}:", count + 1);
-        print_labels(labels);
-        println!();
-        println!(" Repairs: ");
-        for r in repairs {
-            let fix = into_repair(r).unwrap();
-            println!("  {}", fix);
-        }
-        println!();
-    }
-}
-
-fn print_labels(labels: Vec<(clingo::Symbol, clingo::Symbol)>) {
-    for (node, sign) in labels {
-        let sign = match sign.to_string().unwrap().as_ref() {
-            "1" => "+",
-            "-1" => "-",
-            "0" => "0",
-            "notPlus" => "NotPlus",
-            "notMinus" => "NotMinus",
-            "change" => "CHANGE",
-            x => {
-                panic!("Unknown change: {}", x);
+        for mic in iter {
+            if oldmic != mic {
+                let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
+                let serialized = serde_json::to_string(&nodes).unwrap();
+                println!(", {}", serialized);
+                oldmic = mic;
             }
-        };
+        }
+    }
+    println!("]");
+}
 
-        println!("    {} = {}", node.string().unwrap(), sign);
+fn print_labelings(mut labelings: LabelsRepair) {
+    for (count, (labels, repairs)) in labelings.iter().unwrap().enumerate() {
+        println!("\n- Labeling {}:", count + 1);
+        print_labels(&labels);
+
+        println!("\n  Repairs:\n");
+        for fix in repairs {
+            println!("  - {}", fix);
+        }
+    }
+}
+fn print_json_labelings(mut labelings: LabelsRepair) {
+    println!(",\"labels under repair\":[");
+
+    let mut iter = labelings.iter().unwrap();
+    if let Some((labels, repairs)) = iter.next() {
+        let serialized = serde_json::to_string(&labels).unwrap();
+        println!("{{\"labels\":{}", serialized);
+
+        let serialized = serde_json::to_string(&repairs).unwrap();
+        println!(",\"repairs\":{}", serialized);
+        println!("}}");
+
+        for (labels, repairs) in iter {
+            let serialized = serde_json::to_string(&labels).unwrap();
+            println!(", {{\"labels\":{}", serialized);
+
+            let serialized = serde_json::to_string(&repairs).unwrap();
+            println!(",\"repairs\":{}", serialized);
+            println!("}}");
+        }
+    }
+    println!("]");
+}
+
+fn print_labels(labels: &[Prediction]) {
+    for assign in labels {
+        println!("  - {} = {}", assign.node, assign.behavior);
     }
 }
 
@@ -361,6 +497,7 @@ fn print_predictions(predictions: &[Prediction]) {
     let mut not_plus = 0;
     let mut not_minus = 0;
     let mut change = 0;
+    println!("\n## Predictions\n");
     for pred in predictions {
         println!("    {}", pred);
         match pred.behavior {
@@ -372,11 +509,11 @@ fn print_predictions(predictions: &[Prediction]) {
             Behavior::Change => change += 1,
         }
     }
-    println!();
-    println!("    predicted +        = {}", plus);
-    println!("    predicted -        = {}", minus);
-    println!("    predicted 0        = {}", zero);
-    println!("    predicted NotPlus  = {}", not_plus);
-    println!("    predicted NotMinus = {}", not_minus);
-    println!("    predicted CHANGE   = {}", change);
+    println!("\n## Prediction statistics\n");
+    println!("- predicted +        : {}", plus);
+    println!("- predicted -        : {}", minus);
+    println!("- predicted 0        : {}", zero);
+    println!("- predicted notPlus  : {}", not_plus);
+    println!("- predicted notMinus : {}", not_minus);
+    println!("- predicted CHANGE   : {}", change);
 }
