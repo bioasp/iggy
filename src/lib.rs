@@ -1,40 +1,44 @@
 pub mod cif_parser;
 use cif_parser::EdgeSign;
-use cif_parser::Graph;
 pub mod profile_parser;
+// <<<<<<< HEAD
 use clingo::{
     AllModels, ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
     OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
 };
+// =======
+// use clingo::ClingoError;
+// use clingo::Control;
+// use clingo::ExternalError;
+// use clingo::ExternalFunctionHandler;
+// use clingo::FactBase;
+// use clingo::Location;
+// use clingo::Part;
+// use clingo::ShowType;
+// use clingo::SolveHandle;
+// use clingo::SolveMode;
+// use clingo::Symbol;
+// use clingo::SymbolType;
+// use clingo::ToSymbol;
+use profile_parser::Behavior;
 use profile_parser::ProfileId;
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
 use anyhow::Result;
 use encodings::*;
+use log::info;
+use serde::Serialize;
 use std::fmt;
 use thiserror::Error;
 
-type Labelings = Vec<(Symbol, Symbol)>;
+type Labelings = Vec<Prediction>;
 
 pub struct SETTING {
     pub os: bool,
     pub ep: bool,
     pub fp: bool,
     pub fc: bool,
-}
-
-pub fn network_statistics(graph: &Graph) {
-    println!("\n# Network statistics\n");
-    println!("    OR nodes (species): {}", graph.or_nodes().len());
-    println!(
-        "    AND nodes (complex regulation): {}",
-        graph.and_nodes().len()
-    );
-    println!("    Activations: {}", graph.activations().len());
-    println!("    Inhibitions: {}", graph.inhibitions().len());
-    println!("    Unknowns:    {}", graph.unknowns().len());
-    // println!("          Dual = {}", len(unspecified))
 }
 
 #[derive(Debug, Error)]
@@ -48,7 +52,7 @@ impl IggyError {
     }
 }
 
-#[derive(ToSymbol)]
+#[derive(Debug, Clone, ToSymbol, Serialize)]
 pub struct ObsELabel {
     start: NodeId,
     target: NodeId,
@@ -62,7 +66,8 @@ impl fmt::Display for ObsELabel {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ToSymbol)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ToSymbol, Serialize)]
+#[serde(untagged)]
 pub enum NodeId {
     Or(String),
     And(String),
@@ -79,12 +84,22 @@ pub enum CheckResult {
     Consistent,
     Inconsistent(Vec<String>),
 }
+
+#[derive(Debug, Clone, Serialize)]
 pub enum RepairOp {
     AddEdge(ObsELabel),
     RemoveEdge(ObsELabel),
     FlipEdgeDirection(ObsELabel),
-    FlipNodeSign(ProfileId, NodeId, Direction),
-    NewInfluence(ProfileId, NodeId, EdgeSign),
+    FlipNodeSign {
+        profile: ProfileId,
+        node: NodeId,
+        direction: Direction,
+    },
+    NewInfluence {
+        profile: ProfileId,
+        target: NodeId,
+        sign: EdgeSign,
+    },
 }
 impl fmt::Display for RepairOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -92,31 +107,71 @@ impl fmt::Display for RepairOp {
             RepairOp::AddEdge(e) => write!(f, "add edge: {}", e),
             RepairOp::RemoveEdge(e) => write!(f, "remove edge: {}", e),
             RepairOp::FlipEdgeDirection(e) => write!(f, "flip direction: {}", e),
-            RepairOp::FlipNodeSign(_e, n, Direction::PlusToMinus) => {
-                write!(f, "flip {}: + to -", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::PlusToMinus,
+            } => {
+                write!(f, "flip {}: + to -", node)
             }
-            RepairOp::FlipNodeSign(_e, n, Direction::PlusToZero) => write!(f, "flip {}: + to 0", n),
-            RepairOp::FlipNodeSign(_e, n, Direction::ZeroToMinus) => {
-                write!(f, "flip {}: 0 to -", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::PlusToZero,
+            } => write!(f, "flip {}: + to 0", node),
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::ZeroToMinus,
+            } => {
+                write!(f, "flip {}: 0 to -", node)
             }
-            RepairOp::FlipNodeSign(_e, n, Direction::ZeroToPlus) => write!(f, "flip {}: 0 to +", n),
-            RepairOp::FlipNodeSign(_e, n, Direction::MinusToPlus) => {
-                write!(f, "flip {}: - to +", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::ZeroToPlus,
+            } => write!(f, "flip {}: 0 to +", node),
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::MinusToPlus,
+            } => {
+                write!(f, "flip {}: - to +", node)
             }
-            RepairOp::FlipNodeSign(_e, n, Direction::MinusToZero) => {
-                write!(f, "flip {}: - to 0", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::MinusToZero,
+            } => {
+                write!(f, "flip {}: - to 0", node)
             }
-            RepairOp::FlipNodeSign(_e, n, Direction::NotPlusToPlus) => {
-                write!(f, "flip {}: notPlus to +", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::NotPlusToPlus,
+            } => {
+                write!(f, "flip {}: notPlus to +", node)
             }
-            RepairOp::FlipNodeSign(_e, n, Direction::NotMinusToMinus) => {
-                write!(f, "flip {}: notMinus to -", n)
+            RepairOp::FlipNodeSign {
+                profile: _,
+                node,
+                direction: Direction::NotMinusToMinus,
+            } => {
+                write!(f, "flip {}: notMinus to -", node)
             }
-            RepairOp::NewInfluence(_e, n, EdgeSign::Plus) => {
-                write!(f, "new increasing influence on: {}", n)
+            RepairOp::NewInfluence {
+                profile: _,
+                target,
+                sign: EdgeSign::Plus,
+            } => {
+                write!(f, "new increasing influence on {}", target)
             }
-            RepairOp::NewInfluence(_e, n, EdgeSign::Minus) => {
-                write!(f, "new decreasing influence on: {}", n)
+            RepairOp::NewInfluence {
+                profile: _,
+                target,
+                sign: EdgeSign::Minus,
+            } => {
+                write!(f, "new decreasing influence on {}", target)
             }
         }
     }
@@ -288,7 +343,7 @@ impl ExternalFunctionHandler for MyEFH {
             let res = member(element, list);
             Ok(vec![res])
         } else {
-            println!("name: {}", name);
+            eprintln!("name: {}", name);
             Err(ExternalError {
                 msg: "unknown external function!",
             })
@@ -373,6 +428,7 @@ pub fn get_minimal_inconsistent_cores(
     inputs: &FactBase,
     setting: &SETTING,
 ) -> Result<Mics> {
+    info!("Computing minimal inconsistent cores (mic\'s) ...");
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         "0".to_string(),
@@ -470,6 +526,7 @@ pub fn get_scenfit_labelings(
     number: u32,
     setting: &SETTING,
 ) -> Result<LabelsRepair> {
+    info!("Compute scenfit labelings ...");
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -516,7 +573,7 @@ impl LabelsRepair {
 }
 pub struct LabelsRepairIterator<'a>(OptimalModels<'a>);
 impl<'a> Iterator for LabelsRepairIterator<'a> {
-    type Item = (Labelings, Vec<Symbol>);
+    type Item = (Vec<Prediction>, Vec<RepairOp>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.next() {
             None => None,
@@ -584,6 +641,8 @@ pub fn get_mcos_labelings(
     number: u32,
     setting: &SETTING,
 ) -> Result<LabelsRepair> {
+    info!("Compute mcos labelings ...");
+
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![
         format!("{}", number),
@@ -757,6 +816,20 @@ pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
         }
     }
 }
+pub fn into_behavior(symbol: Symbol) -> Result<Behavior> {
+    match symbol.to_string()?.as_ref() {
+        "1" => Ok(Behavior::Plus),
+        "-1" => Ok(Behavior::Minus),
+        "0" => Ok(Behavior::Zero),
+        "notPlus" => Ok(Behavior::NotPlus),
+        "notMinus" => Ok(Behavior::NotMinus),
+        "change" => Ok(Behavior::Change),
+        x => {
+            panic!("Unexpected behavior: {}", x);
+        }
+    }
+}
+#[derive(Debug, Clone, Serialize)]
 pub enum Direction {
     PlusToZero,
     PlusToMinus,
@@ -767,7 +840,7 @@ pub enum Direction {
     NotMinusToMinus,
     NotPlusToPlus,
 }
-pub fn into_repair(symbol: Symbol) -> Result<RepairOp> {
+pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
     match symbol.name()? {
         "addedge" => {
             let arguments = symbol.arguments()?;
@@ -819,71 +892,103 @@ pub fn into_repair(symbol: Symbol) -> Result<RepairOp> {
         }
         "flip_node_sign_Plus_to_0" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::PlusToZero;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_Plus_to_Minus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::PlusToMinus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_Minus_to_0" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::MinusToZero;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_Minus_to_Plus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::MinusToPlus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_0_to_Plus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::ZeroToPlus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_0_to_Minus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::ZeroToMinus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_notMinus_to_Minus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::NotMinusToMinus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "flip_node_sign_notPlus_to_Plus" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let node = into_node_id(arguments[1])?;
             let direction = Direction::NotPlusToPlus;
 
-            Ok(RepairOp::FlipNodeSign(profile_id, node, direction))
+            Ok(RepairOp::FlipNodeSign {
+                profile,
+                node,
+                direction,
+            })
         }
         "new_influence" => {
             let arguments = symbol.arguments()?;
-            let profile_id = arguments[0].string()?.to_string();
+            let profile = arguments[0].string()?.to_string();
             let target = into_node_id(arguments[1])?;
             let sign = match arguments[2].number() {
                 Ok(1) => EdgeSign::Plus,
@@ -891,7 +996,11 @@ pub fn into_repair(symbol: Symbol) -> Result<RepairOp> {
                 _ => panic!("unexpected EdgeSign"),
             };
 
-            Ok(RepairOp::NewInfluence(profile_id, target, sign))
+            Ok(RepairOp::NewInfluence {
+                profile,
+                target,
+                sign,
+            })
         }
         _ => {
             panic!("unmatched symbol: {}", symbol.to_string()?);
@@ -1437,7 +1546,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
 
 /// Given a model this function returns a vector of pairs (node,label)
 /// and a vector of repair operations needed to make the labeling consistent
-fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<Symbol>)> {
+fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp>)> {
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
@@ -1446,42 +1555,45 @@ fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<Symbol>)
                 let id = symbol.arguments()?[1];
                 // only return or nodes
                 if id.name()? == "or" {
-                    let sign = symbol.arguments()?[2];
-                    vlabels.push((id.arguments()?[0], sign));
+                    let behavior = into_behavior(symbol.arguments()?[2])?;
+                    vlabels.push(Prediction {
+                        node: id.arguments()?[0].string()?.to_string(),
+                        behavior,
+                    });
                 }
             }
             "flip_node_sign_Plus_to_0" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_Plus_to_Plus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_Minus_to_0" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_Minus_to_Plus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_0_to_Plus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_0_to_Minus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_notPlus_to_Plus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "flip_node_sign_notMinus_to_Minus" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "addedge" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "remedge" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             "new_influence" => {
-                err.push(*symbol);
+                err.push(into_repair(symbol)?);
             }
             _ => {
                 panic!("unmatched symbol: {}", symbol.to_string()?);
@@ -1534,27 +1646,7 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
 }
 type Predictions = Vec<Prediction>;
 
-#[derive(Debug, Copy, Clone)]
-pub enum Behavior {
-    Plus,
-    Minus,
-    Zero,
-    NotPlus,
-    NotMinus,
-    Change,
-}
-impl fmt::Display for Behavior {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Behavior::Plus => write!(f, "+"),
-            Behavior::Minus => write!(f, "-"),
-            Behavior::Zero => write!(f, "0"),
-            Behavior::NotPlus => write!(f, "NotPlus"),
-            Behavior::NotMinus => write!(f, "NotMinus"),
-            Behavior::Change => write!(f, "CHANGE"),
-        }
-    }
-}
+#[derive(Debug, Clone, Serialize)]
 pub struct Prediction {
     pub node: String,
     pub behavior: Behavior,
@@ -1564,7 +1656,7 @@ impl fmt::Display for Prediction {
         write!(f, "{} = {}", self.node, self.behavior)
     }
 }
-/// Given a model this function returns a vector of pairs (node,label)
+/// Given a model this function returns a Vector of Predictions
 fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
     let mut predictions = Vec::new();
     let mut not_plus = Vec::new();
