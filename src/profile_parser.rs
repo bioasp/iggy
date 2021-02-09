@@ -178,7 +178,7 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
                 Ok(PStatement::Max(s)) => {
                     max.push(NodeId::Or(s));
                 }
-                Err(e) => println!("Parse error: {}", e),
+                Err(e) => Err(e)?,
             }
         }
     }

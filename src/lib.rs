@@ -6,22 +6,7 @@ use clingo::{
     AllModels, ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
     OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
 };
-// =======
-// use clingo::ClingoError;
-// use clingo::Control;
-// use clingo::ExternalError;
-// use clingo::ExternalFunctionHandler;
-// use clingo::FactBase;
-// use clingo::Location;
-// use clingo::Part;
-// use clingo::ShowType;
-// use clingo::SolveHandle;
-// use clingo::SolveMode;
-// use clingo::Symbol;
-// use clingo::SymbolType;
-// use clingo::ToSymbol;
-use profile_parser::Behavior;
-use profile_parser::ProfileId;
+use profile_parser::{Behavior, ProfileId};
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
@@ -34,13 +19,56 @@ use thiserror::Error;
 
 type Labelings = Vec<Prediction>;
 
+#[derive(Debug, Clone, Serialize)]
 pub struct SETTING {
     pub os: bool,
     pub ep: bool,
     pub fp: bool,
     pub fc: bool,
 }
+impl SETTING {
+    pub fn to_json(&self) -> String {
+        format!(
+            "{{
+        \"depmat\":{},
+        \"elempath\":{},
+        \"forward-propagation\":{},
+        \"founded-constraint\":{}\n}}",
+            !self.os, self.ep, self.fp, self.fc
+        )
+    }
+}
+impl fmt::Display for SETTING {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "\n## Settings\n")?;
+        if !self.os {
+            writeln!(f, "- Dependency matrix combines multiple states.")?;
+            writeln!(
+                f,
+                "- An elementary path from an input must exist to explain changes."
+            )?;
+        } else {
+            writeln!(
+                f,
+                "- All observed changes must be explained by a predecessor."
+            )?;
 
+            if self.ep {
+                writeln!(
+                    f,
+                    "- An elementary path from an input must exist to explain changes."
+                )?;
+            }
+            if self.fp {
+                writeln!(f, "- 0-change must be explained.")?;
+            }
+            if self.fc {
+                writeln!(f, "- All observed changes must be explained by an input.")?;
+            }
+        }
+        write!(f, "")
+    }
+}
 #[derive(Debug, Error)]
 #[error("IggyError: {msg}")]
 pub struct IggyError {

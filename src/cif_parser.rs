@@ -17,7 +17,7 @@ pub fn read(file: &File) -> Result<Graph> {
                 Ok(r) => {
                     graph.add(r);
                 }
-                Err(e) => println!("Parse error: {}", e),
+                Err(e) => Err(e)?,
             }
         }
     }
