@@ -1,62 +1,64 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
+use clap::Clap;
 use clingo::FactBase;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
+use log::{error, info, warn};
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
 use std::str::FromStr;
-use structopt::StructOpt;
+use stderrlog;
 use thiserror::Error;
 
-/// Opt-graph confronts interaction graph models with observations of (signed) changes between
+/// Optgraph confronts interaction graph models with observations of (signed) changes between
 /// two measured states.
 /// Opt-graph computes networks fitting the observation data by removing (or adding) a minimal
 /// number of edges in the given network.
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "optgraph")]
+#[derive(Clap, Debug)]
+#[clap(version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
 struct Opt {
     /// Influence graph in CIF format
-    #[structopt(short = "n", long = "network", parse(from_os_str))]
+    #[clap(short = 'n', long = "network", parse(from_os_str))]
     network_file: PathBuf,
 
     /// Directory of observations in bioquali format
-    #[structopt(short = "o", long = "observations", parse(from_os_str))]
+    #[clap(short = 'o', long = "observations", parse(from_os_str))]
     observations_dir: PathBuf,
 
     /// Disable forward propagation constraints
-    #[structopt(long, conflicts_with = "depmat")]
+    #[clap(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[structopt(long, conflicts_with = "depmat")]
+    #[clap(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[structopt(long)]
+    #[clap(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[structopt(long)]
+    #[clap(long)]
     depmat: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[structopt(short = "a", long)]
+    #[clap(short = 'a', long)]
     auto_inputs: bool,
 
     /// Show max-repairs repairs, default is OFF, 0=all
-    #[structopt(short = "r", long = "show-repairs")]
+    #[clap(short = 'r', long = "show-repairs")]
     max_repairs: Option<u32>,
 
     /// Repair mode: remove = remove edges (default),
     ///              optgraph = add + remove edges,
     ///              flip = flip direction of edges
-    #[structopt(short = "m", long)]
+    #[clap(short = 'm', long)]
     repair_mode: Option<RepairMode>,
 
     /// Print JSON output
-    #[structopt(long)]
+    #[clap(long)]
     json: bool,
 }
 
@@ -89,47 +91,96 @@ impl FromStr for RepairMode {
         }
     }
 }
-
-fn main() -> Result<()> {
-    let opt = Opt::from_args();
+fn main() {
+    stderrlog::new()
+        .module(module_path!())
+        .verbosity(2)
+        .init()
+        .unwrap();
+    if let Err(err) = run() {
+        error!("{:?}", err);
+        std::process::exit(1);
+    }
+}
+fn run() -> Result<()> {
+    let opt = Opt::parse();
+    if opt.json {
+        println!("{{");
+    } else {
+        println!("# Optgraph Report");
+    }
     let setting = get_setting(&opt);
 
-    println!("Reading network model from {:?}.", opt.network_file);
-    let f = File::open(opt.network_file)?;
+    info!("Reading network model ...");
+    if opt.json {
+        println!("\"Network file\":{:?}", opt.network_file);
+    } else {
+        println!("\nNetwork file: {}", opt.network_file.display());
+    }
+    let f = File::open(&opt.network_file)
+        .context(format!("unable to open '{}'", opt.network_file.display()))?;
     let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
     let network_statistics = ggraph.statistics();
-    if !opt.json {
+    if opt.json {
+        let serialized = serde_json::to_string(&network_statistics).unwrap();
+        println!(",\"Network Statistics\":{}", serialized);
+    } else {
         network_statistics.print();
     }
 
-    let paths = fs::read_dir(opt.observations_dir)?;
+    let directory = fs::read_dir(&opt.observations_dir).context(format!(
+        "unable to read '{}'",
+        opt.observations_dir.display()
+    ))?;
+    info!("Reading observations ...");
+    if opt.json {
+        println!(",\"Observation files\":{:?}", directory);
+    } else {
+        println!("\nObservation files:");
+    }
+    let json = opt.json;
+    let mut profiles = Ok(FactBase::new());
+    for entry in directory {
+        let observationfile = entry?.path();
+        let name = format!("{}", observationfile.display());
+        if !json {
+            println!("- {}", name);
+        }
+        let f = File::open(observationfile).unwrap();
+        let pprofile = profile_parser::read(&f, &name).unwrap();
+        let profile = pprofile.to_facts();
 
-    let profiles = paths
-        .fold(Some(FactBase::new()), |acc, path| {
-            let observationfile = path.unwrap().path();
-            let name = format!("{}", observationfile.display());
-            println!("\nReading observations from {}.", name);
-            let f = File::open(observationfile).unwrap();
-            let pprofile = profile_parser::read(&f, &name).unwrap();
-            let profile = pprofile.to_facts();
-
-            if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
-                println!("The following observations are contradictory. Please correct them!");
-                for r in reasons {
-                    println!("{}", r);
+        if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+            match profiles {
+                Ok(_) => {
+                    warn!("Contradictory observations. Please correct them!");
+                    profiles = Err(anyhow!(
+                        "\nInconsistent observations in {}\n- {}",
+                        name,
+                        reasons.join("\n- ")
+                    ));
                 }
-                return None;
-            }
-            match acc {
-                Some(mut acc) => {
-                    acc.union(&profile);
-                    Some(acc)
+                Err(ref e) => {
+                    warn!("Contradictory observations. Please correct them!");
+                    profiles = Err(anyhow!(
+                        "\nInconsistent observations in {}\n- {}\n{}",
+                        name,
+                        reasons.join("\n- "),
+                        e
+                    ))
                 }
-                None => None,
             }
-        })
-        .unwrap();
+        }
+        match profiles {
+            Ok(mut acc) => {
+                acc.union(&profile);
+                profiles = Ok(acc)
+            }
+            Err(e) => profiles = Err(e),
+        }
+    }
+    let profiles = profiles?;
 
     let new_inputs = {
         if opt.auto_inputs {
