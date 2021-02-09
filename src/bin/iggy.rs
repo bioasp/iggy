@@ -96,18 +96,19 @@ fn run() -> Result<()> {
 
     info!("Reading network model ...");
     if opt.json {
-        println!("\"Network file\":{:?}", opt.network_file);
+        println!(",\"Network file\":{:?}", opt.network_file);
     } else {
         println!("\nNetwork file: {}", opt.network_file.display());
     }
     let f = File::open(&opt.network_file)
         .context(format!("unable to open '{}'", opt.network_file.display()))?;
 
-    let ggraph = cif_parser::read(&f)?;
+    let ggraph = cif_parser::read(&f)
+        .context(format!("unable to parse '{}'", opt.network_file.display()))?;
     let graph = ggraph.to_facts();
     let network_statistics = ggraph.statistics();
     if opt.json {
-        let serialized = serde_json::to_string(&network_statistics).unwrap();
+        let serialized = serde_json::to_string(&network_statistics)?;
         println!(",\"Network Statistics\":{}", serialized);
     } else {
         network_statistics.print();
@@ -123,11 +124,12 @@ fn run() -> Result<()> {
             }
             let f = File::open(&observationfile)
                 .context(format!("unable to open '{}'", observationfile.display()))?;
-            let pprofile = profile_parser::read(&f, "x1")?;
+            let pprofile = profile_parser::read(&f, "x1")
+                .context(format!("unable to parse '{}'", observationfile.display()))?;
 
             let observations_statistics = observations_statistics(&pprofile, &ggraph);
             if opt.json {
-                let serialized = serde_json::to_string(&observations_statistics).unwrap();
+                let serialized = serde_json::to_string(&observations_statistics)?;
                 println!(",\"Observations Statistics\":{}", serialized);
             } else {
                 observations_statistics.print();
@@ -159,7 +161,7 @@ fn run() -> Result<()> {
                 .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
             if opt.json {
                 let y: Vec<NodeId> = x.collect();
-                let serialized = serde_json::to_string(&y).unwrap();
+                let serialized = serde_json::to_string(&y)?;
                 print!(",\"Computed inputs\":{}", serialized);
             } else {
                 println!("\nnodes computed as inputs: {}", new_inputs.len());
@@ -177,7 +179,7 @@ fn run() -> Result<()> {
         }
     };
     if !opt.json {
-        println!("## Consistency results\n");
+        println!("\n## Consistency results\n");
     }
     if opt.scenfit {
         info!("Computing scenfit of network and data ...");
@@ -188,14 +190,14 @@ fn run() -> Result<()> {
             if opt.json {
                 println!(",\"scenfit\":0");
             } else {
-                println!("scenfit: 0");
+                println!("scenfit: 0\n");
             }
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
                 println!(",\"scenfit\":{}", scenfit);
             } else {
-                println!("scenfit: {}", scenfit);
+                println!("scenfit: {}\n", scenfit);
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
@@ -236,14 +238,14 @@ fn run() -> Result<()> {
             if opt.json {
                 println!(",\"mcos\":0");
             } else {
-                println!("mcos: 0");
+                println!("mcos: 0\n");
             }
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
                 println!(",\"mcos\":{}", mcos);
             } else {
-                println!("mcos: {}", mcos);
+                println!("mcos: {}\n", mcos);
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
@@ -283,10 +285,6 @@ fn run() -> Result<()> {
 
 fn get_setting(opt: &Opt) -> SETTING {
     let setting = if opt.depmat {
-        if !opt.json {
-            println!("\n- DepMat combines multiple states");
-            println!("- An elementary path from an input must exist to explain changes");
-        }
         SETTING {
             os: false,
             ep: true,
@@ -294,37 +292,18 @@ fn get_setting(opt: &Opt) -> SETTING {
             fc: true,
         }
     } else {
-        if !opt.json {
-            println!("\n- All observed changes must be explained by a predecessor");
-        }
         SETTING {
             os: true,
-            ep: if opt.elempath {
-                if !opt.json {
-                    println!("- An elementary path from an input must exist to explain changes");
-                }
-                true
-            } else {
-                false
-            },
-            fp: if opt.fwd_propagation_off {
-                false
-            } else {
-                if !opt.json {
-                    println!("- 0-change must be explained.");
-                }
-                true
-            },
-            fc: if opt.founded_constraints_off {
-                false
-            } else {
-                if !opt.json {
-                    println!("- All observed changes must be explained by an input");
-                }
-                true
-            },
+            ep: opt.elempath,
+            fp: !opt.fwd_propagation_off,
+            fc: !opt.founded_constraints_off,
         }
     };
+    if opt.json {
+        println!("\"Iggy settings\":{}", setting.to_json());
+    } else {
+        print!("{}", setting)
+    }
     setting
 }
 
@@ -429,11 +408,10 @@ fn print_mics(mut mics: Mics) {
     let mut oldmic = vec![];
     for (count, mic) in mics.iter().unwrap().enumerate() {
         if oldmic != *mic {
-            println!("\nmic {}:", count + 1);
-            print!("  ");
+            println!("- mic {}:", count + 1);
             for e in mic.clone() {
                 let node = into_node_id(e).unwrap();
-                print!("{} ", node);
+                println!("  - {} ", node);
             }
             println!();
             oldmic = mic;
@@ -464,10 +442,10 @@ fn print_json_mics(mut mics: Mics) {
 
 fn print_labelings(mut labelings: LabelsRepair) {
     for (count, (labels, repairs)) in labelings.iter().unwrap().enumerate() {
-        println!("\n- Labeling {}:", count + 1);
+        println!("- Labeling {}:", count + 1);
         print_labels(&labels);
 
-        println!("\n  Repairs:\n");
+        println!("\n  Repairs:");
         for fix in repairs {
             println!("  - {}", fix);
         }
@@ -512,7 +490,7 @@ fn print_predictions(predictions: &[Prediction]) {
     let mut change = 0;
     println!("\n## Predictions\n");
     for pred in predictions {
-        println!("    {}", pred);
+        println!("- {}", pred);
         match pred.behavior {
             Behavior::Plus => plus += 1,
             Behavior::Minus => minus += 1,

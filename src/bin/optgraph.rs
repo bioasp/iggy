@@ -119,39 +119,40 @@ fn run() -> Result<()> {
     }
     let f = File::open(&opt.network_file)
         .context(format!("unable to open '{}'", opt.network_file.display()))?;
-    let ggraph = cif_parser::read(&f)?;
+    let ggraph = cif_parser::read(&f)
+        .context(format!("unable to parse '{}'", opt.network_file.display()))?;
     let graph = ggraph.to_facts();
     let network_statistics = ggraph.statistics();
     if opt.json {
-        let serialized = serde_json::to_string(&network_statistics).unwrap();
+        let serialized = serde_json::to_string(&network_statistics)?;
         println!(",\"Network Statistics\":{}", serialized);
     } else {
         network_statistics.print();
     }
 
     let directory = fs::read_dir(&opt.observations_dir).context(format!(
-        "unable to read '{}'",
+        "unable to read directory '{}'",
         opt.observations_dir.display()
     ))?;
     info!("Reading observations ...");
     if opt.json {
-        println!(",\"Observation files\":{:?}", directory);
+        println!(",\"Observation files\":");
     } else {
         println!("\nObservation files:");
     }
-    let json = opt.json;
     let mut profiles = Ok(FactBase::new());
     for entry in directory {
         let observationfile = entry?.path();
         let name = format!("{}", observationfile.display());
-        if !json {
+        if !opt.json {
             println!("- {}", name);
         }
-        let f = File::open(observationfile).unwrap();
-        let pprofile = profile_parser::read(&f, &name).unwrap();
+        let f = File::open(observationfile)?;
+        let pprofile =
+            profile_parser::read(&f, &name).context(format!("unable to parse '{}'", &name))?;
         let profile = pprofile.to_facts();
 
-        if let Inconsistent(reasons) = check_observations(&profile).unwrap() {
+        if let Inconsistent(reasons) = check_observations(&profile)? {
             match profiles {
                 Ok(_) => {
                     warn!("Contradictory observations. Please correct them!");
@@ -194,23 +195,25 @@ fn run() -> Result<()> {
         }
     };
 
+    if !opt.json {
+        println!("\n## Consistency results\n");
+    }
     // compute opt scenfit repair scores
     let (scenfit, repair_score, redges) = match opt.repair_mode {
         Some(RepairMode::OptGraph) if setting.ep => {
-            println!("\nComputing repair through add/removing edges ... ");
-            print!("    using greedy method ... ");
+            info!("Computing repair through add/removing edges ... ");
+            info!("using greedy method ... ");
             let (scenfit, repair_score, redges) =
                 get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs)?;
 
-            println!("done.");
             println!("\nThe network and data can reach a scenfit of {}.", scenfit);
             (scenfit, repair_score, redges)
             //   with {} removals and {} additions.", repairs, edges.len());
         }
         Some(RepairMode::OptGraph) if !setting.ep => {
+            info!("Computing repair through add/removing edges ... ");
             let (scenfit, repair_score) =
                 get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with repairs of score {}",
                 scenfit, repair_score
@@ -218,10 +221,9 @@ fn run() -> Result<()> {
             (scenfit, repair_score, vec![])
         }
         Some(RepairMode::Flip) => {
-            print!("\nComputing repair through flipping edges ... ");
+            info!("Computing repair through flipping edges ... ");
             let (scenfit, repair_score) =
                 get_opt_flip_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with {} flipped edges",
                 scenfit, repair_score
@@ -229,10 +231,9 @@ fn run() -> Result<()> {
             (scenfit, repair_score, vec![])
         }
         _ => {
-            print!("\nComputing repair through removing edges ... ");
+            info!("Computing repair through removing edges ... ");
             let (scenfit, repair_score) =
                 get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!("done.");
             println!(
                 "\nThe network and data can reach a scenfit of {} with {} removed edges.",
                 scenfit, repair_score
@@ -273,8 +274,7 @@ fn run() -> Result<()> {
                     repair_score,
                     max_repairs,
                     &setting,
-                )
-                .unwrap(),
+                )?,
                 Some(RepairMode::Flip) => get_opt_repairs_flip_edges(
                     &graph,
                     &profiles,
@@ -283,8 +283,7 @@ fn run() -> Result<()> {
                     repair_score,
                     max_repairs,
                     &setting,
-                )
-                .unwrap(),
+                )?,
                 _ => get_opt_repairs_remove_edges(
                     &graph,
                     &profiles,
@@ -296,10 +295,8 @@ fn run() -> Result<()> {
                 )?,
             };
 
-            let mut count = 0;
-            for r in &repairs {
-                count += 1;
-                println!("\nRepair {}: ", count);
+            for (count, r) in repairs.iter().enumerate() {
+                println!("\nRepair {}: ", count + 1);
                 for e in r {
                     let repair_op = into_repair(e)?;
                     println!("    {}", repair_op);
@@ -311,10 +308,7 @@ fn run() -> Result<()> {
 }
 
 fn get_setting(opt: &Opt) -> SETTING {
-    println!("_____________________________________________________________________\n");
     let setting = if opt.depmat {
-        println!(" + DepMat combines multiple states.");
-        println!(" + An elementary path from an input must exist to explain changes.");
         SETTING {
             os: false,
             ep: true,
@@ -322,29 +316,17 @@ fn get_setting(opt: &Opt) -> SETTING {
             fc: true,
         }
     } else {
-        println!(" + All observed changes must be explained by a predecessor.");
         SETTING {
             os: true,
-            ep: if opt.elempath {
-                println!(" + An elementary path from an input must exist to explain changes.");
-                true
-            } else {
-                false
-            },
-            fp: if opt.fwd_propagation_off {
-                false
-            } else {
-                println!(" + 0-change must be explained.");
-                true
-            },
-            fc: if opt.founded_constraints_off {
-                false
-            } else {
-                println!(" + All observed changes must be explained by an input.");
-                true
-            },
+            ep: opt.elempath,
+            fp: !opt.fwd_propagation_off,
+            fc: !opt.founded_constraints_off,
         }
     };
-    println!("_____________________________________________________________________\n");
+    if opt.json {
+        println!("\"Iggy settings\":{}", setting.to_json());
+    } else {
+        print!("{}", setting)
+    }
     setting
 }
