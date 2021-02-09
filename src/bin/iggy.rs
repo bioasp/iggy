@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
+use clap::Clap;
 use clingo::FactBase;
-use log::{info, warn};
+use log::{error, info, warn};
 use serde::Serialize;
 use std::fs::File;
 use std::path::PathBuf;
 use stderrlog;
-use structopt::StructOpt;
 
 use iggy::cif_parser;
 use iggy::cif_parser::Graph;
@@ -22,79 +22,87 @@ use iggy::*;
 /// predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "iggy")]
+#[derive(Clap, Debug)]
+#[clap(version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
 struct Opt {
     /// Influence graph in CIF format
-    #[structopt(short = "n", long = "network", parse(from_os_str))]
+    #[clap(short = 'n', long = "network", parse(from_os_str))]
     network_file: PathBuf,
 
     /// Observations in bioquali format
-    #[structopt(short = "o", long = "observations", parse(from_os_str))]
+    #[clap(short = 'o', long = "observations", parse(from_os_str))]
     observations_file: Option<PathBuf>,
 
     /// Disable forward propagation constraints
-    #[structopt(long, conflicts_with = "depmat")]
+    #[clap(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[structopt(long, conflicts_with = "depmat")]
+    #[clap(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[structopt(long)]
+    #[clap(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[structopt(long)]
+    #[clap(long)]
     depmat: bool,
 
     /// Compute minimal inconsistent cores
-    #[structopt(long)]
+    #[clap(long)]
     mics: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[structopt(short = "a", long)]
+    #[clap(short = 'a', long)]
     auto_inputs: bool,
 
     /// Compute scenfit of the data, default is mcos
-    #[structopt(long)]
+    #[clap(long)]
     scenfit: bool,
 
     /// Show max-labelings labelings, default is OFF, 0=all
-    #[structopt(short = "l", long = "show-labelings")]
+    #[clap(short = 'l', long = "show-labelings")]
     max_labelings: Option<u32>,
 
     /// Show predictions
-    #[structopt(short = "p", long)]
+    #[clap(short = 'p', long)]
     show_predictions: bool,
 
     /// Print JSON output
-    #[structopt(long)]
+    #[clap(long)]
     json: bool,
 }
 
-fn main() -> Result<()> {
-    let opt = Opt::from_args();
+fn main() {
+    stderrlog::new()
+        .module(module_path!())
+        .verbosity(2)
+        .init()
+        .unwrap();
+    if let Err(err) = run() {
+        error!("{:?}", err);
+        std::process::exit(1);
+    }
+}
+fn run() -> Result<()> {
+    let opt = Opt::parse();
     if opt.json {
         println!("{{");
     } else {
         println!("# Iggy Report");
     }
     let setting = get_setting(&opt);
-    stderrlog::new()
-        .module(module_path!())
-        .verbosity(2)
-        .init()
-        .unwrap();
 
     info!("Reading network model ...");
     if opt.json {
         println!("\"Network file\":{:?}", opt.network_file);
     } else {
-        println!("\nNetwork file: {:?}", opt.network_file);
+        println!("\nNetwork file: {}", opt.network_file.display());
     }
-    let f = File::open(&opt.network_file)?;
+    let f = File::open(&opt.network_file)
+        .context(format!("unable to open '{}'", opt.network_file.display()))?;
+
     let ggraph = cif_parser::read(&f)?;
     let graph = ggraph.to_facts();
     let network_statistics = ggraph.statistics();
@@ -111,9 +119,10 @@ fn main() -> Result<()> {
             if opt.json {
                 println!(",\"Observation file\":{:?}", observationfile);
             } else {
-                println!("\nObservation file: {:?}", observationfile);
+                println!("\nObservation file: {}", observationfile.display());
             }
-            let f = File::open(&observationfile)?;
+            let f = File::open(&observationfile)
+                .context(format!("unable to open '{}'", observationfile.display()))?;
             let pprofile = profile_parser::read(&f, "x1")?;
 
             let observations_statistics = observations_statistics(&pprofile, &ggraph);
@@ -127,10 +136,12 @@ fn main() -> Result<()> {
 
             info!("Checking observations ...");
             if let Inconsistent(reasons) = check_observations(&profile)? {
-                warn!("The following observations are contradictory. Please correct them!");
-                for r in reasons {
-                    warn!("{}", r);
-                }
+                warn!("Contradictory observations. Please correct them!");
+                Err(anyhow!(
+                    "\nInconsistent observations in {}\n- {}",
+                    observationfile.display(),
+                    reasons.join("\n- ")
+                ))?;
             }
             profile
         } else {
@@ -145,15 +156,17 @@ fn main() -> Result<()> {
             let new_inputs = guess_inputs(&graph)?;
             let x = new_inputs
                 .iter()
-                .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap())
-                ;
+                .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
             if opt.json {
-                let y : Vec<NodeId> = x.collect();
+                let y: Vec<NodeId> = x.collect();
                 let serialized = serde_json::to_string(&y).unwrap();
                 print!(",\"Computed inputs\":{}", serialized);
             } else {
                 println!("\nnodes computed as inputs: {}", new_inputs.len());
-                for y in x.map(|x|match x { NodeId::And(node)=>node,NodeId::Or(node)=>node}) {
+                for y in x.map(|x| match x {
+                    NodeId::And(node) => node,
+                    NodeId::Or(node) => node,
+                }) {
                     println!("- {}", y);
                 }
                 println!()
@@ -163,8 +176,8 @@ fn main() -> Result<()> {
             FactBase::new()
         }
     };
-    if ! opt.json {
-        println!("## Analysis Results\n");
+    if !opt.json {
+        println!("## Consistency results\n");
     }
     if opt.scenfit {
         info!("Computing scenfit of network and data ...");
