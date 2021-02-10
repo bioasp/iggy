@@ -17,7 +17,11 @@ use thiserror::Error;
 /// number of edges in the given network.
 
 #[derive(Clap, Debug)]
-#[clap(name="optgraph", version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
+#[clap(
+    name = "optgraph",
+    version = "2.1.1",
+    author = "Sven Thiele <sthiele78@gmail.com>"
+)]
 struct Opt {
     /// Influence graph in CIF format
     #[clap(short = 'n', long = "network", parse(from_os_str))]
