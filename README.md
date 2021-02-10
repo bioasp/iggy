@@ -31,34 +31,39 @@ Typical usage is:
 
 For more options you can ask for help as follows:
 
-    > iggy -h
-    iggy 2.1.1
-    Iggy confronts interaction graph models with observations of (signed) changes between two measured states
-    (including uncertain observations). Iggy discovers inconsistencies in networks or data, applies minimal
-    repairs, and predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g.
-    increase in a node) and weak predictions (e.g., the value of a node increases or remains unchanged)
-    
-    USAGE:
-        iggy [FLAGS] [OPTIONS] --network <network-file>
-    
-    FLAGS:
-        -a, --auto-inputs                Declare nodes with indegree 0 as inputs
-            --depmat                     Combine multiple states, a change must be explained
-                                         by an elementary path from an input
-            --elempath                   Every change must be explained by an elementary path from an input
-            --founded-constraints-off    Disable foundedness constraints
-            --fwd-propagation-off        Disable forward propagation constraints
-        -h, --help                       Prints help information
-            --json                       Print JSON output
-            --mics                       Compute minimal inconsistent cores
-            --scenfit                    Compute scenfit of the data, default is mcos
-        -p, --show-predictions           Show predictions
-        -V, --version                    Prints version information
-    
-    OPTIONS:
-        -l, --show-labelings <max-labelings>     Show max-labelings labelings, default is OFF, 0=all
-        -n, --network <network-file>             Influence graph in CIF format
-        -o, --observations <observations-file>   Observations in bioquali format
+```txt
+> iggy -h
+iggy 2.1.1
+Sven Thiele <sthiele78@gmail.com>
+Iggy confronts interaction graph models with observations of (signed) changes between two measured
+states (including uncertain observations). Iggy discovers inconsistencies in networks or data,
+applies minimal repairs, and predicts the behavior for the unmeasured species. It distinguishes
+strong predictions (e.g. increase in a node) and weak predictions (e.g., the value of a node
+increases or remains unchanged)
+
+USAGE:
+    iggy [FLAGS] [OPTIONS] --network <network-file>
+
+FLAGS:
+    -a, --auto-inputs                Declare nodes with indegree 0 as inputs
+        --depmat                     Combine multiple states, a change must be explained by an
+                                     elementary path from an input
+        --elempath                   Every change must be explained by an elementary path from an
+                                     input
+        --founded-constraints-off    Disable foundedness constraints
+        --fwd-propagation-off        Disable forward propagation constraints
+    -h, --help                       Prints help information
+        --json                       Print JSON output
+        --mics                       Compute minimal inconsistent cores
+        --scenfit                    Compute scenfit of the data, default is mcos
+    -p, --show-predictions           Show predictions
+    -V, --version                    Prints version information
+
+OPTIONS:
+    -l, --show-labelings <max-labelings>      Show max-labelings labelings, default is OFF, 0=all
+    -n, --network <network-file>              Influence graph in CIF format
+    -o, --observations <observations-file>    Observations in bioquali format
+```
 
 ## Optgraph
 
@@ -68,31 +73,34 @@ Typical usage is:
 
 For more options you can ask for help as follows:
 
-    > optgraph -h
-    optgraph 2.1.0
-    Sven Thiele <sthiele78@gmail.com>
-    Optgraph confronts interaction graph models with observations of (signed) changes between two measured 
-    states. Optgraph computes networks fitting the observation data by removing (or adding) a minimal number 
-    of edges in the given network.
+```txt
+> optgraph -h
+optgraph 2.1.1
+Sven Thiele <sthiele78@gmail.com>
+Optgraph confronts interaction graph models with observations of (signed) changes between two
+measured states. Opt-graph computes networks fitting the observation data by removing (or adding) a
+minimal number of edges in the given network
 
-    USAGE:
-        optgraph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
+USAGE:
+    optgraph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
 
-    FLAGS:
-        -a, --auto-inputs               Declare nodes with indegree 0 as inputs
-            --depmat                    Combine multiple states, a change must be explained by an
-                                        elementary path from an input
-            --elempath                  Every change must be explained by an elementary path from an
-                                        input
-            --founded-constraints-off   Disable foundedness constraints
-            --fwd-propagation-off       Disable forward propagation constraints
-        -h, --help                      Prints help information
-        -V, --version                   Prints version information
+FLAGS:
+    -a, --auto-inputs                Declare nodes with indegree 0 as inputs
+        --depmat                     Combine multiple states, a change must be explained by an
+                                     elementary path from an input
+        --elempath                   Every change must be explained by an elementary path from an
+                                     input
+        --founded-constraints-off    Disable foundedness constraints
+        --fwd-propagation-off        Disable forward propagation constraints
+    -h, --help                       Prints help information
+        --json                       Print JSON output
+    -V, --version                    Prints version information
 
-    OPTIONS:
-        -r, --show-repairs <max-repairs>        Show max-repairs repairs, default is OFF, 0=all
-        -n, --network <network-file>            Influence graph in CIF format
-        -o, --observations <observations-dir>   Directory of observations in bioquali format
-        -m, --repair-mode <repair-mode>         Repair mode: remove = remove edges (default),
-                                                           optgraph = add + remove edges,
-                                                           flip = flip direction of edges
+OPTIONS:
+    -r, --show-repairs <max-repairs>         Show max-repairs repairs, default is OFF, 0=all
+    -n, --network <network-file>             Influence graph in CIF format
+    -o, --observations <observations-dir>    Directory of observations in bioquali format
+    -m, --repair-mode <repair-mode>
+            Repair mode: remove = remove edges (default), optgraph = add + remove edges, flip = flip
+            direction of edges
+```

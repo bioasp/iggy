@@ -132,7 +132,7 @@ impl Graph {
                 self.u_edges.push((startnode, targetnode));
             }
             SNode::List(l) => {
-                let mut inner = "".to_string();
+                let mut inner = vec![];
                 let mut pos = vec![];
                 let mut neg = vec![];
                 let mut unk = vec![];
@@ -140,19 +140,20 @@ impl Graph {
                 for expr in l {
                     match expr {
                         Expression::Negated(s) => {
-                            inner = format!("!{} & {}", s, inner);
+                            inner.push(format!("!{}", s));
                             neg.push(s);
                         }
                         Expression::Plain(s) => {
-                            inner = format!("{} & {}", s, inner);
+                            inner.push(format!("{}", s));
                             pos.push(s);
                         }
                         Expression::Unknown(s) => {
-                            inner = format!("?{} & {}", s, inner);
+                            inner.push(format!("?{}", s));
                             unk.push(s);
                         }
-                    }
+                    };
                 }
+                let inner = inner.join(" & ");
                 let andnode = NodeId::And(inner);
                 self.and_nodes.push(andnode.clone());
                 self.p_edges.push((andnode.clone(), targetnode));
