@@ -190,7 +190,7 @@ The first lines of the output state the constraints that have been used to analy
 For our example, it is the default setting with the following constraints.
 For a deeper understanding of these constraints see [sthiele15].
 
-```md
+```txt
 ## Settings
 
 - All observed changes must be explained by a predecessor.
@@ -205,7 +205,7 @@ with `19` edges with activating influence
 and `6` edges with inhibiting influence
 and `1` edge with `Unknown`  influence.
 
-```md
+```txt
 Network file: network.cif
 
 ## Network statistics
@@ -227,7 +227,7 @@ From the 14 observations `4` nodes were observed as increased `+`,
 `1` node were observed with an *uncertain decrease* (`NotPlus`),
 `1` node were observed with an *uncertain increase* (`NotMinus`).
 
-```md
+```txt
 Observation file: observations.obs
 
 ## Observations statistics
@@ -268,7 +268,7 @@ which is currently not included in the model.
 Please note that in this example both labelings are consistent under the same correction set.
 In another example more than one minimal correction set could exists.
 
-```md
+```txt
 ## Consistency results
 
 scenfit: 2
@@ -332,7 +332,7 @@ Here the predictions are that
 `mtorc1` *never decreases* (`NotMinus`), and
 `brb2` always stays *never increases* (`NotPlus`),
 
-```md
+```txt
 ## Predictions
 
 mek1 = +
@@ -378,7 +378,7 @@ To compute the minimal inconsistent cores use the flag `--mics` as follows:
 ```
 > iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
 ```
-```md
+```txt
 # Iggy Report
 
 ## Settings
@@ -501,7 +501,7 @@ OPTIONS:
 > optgraph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph
 ```
 
-```md
+```txt
 # Optgraph Report
 
 ## Settings
