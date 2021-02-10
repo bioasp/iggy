@@ -390,10 +390,10 @@ fn print_mics(mut mics: Mics) {
     let mut oldmic = vec![];
     for (count, mic) in mics.iter().unwrap().enumerate() {
         if oldmic != *mic {
-            println!("- mic {}:", count + 1);
+            print!("- mic {}:\n  ", count + 1);
             for e in mic.clone() {
                 let node = into_node_id(e).unwrap();
-                println!("  - {} ", node);
+                print!("{} ", node);
             }
             println!();
             oldmic = mic;
@@ -424,6 +424,9 @@ fn print_json_mics(mut mics: Mics) {
 
 fn print_labelings(mut labelings: LabelsRepair) {
     for (count, (labels, repairs)) in labelings.iter().unwrap().enumerate() {
+        if count > 0 {
+            println!();
+        }
         println!("- Labeling {}:", count + 1);
         print_labels(&labels);
 
@@ -459,7 +462,7 @@ fn print_json_labelings(mut labelings: LabelsRepair) {
 
 fn print_labels(labels: &[Prediction]) {
     for assign in labels {
-        println!("  - {} = {}", assign.node, assign.behavior);
+        println!("  {} = {}", assign.node, assign.behavior);
     }
 }
 
@@ -472,7 +475,7 @@ fn print_predictions(predictions: &[Prediction]) {
     let mut change = 0;
     println!("\n## Predictions\n");
     for pred in predictions {
-        println!("- {}", pred);
+        println!("{}", pred);
         match pred.behavior {
             Behavior::Plus => plus += 1,
             Behavior::Minus => minus += 1,
