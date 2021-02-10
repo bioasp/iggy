@@ -109,7 +109,7 @@ fn run() -> Result<()> {
     let network_statistics = ggraph.statistics();
     if opt.json {
         let serialized = serde_json::to_string(&network_statistics)?;
-        println!(",\"Network Statistics\":{}", serialized);
+        println!(",\"Network statistics\":{}", serialized);
     } else {
         network_statistics.print();
     }
@@ -155,25 +155,7 @@ fn run() -> Result<()> {
     let new_inputs = {
         if opt.auto_inputs {
             info!("Computing input nodes ...");
-            let new_inputs = guess_inputs(&graph)?;
-            let x = new_inputs
-                .iter()
-                .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
-            if opt.json {
-                let y: Vec<NodeId> = x.collect();
-                let serialized = serde_json::to_string(&y)?;
-                print!(",\"Computed inputs\":{}", serialized);
-            } else {
-                println!("\nnodes computed as inputs: {}", new_inputs.len());
-                for y in x.map(|x| match x {
-                    NodeId::And(node) => node,
-                    NodeId::Or(node) => node,
-                }) {
-                    println!("- {}", y);
-                }
-                println!()
-            }
-            new_inputs
+            compute_auto_inputs(&graph, opt.json)?
         } else {
             FactBase::new()
         }
@@ -445,7 +427,7 @@ fn print_labelings(mut labelings: LabelsRepair) {
         println!("- Labeling {}:", count + 1);
         print_labels(&labels);
 
-        println!("\n  Repairs:");
+        println!("\n  Repair set:");
         for fix in repairs {
             println!("  - {}", fix);
         }

@@ -17,7 +17,7 @@ use thiserror::Error;
 /// number of edges in the given network.
 
 #[derive(Clap, Debug)]
-#[clap(version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
+#[clap(name="optgraph", version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
 struct Opt {
     /// Influence graph in CIF format
     #[clap(short = 'n', long = "network", parse(from_os_str))]
@@ -113,7 +113,7 @@ fn run() -> Result<()> {
 
     info!("Reading network model ...");
     if opt.json {
-        println!("\"Network file\":{:?}", opt.network_file);
+        println!(",\"Network file\":{:?}", opt.network_file);
     } else {
         println!("\nNetwork file: {}", opt.network_file.display());
     }
@@ -125,7 +125,7 @@ fn run() -> Result<()> {
     let network_statistics = ggraph.statistics();
     if opt.json {
         let serialized = serde_json::to_string(&network_statistics)?;
-        println!(",\"Network Statistics\":{}", serialized);
+        println!(",\"Network statistics\":{}", serialized);
     } else {
         network_statistics.print();
     }
@@ -135,8 +135,9 @@ fn run() -> Result<()> {
         opt.observations_dir.display()
     ))?;
     info!("Reading observations ...");
+    let mut observation_files = vec![];
     if opt.json {
-        println!(",\"Observation files\":");
+        print!(",\"Observation files\":");
     } else {
         println!("\nObservation files:");
     }
@@ -147,7 +148,9 @@ fn run() -> Result<()> {
         if !opt.json {
             println!("- {}", name);
         }
-        let f = File::open(observationfile)?;
+        let f = File::open(&observationfile)?;
+        observation_files.push(observationfile);
+
         let pprofile =
             profile_parser::read(&f, &name).context(format!("unable to parse '{}'", &name))?;
         let profile = pprofile.to_facts();
@@ -181,15 +184,15 @@ fn run() -> Result<()> {
             Err(e) => profiles = Err(e),
         }
     }
+    if opt.json {
+        println!("{}", serde_json::to_string(&observation_files)?);
+    }
     let profiles = profiles?;
 
     let new_inputs = {
         if opt.auto_inputs {
-            print!("\nComputing input nodes ...");
-            let new_inputs = guess_inputs(&graph)?;
-            println!(" done.");
-            println!("  new inputs : {}", new_inputs.len());
-            new_inputs
+            info!("Computing input nodes ...");
+            compute_auto_inputs(&graph, opt.json)?
         } else {
             FactBase::new()
         }
@@ -205,8 +208,12 @@ fn run() -> Result<()> {
             info!("using greedy method ... ");
             let (scenfit, repair_score, redges) =
                 get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs)?;
-
-            println!("\nThe network and data can reach a scenfit of {}.", scenfit);
+            if opt.json {
+                println!(",\"scenfit\":{}", scenfit);
+                println!(",\"repair score\":{}", repair_score);
+            } else {
+                println!("\nThe network and data can reach a scenfit of {}.", scenfit);
+            }
             (scenfit, repair_score, redges)
             //   with {} removals and {} additions.", repairs, edges.len());
         }
@@ -214,30 +221,45 @@ fn run() -> Result<()> {
             info!("Computing repair through add/removing edges ... ");
             let (scenfit, repair_score) =
                 get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!(
-                "\nThe network and data can reach a scenfit of {} with repairs of score {}",
-                scenfit, repair_score
-            );
+            if opt.json {
+                println!(",\"scenfit\":{}", scenfit);
+                println!(",\"repair score\":{}", repair_score);
+            } else {
+                println!(
+                    "\nThe network and data can reach a scenfit of {} with repairs of score {}",
+                    scenfit, repair_score
+                );
+            }
             (scenfit, repair_score, vec![])
         }
         Some(RepairMode::Flip) => {
             info!("Computing repair through flipping edges ... ");
             let (scenfit, repair_score) =
                 get_opt_flip_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!(
-                "\nThe network and data can reach a scenfit of {} with {} flipped edges",
-                scenfit, repair_score
-            );
+            if opt.json {
+                println!(",\"scenfit\":{}", scenfit);
+                println!(",\"repair score\":{}", repair_score);
+            } else {
+                println!(
+                    "\nThe network and data can reach a scenfit of {} with {} flipped edges",
+                    scenfit, repair_score
+                );
+            }
             (scenfit, repair_score, vec![])
         }
         _ => {
             info!("Computing repair through removing edges ... ");
             let (scenfit, repair_score) =
                 get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
-            println!(
-                "\nThe network and data can reach a scenfit of {} with {} removed edges.",
-                scenfit, repair_score
-            );
+            if opt.json {
+                println!(",\"scenfit\":{}", scenfit);
+                println!(",\"repair score\":{}", repair_score);
+            } else {
+                println!(
+                    "\nThe network and data can reach a scenfit of {} with {} removed edges.",
+                    scenfit, repair_score
+                );
+            }
             (scenfit, repair_score, vec![])
         }
     };
@@ -295,14 +317,31 @@ fn run() -> Result<()> {
                 )?,
             };
 
-            for (count, r) in repairs.iter().enumerate() {
-                println!("\nRepair {}: ", count + 1);
-                for e in r {
-                    let repair_op = into_repair(e)?;
-                    println!("    {}", repair_op);
+            if opt.json {
+                let repairs: Vec<Vec<RepairOp>> = repairs
+                    .iter()
+                    .map(|set| {
+                        set.iter()
+                            .map(|symbol| into_repair(symbol).unwrap())
+                            .collect()
+                    })
+                    .collect();
+
+                let serialized = serde_json::to_string(&repairs).unwrap();
+                println!(",\"Repair sets\":{}", serialized);
+            } else {
+                for (count, r) in repairs.iter().enumerate() {
+                    println!("\n- Repair set {}: ", count + 1);
+                    for e in r {
+                        let repair_op = into_repair(e)?;
+                        println!("  - {}", repair_op);
+                    }
                 }
             }
         }
+    }
+    if opt.json {
+        print!("}}");
     }
     Ok(())
 }

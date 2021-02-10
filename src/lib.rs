@@ -1,7 +1,6 @@
 pub mod cif_parser;
 use cif_parser::EdgeSign;
 pub mod profile_parser;
-// <<<<<<< HEAD
 use clingo::{
     AllModels, ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
     OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
@@ -33,7 +32,7 @@ impl SETTING {
         \"depmat\":{},
         \"elempath\":{},
         \"forward-propagation\":{},
-        \"founded-constraint\":{}\n}}",
+        \"founded-constraints\":{}\n}}",
             !self.os, self.ep, self.fp, self.fc
         )
     }
@@ -204,6 +203,25 @@ impl fmt::Display for RepairOp {
         }
     }
 }
+
+pub fn compute_auto_inputs(graph: &FactBase, json: bool) -> Result<FactBase> {
+    let new_inputs = guess_inputs(graph)?;
+    let x = new_inputs
+        .iter()
+        .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
+    if json {
+        let y: Vec<NodeId> = x.collect();
+        let serialized = serde_json::to_string(&y)?;
+        println!(",\"Computed input nodes\":{}", serialized);
+    } else {
+        println!("\nComputed input nodes: {}", new_inputs.len());
+        for y in x {
+            println!("- {}", y);
+        }
+    }
+    Ok(new_inputs)
+}
+
 pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
     // create a control object and pass command line arguments
     let mut ctl = Control::new(vec![])?;
