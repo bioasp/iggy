@@ -137,48 +137,47 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
         let l1 = line?;
         let l = l1.trim();
         if !l.is_empty() {
-            match profile::statement(&l) {
-                Ok(PStatement::Input(s)) => {
+            match profile::statement(&l)? {
+                PStatement::Input(s) => {
                     inputs.push(NodeId::Or(s));
                 }
-                Ok(PStatement::Plus(s)) => {
+                PStatement::Plus(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
 
                         behavior: Behavior::Plus,
                     });
                 }
-                Ok(PStatement::Minus(s)) => {
+                PStatement::Minus(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
                         behavior: Behavior::Minus,
                     });
                 }
-                Ok(PStatement::Zero(s)) => {
+                PStatement::Zero(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
                         behavior: Behavior::Zero,
                     });
                 }
-                Ok(PStatement::NotPlus(s)) => {
+                PStatement::NotPlus(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
                         behavior: Behavior::NotPlus,
                     });
                 }
-                Ok(PStatement::NotMinus(s)) => {
+                PStatement::NotMinus(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
                         behavior: Behavior::NotMinus,
                     });
                 }
-                Ok(PStatement::Min(s)) => {
+                PStatement::Min(s) => {
                     min.push(NodeId::Or(s));
                 }
-                Ok(PStatement::Max(s)) => {
+                PStatement::Max(s) => {
                     max.push(NodeId::Or(s));
                 }
-                Err(e) => Err(e)?,
             }
         }
     }

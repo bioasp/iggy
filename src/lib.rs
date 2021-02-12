@@ -426,14 +426,13 @@ fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<
     let mut symbols = vec![];
     loop {
         handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
+        match handle.model()? {
+            Some(model) => {
                 if model.optimality_proven()? {
                     symbols = model.symbols(ShowType::SHOWN)?;
                 }
             }
-            Ok(None) => break,
-            Err(e) => return Err(e.into()),
+            None => break,
         }
     }
     Ok(symbols)
@@ -444,8 +443,8 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>> {
     let mut found = false;
     loop {
         handle.resume()?;
-        match handle.model() {
-            Ok(Some(model)) => {
+        match handle.model()? {
+            Some(model) => {
                 if model.optimality_proven()? {
                     return Ok(model.cost()?);
                 } else {
@@ -453,15 +452,12 @@ fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>> {
                     last = model.cost()?;
                 }
             }
-            Ok(None) => {
+            None => {
                 if found {
                     return Ok(last);
                 } else {
                     panic!("Error: no optimal model found!");
                 }
-            }
-            Err(e) => {
-                return Err(e.into());
             }
         }
     }
@@ -1091,9 +1087,7 @@ pub fn get_opt_add_remove_edges_greedy(
     let mut fedges: Vec<(FactBase, i64, i64)> = vec![(FactBase::new(), bscenfit, brepscore)];
     let mut tedges = vec![];
 
-    while !fedges.is_empty() {
-        let (oedges, oscenfit, orepscore) = fedges.pop().unwrap();
-
+    while let Some((oedges, oscenfit, orepscore)) = fedges.pop() {
         if oscenfit == 0 && oedges.len() * 2 >= (orepscore - 1) as usize {
             // early return
             let tuple = (oedges, oscenfit, orepscore);
@@ -1134,8 +1128,8 @@ pub fn get_opt_add_remove_edges_greedy(
         // seach best edge end loop
         loop {
             handle.resume()?;
-            match handle.model() {
-                Ok(Some(model)) => {
+            match handle.model()? {
+                Some(model) => {
                     if model.optimality_proven()? {
                         let symbols = model.symbols(ShowType::SHOWN)?;
                         let cost = model.cost()?;
@@ -1145,7 +1139,7 @@ pub fn get_opt_add_remove_edges_greedy(
 
                         if nscenfit < oscenfit || nrepscore < orepscore {
                             // better score or more that 1 scenfit
-                            let nend = extract_addeddy(&symbols).unwrap();
+                            let nend = extract_addeddy(&symbols)?;
 
                             let mut f_end = FactBase::new();
                             f_end.insert(&nend);
@@ -1178,8 +1172,8 @@ pub fn get_opt_add_remove_edges_greedy(
                             // seach best edge start loop
                             loop {
                                 handle2.resume()?;
-                                match handle2.model() {
-                                    Ok(Some(model)) => {
+                                match handle2.model()? {
+                                    Some(model) => {
                                         if model.optimality_proven()? {
                                             let symbols2 = model.symbols(ShowType::SHOWN)?;
                                             let n2scenfit = model.cost()?[0];
@@ -1195,7 +1189,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                                     brepscore = n2repscore;
                                                 }
 
-                                                let nedges = extract_addedges(&symbols2).unwrap();
+                                                let nedges = extract_addedges(&symbols2)?;
 
                                                 let tuple = (nedges.clone(), n2scenfit, n2repscore);
                                                 if !fedges.contains(&tuple) {
@@ -1205,8 +1199,7 @@ pub fn get_opt_add_remove_edges_greedy(
                                             }
                                         }
                                     }
-                                    Ok(None) => break,
-                                    Err(e) => return Err(e.into()),
+                                    None => break,
                                 }
                             }
                         }
@@ -1222,8 +1215,7 @@ pub fn get_opt_add_remove_edges_greedy(
                         }
                     }
                 }
-                Ok(None) => break,
-                Err(e) => return Err(e.into()),
+                None => break,
             }
         }
     }
