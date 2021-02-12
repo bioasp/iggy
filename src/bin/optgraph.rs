@@ -216,7 +216,7 @@ fn run() -> Result<()> {
                 println!(",\"scenfit\":{}", scenfit);
                 println!(",\"repair score\":{}", repair_score);
             } else {
-                println!("\nThe network and data can reach a scenfit of {}.", scenfit);
+                println!("The network and data can reach a scenfit of {}.", scenfit);
             }
             (scenfit, repair_score, redges)
             //   with {} removals and {} additions.", repairs, edges.len());
@@ -230,7 +230,7 @@ fn run() -> Result<()> {
                 println!(",\"repair score\":{}", repair_score);
             } else {
                 println!(
-                    "\nThe network and data can reach a scenfit of {} with repairs of score {}",
+                    "The network and data can reach a scenfit of {} with repairs of score {}",
                     scenfit, repair_score
                 );
             }
@@ -245,7 +245,7 @@ fn run() -> Result<()> {
                 println!(",\"repair score\":{}", repair_score);
             } else {
                 println!(
-                    "\nThe network and data can reach a scenfit of {} with {} flipped edges",
+                    "The network and data can reach a scenfit of {} with {} flipped edges",
                     scenfit, repair_score
                 );
             }
@@ -260,7 +260,7 @@ fn run() -> Result<()> {
                 println!(",\"repair score\":{}", repair_score);
             } else {
                 println!(
-                    "\nThe network and data can reach a scenfit of {} with {} removed edges.",
+                    "The network and data can reach a scenfit of {} with {} removed edges.",
                     scenfit, repair_score
                 );
             }
@@ -331,7 +331,7 @@ fn run() -> Result<()> {
                     })
                     .collect();
 
-                let serialized = serde_json::to_string(&repairs).unwrap();
+                let serialized = serde_json::to_string(&repairs)?;
                 println!(",\"Repair sets\":{}", serialized);
             } else {
                 for (count, r) in repairs.iter().enumerate() {

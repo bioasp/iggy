@@ -182,22 +182,20 @@ fn run() -> Result<()> {
                 println!("scenfit: {}\n", scenfit);
             }
             if opt.mics {
-                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
-                    .unwrap();
+                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
                 if opt.json {
-                    print_json_mics(mics);
+                    print_json_mics(mics)?;
                 } else {
-                    print_mics(mics);
+                    print_mics(mics)?;
                 }
             }
         }
         if let Some(max_labelings) = opt.max_labelings {
-            let l = get_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting)
-                .unwrap();
+            let l = get_scenfit_labelings(&graph, &profile, &new_inputs, max_labelings, &setting)?;
             if opt.json {
-                print_json_labelings(l);
+                print_json_labelings(l)?;
             } else {
-                print_labelings(l);
+                print_labelings(l)?;
             }
         }
         if opt.show_predictions {
@@ -206,7 +204,7 @@ fn run() -> Result<()> {
                 get_predictions_under_scenfit(&graph, &profile, &new_inputs, &setting)?;
 
             if opt.json {
-                let serialized = serde_json::to_string(&predictions).unwrap();
+                let serialized = serde_json::to_string(&predictions)?;
                 println!(",\"Predictions\":{}", serialized);
             } else {
                 print_predictions(&predictions);
@@ -230,29 +228,27 @@ fn run() -> Result<()> {
                 println!("mcos: {}\n", mcos);
             }
             if opt.mics {
-                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)
-                    .unwrap();
+                let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
                 if opt.json {
-                    print_json_mics(mics);
+                    print_json_mics(mics)?;
                 } else {
-                    print_mics(mics);
+                    print_mics(mics)?;
                 }
             }
         }
         if let Some(max_labelings) = opt.max_labelings {
-            let l =
-                get_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting).unwrap();
+            let l = get_mcos_labelings(&graph, &profile, &new_inputs, max_labelings, &setting)?;
             if opt.json {
-                print_json_labelings(l);
+                print_json_labelings(l)?;
             } else {
-                print_labelings(l);
+                print_labelings(l)?;
             }
         }
         if opt.show_predictions {
             info!("Compute predictions ...");
             let predictions = get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
             if opt.json {
-                let serialized = serde_json::to_string(&predictions).unwrap();
+                let serialized = serde_json::to_string(&predictions)?;
                 println!(",\"Predictions\":{}", serialized);
             } else {
                 print_predictions(&predictions);
@@ -386,44 +382,46 @@ fn observations_statistics(profile: &Profile, graph: &Graph) -> ObservationsStat
     }
 }
 
-fn print_mics(mut mics: Mics) {
+fn print_mics(mut mics: Mics) -> Result<()> {
     let mut oldmic = vec![];
-    for (count, mic) in mics.iter().unwrap().enumerate() {
+    for (count, mic) in mics.iter()?.enumerate() {
         if oldmic != *mic {
             print!("- mic {}:\n  ", count + 1);
             for e in mic.clone() {
-                let node = into_node_id(e).unwrap();
+                let node = into_node_id(e)?;
                 print!("{} ", node);
             }
             println!();
             oldmic = mic;
         }
     }
+    Ok(())
 }
-fn print_json_mics(mut mics: Mics) {
+fn print_json_mics(mut mics: Mics) -> Result<()> {
     println!(",\"mics\":[");
 
-    let mut iter = mics.iter().unwrap();
+    let mut iter = mics.iter()?;
     if let Some(mic) = iter.next() {
         let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
-        let serialized = serde_json::to_string(&nodes).unwrap();
+        let serialized = serde_json::to_string(&nodes)?;
         println!("{}", serialized);
         let mut oldmic = mic;
 
         for mic in iter {
             if oldmic != mic {
                 let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
-                let serialized = serde_json::to_string(&nodes).unwrap();
+                let serialized = serde_json::to_string(&nodes)?;
                 println!(", {}", serialized);
                 oldmic = mic;
             }
         }
     }
     println!("]");
+    Ok(())
 }
 
-fn print_labelings(mut labelings: LabelsRepair) {
-    for (count, (labels, repairs)) in labelings.iter().unwrap().enumerate() {
+fn print_labelings(mut labelings: LabelsRepair) -> Result<()> {
+    for (count, (labels, repairs)) in labelings.iter()?.enumerate() {
         if count > 0 {
             println!();
         }
@@ -435,29 +433,31 @@ fn print_labelings(mut labelings: LabelsRepair) {
             println!("  - {}", fix);
         }
     }
+    Ok(())
 }
-fn print_json_labelings(mut labelings: LabelsRepair) {
+fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
     println!(",\"labels under repair\":[");
 
-    let mut iter = labelings.iter().unwrap();
+    let mut iter = labelings.iter()?;
     if let Some((labels, repairs)) = iter.next() {
-        let serialized = serde_json::to_string(&labels).unwrap();
+        let serialized = serde_json::to_string(&labels)?;
         println!("{{\"labels\":{}", serialized);
 
-        let serialized = serde_json::to_string(&repairs).unwrap();
+        let serialized = serde_json::to_string(&repairs)?;
         println!(",\"repairs\":{}", serialized);
         println!("}}");
 
         for (labels, repairs) in iter {
-            let serialized = serde_json::to_string(&labels).unwrap();
+            let serialized = serde_json::to_string(&labels)?;
             println!(", {{\"labels\":{}", serialized);
 
-            let serialized = serde_json::to_string(&repairs).unwrap();
+            let serialized = serde_json::to_string(&repairs)?;
             println!(",\"repairs\":{}", serialized);
             println!("}}");
         }
     }
     println!("]");
+    Ok(())
 }
 
 fn print_labels(labels: &[Prediction]) {

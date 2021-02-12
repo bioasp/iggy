@@ -13,12 +13,7 @@ pub fn read(file: &File) -> Result<Graph> {
         let l1 = line?;
         let l = l1.trim();
         if !l.is_empty() {
-            match cif::statement(&l) {
-                Ok(r) => {
-                    graph.add(r);
-                }
-                Err(e) => Err(e)?,
-            }
+            graph.add(cif::statement(&l)?);
         }
     }
     graph.or_nodes.sort();
@@ -144,7 +139,7 @@ impl Graph {
                             neg.push(s);
                         }
                         Expression::Plain(s) => {
-                            inner.push(format!("{}", s));
+                            inner.push(s.to_string());
                             pos.push(s);
                         }
                         Expression::Unknown(s) => {
@@ -244,7 +239,7 @@ peg::parser! { grammar cif() for str {
     pub rule statement() -> Statement
         = whitespace()* s:exprlist() whitespace()+ "->" whitespace()+ t:ident() {
             if s.len() == 1 {
-                let expr = s.clone().pop().unwrap();
+                let expr = s[0].clone();
                 Statement{ start : SNode::Single(expr) ,target : t.to_string() }
             }
             else {
