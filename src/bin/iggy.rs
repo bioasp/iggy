@@ -250,11 +250,8 @@ fn run() -> Result<()> {
         }
          if let Some(count_labelings) = opt.count_labelings {
               let l = get_mcos_labelings(&graph, &profile, &new_inputs, count_labelings, &setting)?;
-		if opt.json {
-                print_json_labelings(l)?;
-            } else {
-                print_labelings(l)?;
-            }
+              print_count_labelings(l)?;
+		
         }
         if opt.show_predictions {
             info!("Compute predictions ...");
@@ -445,6 +442,20 @@ fn print_labelings(mut labelings: LabelsRepair) -> Result<()> {
             println!("  - {}", fix);
         }
     }
+    Ok(())
+}
+
+
+
+
+fn print_count_labelings(mut labelings: LabelsRepair) -> Result<()> {
+	 let mut tot_count = 0;
+    for _labels in labelings.iter()?.enumerate() {
+       
+      tot_count=tot_count+1;
+    }
+     println!("{}", tot_count);
+    
     Ok(())
 }
 fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
