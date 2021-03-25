@@ -769,7 +769,7 @@ pub fn get_predictions_under_mcos(
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
     let model = cautious_consequences_optimal_models(&mut handle)?;
-    Ok(extract_predictions(&model)?)
+    extract_predictions(&model)
 }
 
 pub fn get_predictions_under_scenfit(
@@ -818,7 +818,7 @@ pub fn get_predictions_under_scenfit(
     // ground & solve
     let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
     let model = cautious_consequences_optimal_models(&mut handle)?;
-    Ok(extract_predictions(&model)?)
+    extract_predictions(&model)
 }
 
 fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol> {
