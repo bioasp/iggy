@@ -61,6 +61,7 @@ FLAGS:
 
 OPTIONS:
     -l, --show-labelings <max-labelings>      Show max-labelings labelings, default is OFF, 0=all
+    -c, --count-labelings <max-labelings>      count-labelings, default is OFF, 0=all
     -n, --network <network-file>              Influence graph in CIF format
     -o, --observations <observations-file>    Observations in bioquali format
 ```
