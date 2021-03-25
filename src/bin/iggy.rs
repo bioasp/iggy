@@ -249,7 +249,7 @@ fn run() -> Result<()> {
             }
         }
          if let Some(count_labelings) = opt.count_labelings {
-              let l = count_mcos_labelings(&graph, &profile, &new_inputs, count_labelings, &setting)?;
+              let l = get_mcos_labelings(&graph, &profile, &new_inputs, count_labelings, &setting)?;
 		if opt.json {
                 print_json_labelings(l)?;
             } else {
@@ -473,27 +473,6 @@ fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
 }
 
 
-fn count_mcos_labelings(
-    graph: &FactBase,
-    profile: &FactBase,
-    inputs: &FactBase,
-    number: u32,
-    setting: &SETTING,
-) {
-    print!("\nCompute mcos labelings ... ");
-    let models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap()?;
-    println!("done.");
-    let mut count = 0;
-    for _labels in models {
-    	
-    	count+=1;
-    	
-    	
-    	}
-    	println!("{}",count);
-	
-    
-}
 
 fn print_labels(labels: &[Prediction]) {
     for assign in labels {
