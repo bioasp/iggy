@@ -2,8 +2,9 @@ pub mod cif_parser;
 use cif_parser::EdgeSign;
 pub mod profile_parser;
 use clingo::{
-    AllModels, ClingoError, Control, ExternalError, ExternalFunctionHandler, FactBase, Location,
-    OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol, SymbolType, ToSymbol,
+    defaults::Default, AllModels, ClingoError, Control, ExternalError, FactBase, FunctionHandler,
+    GenericControl, Location, OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol,
+    SymbolType, ToSymbol,
 };
 use profile_parser::{Behavior, ProfileId};
 
@@ -16,16 +17,19 @@ use serde::Serialize;
 use std::fmt;
 use thiserror::Error;
 
+type ControlWithFH = GenericControl<Default, Default, Default, MemberFH>;
+type SolveHandleWithFH<FH> = SolveHandle<Default, Default, Default, FH, Default>;
+
 type Labelings = Vec<Prediction>;
 
 #[derive(Debug, Clone, Serialize)]
-pub struct SETTING {
+pub struct Setting {
     pub os: bool,
     pub ep: bool,
     pub fp: bool,
     pub fc: bool,
 }
-impl SETTING {
+impl Setting {
     pub fn to_json(&self) -> String {
         format!(
             "{{
@@ -37,7 +41,7 @@ impl SETTING {
         )
     }
 }
-impl fmt::Display for SETTING {
+impl fmt::Display for Setting {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "\n## Settings\n")?;
         if !self.os {
@@ -224,11 +228,11 @@ pub fn compute_auto_inputs(graph: &FactBase, json: bool) -> Result<FactBase> {
 
 pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![])?;
+    let mut ctl = clingo::control(vec![])?;
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_CONTRADICTORY_OBS)?;
-    ctl.add_facts(profile);
+    ctl.add_facts(profile)?;
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -257,7 +261,7 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
                     .arguments()?
                     .get(0)
                     .ok_or_else(|| IggyError::new("Expected function with at least one argument."))?
-                    .to_string()?;
+                    .to_string();
 
                 match atom.name()? {
                     "contradiction1" => {
@@ -316,11 +320,11 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
 
 pub fn guess_inputs(graph: &FactBase) -> Result<FactBase> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![])?;
+    let mut ctl = clingo::control(vec![])?;
 
     // add a logic program to the base part
     ctl.add("base", &[], PRG_GUESS_INPUTS)?;
-    ctl.add_facts(graph);
+    ctl.add_facts(graph)?;
 
     // ground the base part
     let part = Part::new("base", &[])?;
@@ -375,8 +379,8 @@ fn member(elem: Symbol, list: Symbol) -> Symbol {
     }
 }
 
-struct MyEFH;
-impl ExternalFunctionHandler for MyEFH {
+struct MemberFH;
+impl FunctionHandler for MemberFH {
     fn on_external_function(
         &mut self,
         _location: &Location,
@@ -396,33 +400,38 @@ impl ExternalFunctionHandler for MyEFH {
         }
     }
 }
-
-fn ground_and_solve_with_myefh(ctl: &mut Control) -> Result<SolveHandle> {
+fn ground_and_solve(ctl: Control) -> Result<SolveHandleWithFH<MemberFH>> {
     // declare extern function handler
-    let mut efh = MyEFH;
+    let member_fh = MemberFH;
 
     // ground the base part
     let part = Part::new("base", &[])?;
     let parts = vec![part];
 
-    ctl.ground_with_event_handler(&parts, &mut efh)
+    let mut ctl = ctl.register_function_handler(member_fh);
+    ctl.ground(&parts)
         .expect("ground with event handler did not work.");
 
     // solve
-    Ok(ctl.solve(SolveMode::YIELD, &[])?)
+    let x = ctl.solve(SolveMode::YIELD, &[])?;
+    Ok(x)
 }
-fn ground_with_myefh(ctl: &mut Control) -> Result<()> {
+fn ground(ctl: Control) -> Result<ControlWithFH> {
     // declare extern function handler
-    let mut efh = MyEFH;
+    let member_fh = MemberFH;
 
     // ground the base part
     let part = Part::new("base", &[])?;
     let parts = vec![part];
 
-    Ok(ctl.ground_with_event_handler(&parts, &mut efh)?)
+    let mut ctl = ctl.register_function_handler(member_fh);
+    ctl.ground(&parts)?;
+    Ok(ctl)
 }
 
-fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<Symbol>> {
+fn cautious_consequences_optimal_models(
+    handle: &mut SolveHandleWithFH<MemberFH>,
+) -> Result<Vec<Symbol>> {
     let mut symbols = vec![];
     loop {
         handle.resume()?;
@@ -438,7 +447,7 @@ fn cautious_consequences_optimal_models(handle: &mut SolveHandle) -> Result<Vec<
     Ok(symbols)
 }
 
-fn get_optimum(handle: &mut SolveHandle) -> Result<Vec<i64>> {
+fn get_optimum<FH: FunctionHandler>(handle: &mut SolveHandleWithFH<FH>) -> Result<Vec<i64>> {
     let mut last = vec![];
     let mut found = false;
     loop {
@@ -468,20 +477,20 @@ pub fn get_minimal_inconsistent_cores(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Mics> {
     info!("Computing minimal inconsistent cores (mic\'s) ...");
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl: Control = clingo::control(vec![
         "0".to_string(),
         "--dom-mod=5,16".to_string(),
         "--heu=Domain".to_string(),
         "--enum-mode=domRec".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_MICS)?;
 
     if setting.fp {
@@ -489,17 +498,11 @@ pub fn get_minimal_inconsistent_cores(
     }
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
-    Ok(Mics(ctl))
+    let ctl = ground(ctl)?;
+    Ok(Mics(ctl.all_models()?))
 }
-pub struct Mics(Control);
-impl Mics {
-    pub fn iter(&mut self) -> Result<MicsIterator> {
-        Ok(MicsIterator(self.0.all_models()?))
-    }
-}
-pub struct MicsIterator<'a>(AllModels<'a>);
-impl<'a> Iterator for MicsIterator<'a> {
+pub struct Mics(AllModels<Default, Default, Default, MemberFH, Default>);
+impl Iterator for Mics {
     type Item = Vec<Symbol>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.next() {
@@ -519,18 +522,18 @@ pub fn get_scenfit(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<i64> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -552,7 +555,7 @@ pub fn get_scenfit(
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     Ok(get_optimum(&mut handle)?[0])
 }
 
@@ -566,20 +569,20 @@ pub fn get_scenfit_labelings(
     profile: &FactBase,
     inputs: &FactBase,
     number: u32,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<LabelsRepair> {
     info!("Compute scenfit labelings ...");
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         format!("{}", number),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -604,17 +607,17 @@ pub fn get_scenfit_labelings(
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
-    Ok(LabelsRepair(ctl))
+    let ctl = ground(ctl)?;
+    Ok(LabelsRepair(ctl.optimal_models()?))
 }
-pub struct LabelsRepair(Control);
-impl LabelsRepair {
-    pub fn iter(&mut self) -> Result<LabelsRepairIterator> {
-        Ok(LabelsRepairIterator(self.0.optimal_models()?))
-    }
-}
-pub struct LabelsRepairIterator<'a>(OptimalModels<'a>);
-impl<'a> Iterator for LabelsRepairIterator<'a> {
+// pub struct LabelsRepair(ControlWithFH);
+// impl LabelsRepair {
+//     pub fn iter(self) -> Result<LabelsRepairIterator> {
+//         Ok(LabelsRepairIterator(self.0.optimal_models()?))
+//     }
+// }
+pub struct LabelsRepair(OptimalModels<Default, Default, Default, MemberFH, Default>);
+impl Iterator for LabelsRepair {
     type Item = (Vec<Prediction>, Vec<RepairOp>);
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.next() {
@@ -634,18 +637,18 @@ pub fn get_mcos(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<i64> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -667,7 +670,7 @@ pub fn get_mcos(
     ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     Ok(get_optimum(&mut handle)?[0])
 }
 
@@ -681,21 +684,21 @@ pub fn get_mcos_labelings(
     profile: &FactBase,
     inputs: &FactBase,
     number: u32,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<LabelsRepair> {
     info!("Compute mcos labelings ...");
 
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         format!("{}", number),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -720,26 +723,26 @@ pub fn get_mcos_labelings(
     ctl.add("base", &[], PRG_SHOW_LABELS)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
-    Ok(LabelsRepair(ctl))
+    let ctl = ground(ctl)?;
+    Ok(LabelsRepair(ctl.optimal_models()?))
 }
 pub fn get_predictions_under_mcos(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Predictions> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
         // format!("--opt-bound={}",opt)
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -767,7 +770,7 @@ pub fn get_predictions_under_mcos(
     }
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     let model = cautious_consequences_optimal_models(&mut handle)?;
     extract_predictions(&model)
 }
@@ -776,19 +779,19 @@ pub fn get_predictions_under_scenfit(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Predictions> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
         // format!("--opt-bound={}",opt)
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profile);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profile)?;
+    ctl.add_facts(inputs)?;
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
 
@@ -816,7 +819,7 @@ pub fn get_predictions_under_scenfit(
     }
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     let model = cautious_consequences_optimal_models(&mut handle)?;
     extract_predictions(&model)
 }
@@ -854,12 +857,12 @@ pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
             Ok(NodeId::And(s.to_string()))
         }
         _ => {
-            panic!("unmatched symbol: {}", symbol.to_string()?);
+            panic!("unmatched symbol: {}", symbol);
         }
     }
 }
 pub fn into_behavior(symbol: Symbol) -> Result<Behavior> {
-    match symbol.to_string()?.as_ref() {
+    match symbol.to_string().as_ref() {
         "1" => Ok(Behavior::Plus),
         "-1" => Ok(Behavior::Minus),
         "0" => Ok(Behavior::Zero),
@@ -1045,7 +1048,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
             })
         }
         _ => {
-            panic!("unmatched symbol: {}", symbol.to_string()?);
+            panic!("unmatched symbol: {}", symbol);
         }
     }
 }
@@ -1056,15 +1059,15 @@ pub fn get_opt_add_remove_edges_greedy(
     profiles: &FactBase,
     inputs: &FactBase,
 ) -> Result<(i64, i64, std::vec::Vec<FactBase>)> {
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1079,7 +1082,7 @@ pub fn get_opt_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     let optima = get_optimum(&mut handle)?;
     let mut bscenfit = optima[0];
     let mut brepscore = optima[1];
@@ -1101,15 +1104,15 @@ pub fn get_opt_add_remove_edges_greedy(
 
         let mut end = true; // assume this time it's the end
 
-        let mut ctl = Control::new(vec![
+        let mut ctl = clingo::control(vec![
             "--opt-strategy=5".to_string(),
             "--opt-mode=optN".to_string(),
             "--project".to_string(),
         ])?;
-        ctl.add_facts(graph);
-        ctl.add_facts(profiles);
-        ctl.add_facts(inputs);
-        ctl.add_facts(&oedges);
+        ctl.add_facts(graph)?;
+        ctl.add_facts(profiles)?;
+        ctl.add_facts(inputs)?;
+        ctl.add_facts(&oedges)?;
 
         ctl.add("base", &[], PRG_SIGN_CONS)?;
         ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1124,7 +1127,7 @@ pub fn get_opt_add_remove_edges_greedy(
         ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
         // ground & solve
-        let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+        let mut handle = ground_and_solve(ctl)?;
         // seach best edge end loop
         loop {
             handle.resume()?;
@@ -1144,16 +1147,16 @@ pub fn get_opt_add_remove_edges_greedy(
                             let mut f_end = FactBase::new();
                             f_end.insert(&nend);
 
-                            let mut ctl2 = Control::new(vec![
+                            let mut ctl2 = clingo::control(vec![
                                 "--opt-strategy=5".to_string(),
                                 "--opt-mode=optN".to_string(),
                                 "--project".to_string(),
                             ])?;
-                            ctl2.add_facts(graph);
-                            ctl2.add_facts(profiles);
-                            ctl2.add_facts(inputs);
-                            ctl2.add_facts(&oedges);
-                            ctl2.add_facts(&f_end);
+                            ctl2.add_facts(graph)?;
+                            ctl2.add_facts(profiles)?;
+                            ctl2.add_facts(inputs)?;
+                            ctl2.add_facts(&oedges)?;
+                            ctl2.add_facts(&f_end)?;
 
                             ctl2.add("base", &[], PRG_SIGN_CONS)?;
                             ctl2.add("base", &[], PRG_BWD_PROP)?;
@@ -1168,7 +1171,7 @@ pub fn get_opt_add_remove_edges_greedy(
                             ctl2.add("base", &[], PRG_KEEP_INPUTS)?;
 
                             // ground & solve
-                            let mut handle2 = ground_and_solve_with_myefh(&mut ctl2)?;
+                            let mut handle2 = ground_and_solve(ctl2)?;
                             // seach best edge start loop
                             loop {
                                 handle2.resume()?;
@@ -1241,17 +1244,17 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     max_solutions: u32,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
         "--project".to_string(),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
-    ctl.add_facts(edges);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
+    ctl.add_facts(edges)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1266,7 +1269,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
+    let ctl = ground(ctl)?;
 
     let models = ctl.optimal_models()?;
     models
@@ -1278,14 +1281,14 @@ pub fn get_opt_add_remove_edges(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<(i64, i64)> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
+    let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1334,19 +1337,19 @@ pub fn get_opt_repairs_add_remove_edges(
     scenfit: i64,
     repair_score: i64,
     max_solutions: u32,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1374,7 +1377,7 @@ pub fn get_opt_repairs_add_remove_edges(
     ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
+    let ctl = ground(ctl)?;
     let models = ctl.optimal_models()?;
     models
         .map(|model| extract_repairs(&model.symbols))
@@ -1385,14 +1388,14 @@ pub fn get_opt_flip_edges(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<(i64, i64)> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
+    let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1418,7 +1421,7 @@ pub fn get_opt_flip_edges(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     let cost = get_optimum(&mut handle)?;
     Ok((cost[0], cost[1]))
 }
@@ -1430,18 +1433,18 @@ pub fn get_opt_repairs_flip_edges(
     scenfit: i64,
     repair_score: i64,
     max_solutions: u32,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1468,7 +1471,7 @@ pub fn get_opt_repairs_flip_edges(
     ctl.add("base", &[], PRG_SHOW_FLIP)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
+    let ctl = ground(ctl)?;
     let models = ctl.optimal_models()?;
     models.map(|model| extract_flips(&model.symbols)).collect()
 }
@@ -1477,14 +1480,14 @@ pub fn get_opt_remove_edges(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<(i64, i64)> {
     // create a control object and pass command line arguments
-    let mut ctl = Control::new(vec!["--opt-strategy=5".to_string()])?;
+    let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1510,7 +1513,7 @@ pub fn get_opt_remove_edges(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
 
     // ground & solve
-    let mut handle = ground_and_solve_with_myefh(&mut ctl)?;
+    let mut handle = ground_and_solve(ctl)?;
     let cost = get_optimum(&mut handle)?;
     Ok((cost[0], cost[1]))
 }
@@ -1521,18 +1524,18 @@ pub fn get_opt_repairs_remove_edges(
     scenfit: i64,
     repair_score: i64,
     max_solutions: u32,
-    setting: &SETTING,
+    setting: &Setting,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
-    let mut ctl = Control::new(vec![
+    let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
         format!("--opt-mode=optN,{},{}", scenfit, repair_score),
     ])?;
 
-    ctl.add_facts(graph);
-    ctl.add_facts(profiles);
-    ctl.add_facts(inputs);
+    ctl.add_facts(graph)?;
+    ctl.add_facts(profiles)?;
+    ctl.add_facts(inputs)?;
 
     ctl.add("base", &[], PRG_SIGN_CONS)?;
     ctl.add("base", &[], PRG_BWD_PROP)?;
@@ -1559,7 +1562,7 @@ pub fn get_opt_repairs_remove_edges(
     ctl.add("base", &[], PRG_SHOW_REPAIRS)?;
 
     // ground & solve
-    ground_with_myefh(&mut ctl)?;
+    let ctl = ground(ctl)?;
     let models = ctl.optimal_models()?;
     models
         .map(|model| extract_repairs(&model.symbols))
@@ -1575,7 +1578,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 mics.push(id);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
+                panic!("unmatched symbol: {}", symbol);
             }
         }
     }
@@ -1634,7 +1637,7 @@ fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp
                 err.push(into_repair(symbol)?);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
+                panic!("unmatched symbol: {}", symbol);
             }
         }
     }
@@ -1660,7 +1663,7 @@ fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 rep.push(*symbol);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
+                panic!("unmatched symbol: {}", symbol);
             }
         }
     }
@@ -1676,7 +1679,7 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 rep.push(*symbol);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol.to_string()?);
+                panic!("unmatched symbol: {}", symbol);
             }
         }
     }
@@ -1707,7 +1710,7 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
                 let id = symbol.arguments()?[1];
                 // only return or nodes
                 if id.name()? == "or" {
-                    match symbol.arguments()?[2].to_string()?.as_ref() {
+                    match symbol.arguments()?[2].to_string().as_ref() {
                         "1" => {
                             predictions.push(Prediction {
                                 node: id.arguments()?[0].string()?.to_string(),
@@ -1742,7 +1745,7 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
                 }
             }
             _ => {
-                panic!("Unexpected predicate: {}", symbol.to_string()?);
+                panic!("Unexpected predicate: {}", symbol);
             }
         }
     }

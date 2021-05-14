@@ -261,16 +261,16 @@ fn run() -> Result<()> {
     Ok(())
 }
 
-fn get_setting(opt: &Opt) -> SETTING {
+fn get_setting(opt: &Opt) -> Setting {
     let setting = if opt.depmat {
-        SETTING {
+        Setting {
             os: false,
             ep: true,
             fp: true,
             fc: true,
         }
     } else {
-        SETTING {
+        Setting {
             os: true,
             ep: opt.elempath,
             fp: !opt.fwd_propagation_off,
@@ -382,9 +382,9 @@ fn observations_statistics(profile: &Profile, graph: &Graph) -> ObservationsStat
     }
 }
 
-fn print_mics(mut mics: Mics) -> Result<()> {
+fn print_mics(mics: Mics) -> Result<()> {
     let mut oldmic = vec![];
-    for (count, mic) in mics.iter()?.enumerate() {
+    for (count, mic) in mics.enumerate() {
         if oldmic != *mic {
             print!("- mic {}:\n  ", count + 1);
             for e in mic.clone() {
@@ -400,14 +400,13 @@ fn print_mics(mut mics: Mics) -> Result<()> {
 fn print_json_mics(mut mics: Mics) -> Result<()> {
     println!(",\"mics\":[");
 
-    let mut iter = mics.iter()?;
-    if let Some(mic) = iter.next() {
+    if let Some(mic) = mics.next() {
         let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
         let serialized = serde_json::to_string(&nodes)?;
         println!("{}", serialized);
         let mut oldmic = mic;
 
-        for mic in iter {
+        for mic in mics {
             if oldmic != mic {
                 let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
                 let serialized = serde_json::to_string(&nodes)?;
@@ -420,8 +419,8 @@ fn print_json_mics(mut mics: Mics) -> Result<()> {
     Ok(())
 }
 
-fn print_labelings(mut labelings: LabelsRepair) -> Result<()> {
-    for (count, (labels, repairs)) in labelings.iter()?.enumerate() {
+fn print_labelings(labelings: LabelsRepair) -> Result<()> {
+    for (count, (labels, repairs)) in labelings.enumerate() {
         if count > 0 {
             println!();
         }
@@ -438,8 +437,7 @@ fn print_labelings(mut labelings: LabelsRepair) -> Result<()> {
 fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
     println!(",\"labels under repair\":[");
 
-    let mut iter = labelings.iter()?;
-    if let Some((labels, repairs)) = iter.next() {
+    if let Some((labels, repairs)) = labelings.next() {
         let serialized = serde_json::to_string(&labels)?;
         println!("{{\"labels\":{}", serialized);
 
@@ -447,7 +445,7 @@ fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
         println!(",\"repairs\":{}", serialized);
         println!("}}");
 
-        for (labels, repairs) in iter {
+        for (labels, repairs) in labelings {
             let serialized = serde_json::to_string(&labels)?;
             println!(", {{\"labels\":{}", serialized);
 
