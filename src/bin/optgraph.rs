@@ -350,16 +350,16 @@ fn run() -> Result<()> {
     Ok(())
 }
 
-fn get_setting(opt: &Opt) -> SETTING {
+fn get_setting(opt: &Opt) -> Setting {
     let setting = if opt.depmat {
-        SETTING {
+        Setting {
             os: false,
             ep: true,
             fp: true,
             fc: true,
         }
     } else {
-        SETTING {
+        Setting {
             os: true,
             ep: opt.elempath,
             fp: !opt.fwd_propagation_off,
