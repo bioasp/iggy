@@ -2,8 +2,8 @@ pub mod cif_parser;
 use cif_parser::EdgeSign;
 pub mod profile_parser;
 use clingo::{
-    defaults::Default, AllModels, ClingoError, Control, ExternalError, FactBase, FunctionHandler,
-    GenericControl, Location, OptimalModels, Part, ShowType, SolveHandle, SolveMode, Symbol,
+    defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase, FunctionHandler,
+    GenericControl, GenericSolveHandle, Location, OptimalModels, Part, ShowType, SolveMode, Symbol,
     SymbolType, ToSymbol,
 };
 use profile_parser::{Behavior, ProfileId};
@@ -17,8 +17,8 @@ use serde::Serialize;
 use std::fmt;
 use thiserror::Error;
 
-type ControlWithFH = GenericControl<Default, Default, Default, MemberFH>;
-type SolveHandleWithFH<FH> = SolveHandle<Default, Default, Default, FH, Default>;
+type ControlWithFH = GenericControl<Non, Non, Non, MemberFH>;
+type SolveHandleWithFH<FH> = GenericSolveHandle<Non, Non, Non, FH, Non>;
 
 type Labelings = Vec<Prediction>;
 
@@ -306,12 +306,6 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
                 }
             }
 
-            //     // close the solve handle
-            //     handle
-            //   .get()
-            //   .expect("Failed to get result from solve handle.");
-            //     handle.close().expect("Failed to close solve handle.");
-
             Ok(CheckResult::Inconsistent(v))
         }
         _ => panic!("Expected model!"),
@@ -501,7 +495,7 @@ pub fn get_minimal_inconsistent_cores(
     let ctl = ground(ctl)?;
     Ok(Mics(ctl.all_models()?))
 }
-pub struct Mics(AllModels<Default, Default, Default, MemberFH, Default>);
+pub struct Mics(AllModels<Non, Non, Non, MemberFH, Non>);
 impl Iterator for Mics {
     type Item = Vec<Symbol>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -610,13 +604,7 @@ pub fn get_scenfit_labelings(
     let ctl = ground(ctl)?;
     Ok(LabelsRepair(ctl.optimal_models()?))
 }
-// pub struct LabelsRepair(ControlWithFH);
-// impl LabelsRepair {
-//     pub fn iter(self) -> Result<LabelsRepairIterator> {
-//         Ok(LabelsRepairIterator(self.0.optimal_models()?))
-//     }
-// }
-pub struct LabelsRepair(OptimalModels<Default, Default, Default, MemberFH, Default>);
+pub struct LabelsRepair(OptimalModels<Non, Non, Non, MemberFH, Non>);
 impl Iterator for LabelsRepair {
     type Item = (Vec<Prediction>, Vec<RepairOp>);
     fn next(&mut self) -> Option<Self::Item> {
