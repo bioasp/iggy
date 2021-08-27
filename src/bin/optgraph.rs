@@ -19,7 +19,7 @@ use thiserror::Error;
 #[derive(Clap, Debug)]
 #[clap(
     name = "optgraph",
-    version = "2.1.1",
+    version = "2.2.0",
     author = "Sven Thiele <sthiele78@gmail.com>"
 )]
 struct Opt {

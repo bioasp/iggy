@@ -23,7 +23,7 @@ use iggy::*;
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
 #[derive(Clap, Debug)]
-#[clap(version = "2.1.1", author = "Sven Thiele <sthiele78@gmail.com>")]
+#[clap(version = "2.2.0", author = "Sven Thiele <sthiele78@gmail.com>")]
 struct Opt {
     /// Influence graph in CIF format
     #[clap(short = 'n', long = "network", parse(from_os_str))]
