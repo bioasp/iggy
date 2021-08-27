@@ -3,7 +3,7 @@ use cif_parser::EdgeSign;
 pub mod profile_parser;
 use clingo::{
     defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase, FunctionHandler,
-    GenericControl, GenericSolveHandle, Location, OptimalModels, Part, ShowType, SolveMode, Symbol,
+    GenericControl, GenericSolveHandle, ast::Location, OptimalModels, Part, ShowType, SolveMode, Symbol,
     SymbolType, ToSymbol,
 };
 use profile_parser::{Behavior, ProfileId};
@@ -235,7 +235,7 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
     ctl.add_facts(profile)?;
 
     // ground the base part
-    let part = Part::new("base", &[])?;
+    let part = Part::new("base", vec![])?;
     let parts = vec![part];
     ctl.ground(&parts)?;
 
@@ -321,7 +321,7 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase> {
     ctl.add_facts(graph)?;
 
     // ground the base part
-    let part = Part::new("base", &[])?;
+    let part = Part::new("base", vec![])?;
     let parts = vec![part];
     ctl.ground(&parts)?;
 
@@ -399,7 +399,7 @@ fn ground_and_solve(ctl: Control) -> Result<SolveHandleWithFH<MemberFH>> {
     let member_fh = MemberFH;
 
     // ground the base part
-    let part = Part::new("base", &[])?;
+    let part = Part::new("base", vec![])?;
     let parts = vec![part];
 
     let mut ctl = ctl.register_function_handler(member_fh);
@@ -415,7 +415,7 @@ fn ground(ctl: Control) -> Result<ControlWithFH> {
     let member_fh = MemberFH;
 
     // ground the base part
-    let part = Part::new("base", &[])?;
+    let part = Part::new("base", vec![])?;
     let parts = vec![part];
 
     let mut ctl = ctl.register_function_handler(member_fh);
@@ -1307,7 +1307,7 @@ pub fn get_opt_add_remove_edges(
     ctl.add("base", &[], PRG_MIN_WEIGHTED_REPAIRS)?;
 
     // ground & solve
-    let part = Part::new("base", &[])?;
+    let part = Part::new("base", vec![])?;
     let parts = vec![part];
 
     ctl.ground(&parts).expect("ground did not work.");
