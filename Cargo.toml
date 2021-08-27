@@ -13,8 +13,7 @@ edition = "2018"
 # static-linking = ["clingo/static-linking"]
 
 [dependencies]
-# clingo = { version = "0.6", features = ["derive"] }
-clingo = { version = "0.7.0-beta.1", git = "https://github.com/potassco/clingo-rs", branch = "st/next", features = ["derive","static-linking"] }
+clingo = { version = "0.7.0", git = "https://github.com/potassco/clingo-rs", branch = "master", features = ["derive","static-linking"] }
 clap = "3.0.0-beta.2"
 thiserror = "1.0"
 anyhow = "1.0"
