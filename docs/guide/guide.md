@@ -1,4 +1,4 @@
-# Iggy - User Guide (version 2.1.1)
+# Iggy - User Guide (version 2.2.0)
 
 Sven Thiele
 
@@ -137,7 +137,7 @@ For more options, you can ask for help as follows:
 
 ```txt
 > iggy -h
-iggy 2.1.1
+iggy 2.2.0
 Sven Thiele <sthiele78@gmail.com>
 Iggy confronts interaction graph models with observations of (signed) changes between two measured
 states (including uncertain observations). Iggy discovers inconsistencies in networks or data,
@@ -465,7 +465,7 @@ For more options, you can ask for help as follows:
 
 ```txt
 > optgraph -h
-optgraph 2.1.1
+optgraph 2.2.0
 Sven Thiele <sthiele78@gmail.com>
 Optgraph confronts interaction graph models with observations of (signed) changes between two
 measured states. Opt-graph computes networks fitting the observation data by removing (or adding) a

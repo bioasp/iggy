@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.2.0 - 2021, Aug
+
+- improve output/logging
+- add option for JSON output
+- enumerate mics using an iterator
+- use clingo 5.5.0 via clingo-rs 0.7.0
 
 ## v2.1.1 - 2020, Mar 11
 
