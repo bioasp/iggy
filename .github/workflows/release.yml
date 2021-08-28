@@ -23,13 +23,13 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       env:
         PACKAGE: "iggy-linux-x86_64.tar.gz"
-      run: tar -czf $PACKAGE -C target/release/ iggy opt_graph
+      run: tar -czf $PACKAGE -C target/release/ iggy optgraph
       
     - name: archive macOS
       if: matrix.os == 'macOS-latest'
       env:
         PACKAGE: "iggy-macos-x86_64.tar.gz"
-      run: tar -czf $PACKAGE -C target/release/ iggy opt_graph
+      run: tar -czf $PACKAGE -C target/release/ iggy optgraph
       
     - name: GH Release linux
       if: matrix.os == 'ubuntu-latest'
