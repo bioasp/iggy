@@ -1,6 +1,6 @@
 [package]
 name = "iggy"
-version = "2.2.0"
+version = "2.2.1-dev"
 authors = ["Sven Thiele <sthiele78@gmail.com>"]
 description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
 readme = "README.md"
