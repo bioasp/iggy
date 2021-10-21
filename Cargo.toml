@@ -7,7 +7,7 @@ readme = "README.md"
 documentation = "bioasp.github.io/iggy"
 repository = "https://github.com/bioasp/iggy"
 publish = false
-edition = "2018"
+edition = "2021"
 
 # [features]
 # static-linking = ["clingo/static-linking"]
