@@ -137,7 +137,7 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
         let l1 = line?;
         let l = l1.trim();
         if !l.is_empty() {
-            match profile::statement(&l)? {
+            match profile::statement(l)? {
                 PStatement::Input(s) => {
                     inputs.push(NodeId::Or(s));
                 }

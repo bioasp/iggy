@@ -13,7 +13,7 @@ pub fn read(file: &File) -> Result<Graph> {
         let l1 = line?;
         let l = l1.trim();
         if !l.is_empty() {
-            graph.add(cif::statement(&l)?);
+            graph.add(cif::statement(l)?);
         }
     }
     graph.or_nodes.sort();
