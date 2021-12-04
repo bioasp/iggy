@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use clap::Clap;
+use clap::Parser;
 use clingo::FactBase;
 use log::{error, info, warn};
 use serde::Serialize;
@@ -22,7 +22,7 @@ use iggy::*;
 /// predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(version = "2.2.0", author = "Sven Thiele <sthiele78@gmail.com>")]
 struct Opt {
     /// Influence graph in CIF format
