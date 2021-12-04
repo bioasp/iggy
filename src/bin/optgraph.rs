@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use clap::Clap;
+use clap::Parser;
 use clingo::FactBase;
 use iggy::CheckResult::Inconsistent;
 use iggy::*;
@@ -16,7 +16,7 @@ use thiserror::Error;
 /// Opt-graph computes networks fitting the observation data by removing (or adding) a minimal
 /// number of edges in the given network.
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(
     name = "optgraph",
     version = "2.2.0",

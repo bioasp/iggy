@@ -14,7 +14,7 @@ edition = "2021"
 
 [dependencies]
 clingo = { version ="0.7.0", features = ["derive","static-linking"] }
-clap = "3.0.0-beta.2"
+clap = "3.0.0-beta.5"
 thiserror = "1.0"
 anyhow = "1.0"
 log = "*"
