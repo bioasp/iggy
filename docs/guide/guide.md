@@ -30,8 +30,10 @@ In practice, this is used to identify unreliable data or to indicate missing rea
 
 Clone the git repository:
 
-    git clone https://github.com/bioasp/iggy.git
-    cargo build --release
+```sh
+git clone https://github.com/bioasp/iggy.git
+cargo build --release
+```
 
 The executables can be found under `./target/release/`
 
@@ -46,13 +48,15 @@ The second is the experimental data, representing experimental condition and obs
 The model is represented as file in complex interaction format `CIF` as shown below.
 Lines in the `CIF` file specify a interaction between (multiple) source nodes and one target node.
 
-    shp2                        ->  grb2_sos
-    !mtor_inhibitor             ->  mtor
-    ?jak2_p                     ->  stat5ab_py
-    !ras_gap & grb2_sos         ->  pi3k
-    akt & erk & mtor & pi3k     ->  mtorc1
-    gab1_bras_py                ->  ras_gap
-    gab1_ps & jak2_p & pi3k     ->  gab1_bras_py
+```txt
+shp2                        ->  grb2_sos
+!mtor_inhibitor             ->  mtor
+?jak2_p                     ->  stat5ab_py
+!ras_gap & grb2_sos         ->  pi3k
+akt & erk & mtor & pi3k     ->  mtorc1
+gab1_bras_py                ->  ras_gap
+gab1_ps & jak2_p & pi3k     ->  gab1_bras_py
+```
 
 In our influence graph models, we have simple interactions like:
 in Line 1 for `shp2` *increases* `grb2_sos`
@@ -77,14 +81,16 @@ line 6 states that an *uncertain increase* (`NotMinus`) has been observed in `mt
 Line 7 states that `akt` is initially on the minimum level, this means it cannot further decrease, and
 line 8 states that `grb2_sos` is initially on the maximum level, this means it cannot further increase.
 
-    depor         = input
-    depor         = +
-    stat5ab_py    = -
-    ras_gap       = 0
-    jak2_p        = NotPlus
-    mtorc1        = NotMinus
-    akt           = MIN
-    pi3k          = MAX
+```txt
+depor         = input
+depor         = +
+stat5ab_py    = -
+ras_gap       = 0
+jak2_p        = NotPlus
+mtorc1        = NotMinus
+akt           = MIN
+pi3k          = MAX
+```
 
 ### Consistency notions
 
@@ -131,14 +137,18 @@ The repairs re-establish the mutual consistency between model and data, and enab
 
 The typical usage of `iggy` is:
 
-    > iggy -n network.cif -o observation.obs -l 10 -p
+```sh
+iggy -n network.cif -o observation.obs -l 10 -p
+```
 
 For more options, you can ask for help as follows:
 
 ```txt
 > iggy -h
 iggy 2.2.0
+
 Sven Thiele <sthiele78@gmail.com>
+
 Iggy confronts interaction graph models with observations of (signed) changes between two measured
 states (including uncertain observations). Iggy discovers inconsistencies in networks or data,
 applies minimal repairs, and predicts the behavior for the unmeasured species. It distinguishes
@@ -146,27 +156,50 @@ strong predictions (e.g. increase in a node) and weak predictions (e.g., the val
 increases or remains unchanged)
 
 USAGE:
-    iggy [FLAGS] [OPTIONS] --network <network-file>
-
-FLAGS:
-    -a, --auto-inputs                Declare nodes with indegree 0 as inputs
-        --depmat                     Combine multiple states, a change must be explained by an
-                                     elementary path from an input
-        --elempath                   Every change must be explained by an elementary path from an
-                                     input
-        --founded-constraints-off    Disable foundedness constraints
-        --fwd-propagation-off        Disable forward propagation constraints
-    -h, --help                       Prints help information
-        --json                       Print JSON output
-        --mics                       Compute minimal inconsistent cores
-        --scenfit                    Compute scenfit of the data, default is mcos
-    -p, --show-predictions           Show predictions
-    -V, --version                    Prints version information
+    iggy [OPTIONS] --network <NETWORK_FILE>
 
 OPTIONS:
-    -l, --show-labelings <max-labelings>      Show max-labelings labelings, default is OFF, 0=all
-    -n, --network <network-file>              Influence graph in CIF format
-    -o, --observations <observations-file>    Observations in bioquali format
+    -a, --auto-inputs
+            Declare nodes with indegree 0 as inputs
+
+        --depmat
+            Combine multiple states, a change must be explained by an elementary path from an input
+
+        --elempath
+            Every change must be explained by an elementary path from an input
+
+        --founded-constraints-off
+            Disable foundedness constraints
+
+        --fwd-propagation-off
+            Disable forward propagation constraints
+
+    -h, --help
+            Print help information
+
+        --json
+            Print JSON output
+
+    -l, --show-labelings <MAX_LABELINGS>
+            Show MAX_LABELINGS labelings, default is OFF, 0=all
+
+        --mics
+            Compute minimal inconsistent cores
+
+    -n, --network <NETWORK_FILE>
+            Influence graph in CIF format
+
+    -o, --observations <OBSERVATIONS_FILE>
+            Observations in bioquali format
+
+    -p, --show-predictions
+            Show predictions
+
+        --scenfit
+            Compute scenfit of the data, default is mcos
+
+    -V, --version
+            Print version information
 ```
 
 ### Compute minimal correction sets (mcos) or *scenfit* and predictions under inconsistency
@@ -183,7 +216,9 @@ More precisely the behaviors of the system that are invariant also under the min
 The output of `iggy` can be redirected into a file using the `>` operator.
 For example to write the results shown below into the file `myfile.txt` type:
 
-    > iggy -n network.cif -o observations.obs -l 10 -p > myfile.txt
+```sh
+iggy -n network.cif -o observations.obs -l 10 -p > myfile.txt
+```
 
 In the following we will dissect the output generated by `iggy`.
 The first lines of the output state the constraints that have been used to analyze network and data.
@@ -375,9 +410,10 @@ Iggy computes minimal inconsistent cores *mics* for inconsistent model and data.
 The *mics* are connected parts of the model and indicate unreliable data or missing reactions.
 To compute the minimal inconsistent cores use the flag `--mics` as follows:
 
+```sh
+iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
 ```
-> iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
-```
+
 ```txt
 # Iggy Report
 
@@ -459,46 +495,68 @@ Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
 
 Typical usage is:
 
-    > optgraph -n network.cif -o observations_dir/ --show_repairs 10
+```sh
+optgraph -n network.cif -o observations_dir/ --show-repairs 10
+```
 
 For more options, you can ask for help as follows:
 
 ```txt
 > optgraph -h
 optgraph 2.2.0
+
 Sven Thiele <sthiele78@gmail.com>
+
 Optgraph confronts interaction graph models with observations of (signed) changes between two
 measured states. Opt-graph computes networks fitting the observation data by removing (or adding) a
 minimal number of edges in the given network
 
 USAGE:
-    optgraph [FLAGS] [OPTIONS] --network <network-file> --observations <observations-dir>
-
-FLAGS:
-    -a, --auto-inputs                Declare nodes with indegree 0 as inputs
-        --depmat                     Combine multiple states, a change must be explained by an
-                                     elementary path from an input
-        --elempath                   Every change must be explained by an elementary path from an
-                                     input
-        --founded-constraints-off    Disable foundedness constraints
-        --fwd-propagation-off        Disable forward propagation constraints
-    -h, --help                       Prints help information
-        --json                       Print JSON output
-    -V, --version                    Prints version information
+    optgraph [OPTIONS] --network <NETWORK_FILE> --observations <OBSERVATIONS_DIR>
 
 OPTIONS:
-    -r, --show-repairs <max-repairs>         Show max-repairs repairs, default is OFF, 0=all
-    -n, --network <network-file>             Influence graph in CIF format
-    -o, --observations <observations-dir>    Directory of observations in bioquali format
-    -m, --repair-mode <repair-mode>
-            Repair mode: remove = remove edges (default), optgraph = add + remove edges, flip = flip
+    -a, --auto-inputs
+            Declare nodes with indegree 0 as inputs
+
+        --depmat
+            Combine multiple states, a change must be explained by an elementary path from an input
+
+        --elempath
+            Every change must be explained by an elementary path from an input
+
+        --founded-constraints-off
+            Disable foundedness constraints
+
+        --fwd-propagation-off
+            Disable forward propagation constraints
+
+    -h, --help
+            Print help information
+
+        --json
+            Print JSON output
+
+    -m, --repair-mode <REPAIR_MODE>
+            REPAIR_MODE: remove = remove edges (default), optgraph = add + remove edges, flip = flip
             direction of edges
+
+    -n, --network <NETWORK_FILE>
+            Influence graph in CIF format
+
+    -o, --observations <OBSERVATIONS_DIR>
+            Directory of observations in bioquali format
+
+    -r, --show-repairs <MAX_REPAIRS>
+            Show MAX_REPAIRS repairs, default is OFF, 0=all
+
+    -V, --version
+            Print version information
 ```
 
 ### Example
 
-```txt
-> optgraph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph
+```sh
+optgraph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph
 ```
 
 ```txt

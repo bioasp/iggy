@@ -61,7 +61,7 @@ struct Opt {
     #[clap(long)]
     scenfit: bool,
 
-    /// Show max-labelings labelings, default is OFF, 0=all
+    /// Show MAX_LABELINGS labelings, default is OFF, 0=all
     #[clap(short = 'l', long = "show-labelings")]
     max_labelings: Option<u32>,
 

@@ -51,11 +51,11 @@ struct Opt {
     #[clap(short = 'a', long)]
     auto_inputs: bool,
 
-    /// Show max-repairs repairs, default is OFF, 0=all
+    /// Show MAX_REPAIRS repairs, default is OFF, 0=all
     #[clap(short = 'r', long = "show-repairs")]
     max_repairs: Option<u32>,
 
-    /// Repair mode: remove = remove edges (default),
+    /// REPAIR_MODE: remove = remove edges (default),
     ///              optgraph = add + remove edges,
     ///              flip = flip direction of edges
     #[clap(short = 'm', long)]
