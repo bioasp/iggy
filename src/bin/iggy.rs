@@ -21,16 +21,20 @@ use iggy::*;
 /// Iggy discovers inconsistencies in networks or data, applies minimal repairs, and
 /// predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
-
 #[derive(Parser, Debug)]
-#[clap(version = "2.2.0", author = "Sven Thiele <sthiele78@gmail.com>")]
+#[clap(version, author)]
 struct Opt {
     /// Influence graph in CIF format
-    #[clap(short = 'n', long = "network", parse(from_os_str))]
+    #[clap(short = 'n', long = "network", value_name = "FILE", parse(from_os_str))]
     network_file: PathBuf,
 
     /// Observations in bioquali format
-    #[clap(short = 'o', long = "observations", parse(from_os_str))]
+    #[clap(
+        short = 'o',
+        long = "observations",
+        value_name = "FILE",
+        parse(from_os_str)
+    )]
     observations_file: Option<PathBuf>,
 
     /// Disable forward propagation constraints
@@ -61,8 +65,8 @@ struct Opt {
     #[clap(long)]
     scenfit: bool,
 
-    /// Show MAX_LABELINGS labelings, default is OFF, 0=all
-    #[clap(short = 'l', long = "show-labelings")]
+    /// Show N labelings, default is OFF, 0=all
+    #[clap(short = 'l', long = "show-labelings", value_name = "N")]
     max_labelings: Option<u32>,
 
     /// Show predictions

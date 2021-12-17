@@ -15,20 +15,20 @@ use thiserror::Error;
 /// two measured states.
 /// Opt-graph computes networks fitting the observation data by removing (or adding) a minimal
 /// number of edges in the given network.
-
 #[derive(Parser, Debug)]
-#[clap(
-    name = "optgraph",
-    version = "2.2.0",
-    author = "Sven Thiele <sthiele78@gmail.com>"
-)]
+#[clap(name = "optgraph", version, author)]
 struct Opt {
     /// Influence graph in CIF format
-    #[clap(short = 'n', long = "network", parse(from_os_str))]
+    #[clap(short = 'n', long = "network", value_name = "FILE", parse(from_os_str))]
     network_file: PathBuf,
 
     /// Directory of observations in bioquali format
-    #[clap(short = 'o', long = "observations", parse(from_os_str))]
+    #[clap(
+        short = 'o',
+        long = "observations",
+        value_name = "DIR",
+        parse(from_os_str)
+    )]
     observations_dir: PathBuf,
 
     /// Disable forward propagation constraints
@@ -51,8 +51,8 @@ struct Opt {
     #[clap(short = 'a', long)]
     auto_inputs: bool,
 
-    /// Show MAX_REPAIRS repairs, default is OFF, 0=all
-    #[clap(short = 'r', long = "show-repairs")]
+    /// Show N repairs, default is OFF, 0=all
+    #[clap(short = 'r', long = "show-repairs", value_name = "N")]
     max_repairs: Option<u32>,
 
     /// REPAIR_MODE: remove = remove edges (default),
