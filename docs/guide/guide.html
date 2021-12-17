@@ -1,437 +1,320 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>guide.md</title>
-<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+  <title>guide.md</title>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+  <style>
+    body {
+      font: 400 16px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #111;
+      background-color: #fdfdfd;
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-feature-settings: "kern"1;
+      -moz-font-feature-settings: "kern"1;
+      -o-font-feature-settings: "kern"1;
+      font-feature-settings: "kern"1;
+      font-kerning: normal;
+      padding: 30px;
+    }
 
-<style>
-/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+    @media only screen and (max-width: 600px) {
+      body {
+        padding: 5px;
+      }
 
-body {
-	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
-	font-size: var(--vscode-markdown-font-size, 14px);
-	padding: 0 26px;
-	line-height: var(--vscode-markdown-line-height, 22px);
-	word-wrap: break-word;
-}
+      body>#content {
+        padding: 0px 20px 20px 20px !important;
+      }
+    }
 
-#code-csp-warning {
-	position: fixed;
-	top: 0;
-	right: 0;
-	color: white;
-	margin: 16px;
-	text-align: center;
-	font-size: 12px;
-	font-family: sans-serif;
-	background-color:#444444;
-	cursor: pointer;
-	padding: 6px;
-	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
-}
+    body>#content {
+      margin: 0px;
+      max-width: 900px;
+      border: 1px solid #e1e4e8;
+      padding: 10px 40px;
+      padding-bottom: 20px;
+      border-radius: 2px;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-#code-csp-warning:hover {
-	text-decoration: none;
-	background-color:#007acc;
-	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
-}
+    hr {
+      color: #bbb;
+      background-color: #bbb;
+      height: 1px;
+      flex: 0 1 auto;
+      margin: 1em 0;
+      padding: 0;
+      border: none;
+    }
 
-body.scrollBeyondLastLine {
-	margin-bottom: calc(100vh - 22px);
-}
+    /**
+ * Links
+ */
+    a {
+      color: #0366d6;
+      text-decoration: none;
+    }
 
-body.showEditorSelection .code-line {
-	position: relative;
-}
+    a:visited {
+      color: #0366d6;
+    }
 
-body.showEditorSelection .code-active-line:before,
-body.showEditorSelection .code-line:hover:before {
-	content: "";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: -12px;
-	height: 100%;
-}
+    a:hover {
+      color: #0366d6;
+      text-decoration: underline;
+    }
 
-body.showEditorSelection li.code-active-line:before,
-body.showEditorSelection li.code-line:hover:before {
-	left: -30px;
-}
+    pre {
+      background-color: #f6f8fa;
+      border-radius: 3px;
+      font-size: 85%;
+      line-height: 1.45;
+      overflow: auto;
+      padding: 16px;
+    }
 
-.vscode-light.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.15);
-}
+    /**
+  * Code blocks
+  */
 
-.vscode-light.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(0, 0, 0, 0.40);
-}
+    code {
+      background-color: rgba(27, 31, 35, .05);
+      border-radius: 3px;
+      font-size: 85%;
+      margin: 0;
+      word-wrap: break-word;
+      padding: .2em .4em;
+      font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, Courier, monospace;
+    }
 
-.vscode-light.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    pre>code {
+      background-color: transparent;
+      border: 0;
+      display: inline;
+      line-height: inherit;
+      margin: 0;
+      overflow: visible;
+      padding: 0;
+      word-wrap: normal;
+      font-size: 100%;
+    }
 
-.vscode-dark.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.4);
-}
 
-.vscode-dark.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 255, 255, 0.60);
-}
+    /**
+ * Blockquotes
+ */
+    blockquote {
+      margin-left: 30px;
+      margin-top: 0px;
+      margin-bottom: 16px;
+      border-left-width: 3px;
+      padding: 0 1em;
+      color: #828282;
+      border-left: 4px solid #e8e8e8;
+      padding-left: 15px;
+      font-size: 18px;
+      letter-spacing: -1px;
+      font-style: italic;
+    }
 
-.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    blockquote * {
+      font-style: normal !important;
+      letter-spacing: 0;
+      color: #6a737d !important;
+    }
 
-.vscode-high-contrast.showEditorSelection .code-active-line:before {
-	border-left: 3px solid rgba(255, 160, 0, 0.7);
-}
+    /**
+ * Tables
+ */
+    table {
+      border-spacing: 2px;
+      display: block;
+      font-size: 14px;
+      overflow: auto;
+      width: 100%;
+      margin-bottom: 16px;
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
 
-.vscode-high-contrast.showEditorSelection .code-line:hover:before {
-	border-left: 3px solid rgba(255, 160, 0, 1);
-}
+    td {
+      padding: 6px 13px;
+      border: 1px solid #dfe2e5;
+    }
 
-.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
-	border-left: none;
-}
+    th {
+      font-weight: 600;
+      padding: 6px 13px;
+      border: 1px solid #dfe2e5;
+    }
 
-img {
-	max-width: 100%;
-	max-height: 100%;
-}
+    tr {
+      background-color: #fff;
+      border-top: 1px solid #c6cbd1;
+    }
 
-a {
-	text-decoration: none;
-}
+    table tr:nth-child(2n) {
+      background-color: #f6f8fa;
+    }
 
-a:hover {
-	text-decoration: underline;
-}
-
-a:focus,
-input:focus,
-select:focus,
-textarea:focus {
-	outline: 1px solid -webkit-focus-ring-color;
-	outline-offset: -1px;
-}
-
-hr {
-	border: 0;
-	height: 2px;
-	border-bottom: 2px solid;
-}
-
-h1 {
-	padding-bottom: 0.3em;
-	line-height: 1.2;
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-}
-
-h1, h2, h3 {
-	font-weight: normal;
-}
-
-table {
-	border-collapse: collapse;
-}
-
-table > thead > tr > th {
-	text-align: left;
-	border-bottom: 1px solid;
-}
-
-table > thead > tr > th,
-table > thead > tr > td,
-table > tbody > tr > th,
-table > tbody > tr > td {
-	padding: 5px 10px;
-}
-
-table > tbody > tr + tr > td {
-	border-top: 1px solid;
-}
-
-blockquote {
-	margin: 0 7px 0 5px;
-	padding: 0 16px 0 10px;
-	border-left-width: 5px;
-	border-left-style: solid;
-}
-
-code {
-	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
-	font-size: 1em;
-	line-height: 1.357em;
-}
-
-body.wordWrap pre {
-	white-space: pre-wrap;
-}
-
-pre:not(.hljs),
-pre.hljs code > div {
-	padding: 16px;
-	border-radius: 3px;
-	overflow: auto;
-}
-
-pre code {
-	color: var(--vscode-editor-foreground);
-	tab-size: 4;
-}
-
-/** Theming */
-
-.vscode-light pre {
-	background-color: rgba(220, 220, 220, 0.4);
-}
-
-.vscode-dark pre {
-	background-color: rgba(10, 10, 10, 0.4);
-}
-
-.vscode-high-contrast pre {
-	background-color: rgb(0, 0, 0);
-}
-
-.vscode-high-contrast h1 {
-	border-color: rgb(0, 0, 0);
-}
-
-.vscode-light table > thead > tr > th {
-	border-color: rgba(0, 0, 0, 0.69);
-}
-
-.vscode-dark table > thead > tr > th {
-	border-color: rgba(255, 255, 255, 0.69);
-}
-
-.vscode-light h1,
-.vscode-light hr,
-.vscode-light table > tbody > tr + tr > td {
-	border-color: rgba(0, 0, 0, 0.18);
-}
-
-.vscode-dark h1,
-.vscode-dark hr,
-.vscode-dark table > tbody > tr + tr > td {
-	border-color: rgba(255, 255, 255, 0.18);
-}
-
-</style>
-
-<style>
-/* Tomorrow Theme */
-/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
-/* Original theme - https://github.com/chriskempson/tomorrow-theme */
-
-/* Tomorrow Comment */
-.hljs-comment,
-.hljs-quote {
-	color: #8e908c;
-}
-
-/* Tomorrow Red */
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-regexp,
-.hljs-deletion {
-	color: #c82829;
-}
-
-/* Tomorrow Orange */
-.hljs-number,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-literal,
-.hljs-type,
-.hljs-params,
-.hljs-meta,
-.hljs-link {
-	color: #f5871f;
-}
-
-/* Tomorrow Yellow */
-.hljs-attribute {
-	color: #eab700;
-}
-
-/* Tomorrow Green */
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet,
-.hljs-addition {
-	color: #718c00;
-}
-
-/* Tomorrow Blue */
-.hljs-title,
-.hljs-section {
-	color: #4271ae;
-}
-
-/* Tomorrow Purple */
-.hljs-keyword,
-.hljs-selector-tag {
-	color: #8959a8;
-}
-
-.hljs {
-	display: block;
-	overflow-x: auto;
-	color: #4d4d4c;
-	padding: 0.5em;
-}
-
-.hljs-emphasis {
-	font-style: italic;
-}
-
-.hljs-strong {
-	font-weight: bold;
-}
-</style>
-
-<style>
-/*
- * Markdown PDF CSS
+    /**
+ * Others
  */
 
- body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
-	padding: 0 12px;
-}
+    img {
+      max-width: 100%;
+    }
 
-pre {
-	background-color: #f8f8f8;
-	border: 1px solid #cccccc;
-	border-radius: 3px;
-	overflow-x: auto;
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
+    p {
+      line-height: 24px;
+      font-weight: 400;
+      font-size: 16px;
+      color: #24292e;
+    }
 
-pre:not(.hljs) {
-	padding: 23px;
-	line-height: 19px;
-}
+    ul {
+      margin-top: 0;
+    }
 
-blockquote {
-	background: rgba(127, 127, 127, 0.1);
-	border-color: rgba(0, 122, 204, 0.5);
-}
+    li {
+      color: #24292e;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
 
-.emoji {
-	height: 1.4em;
-}
+    li+li {
+      margin-top: 0.25em;
+    }
 
-code {
-	font-size: 14px;
-	line-height: 19px;
-}
+    * {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      color: #24292e;
+    }
 
-/* for inline code */
-:not(pre):not(.hljs) > code {
-	color: #C9AE75; /* Change the old color so it seems less like an error */
-	font-size: inherit;
-}
+    a:visited {
+      color: #0366d6;
+    }
 
-/* Page Break : use <div class="page"/> to insert page break
--------------------------------------------------------- */
-.page {
-	page-break-after: always;
-}
+    h1,
+    h2,
+    h3 {
+      border-bottom: 1px solid #eaecef;
+      color: #111;
+      /* Darker */
+    }
+  </style>
 
-</style>
-
-<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
-</head>
 <body>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
-          ? 'dark'
-          : 'default'
-    });
-  </script>
-<h1 id="iggy---user-guide-version-220">Iggy - User Guide (version 2.2.0)</h1>
-<p>Sven Thiele</p>
-<h2 id="what-are-iggy-and-optgraph">What are <code>iggy</code> and <code>optgraph</code></h2>
-<p><code>iggy</code> and <code>optgraph</code> are tools for consistency based analysis of influence graphs and
-observed systems behavior (signed changes between two measured states).
-For many (biological) systems are knowledge bases available that describe the interaction
-of its components in terms of causal networks, boolean networks and influence graphs
-where edges indicate either positive or negative effect of one node upon another.</p>
-<p><code>iggy</code> implements methods to check the consistency of large-scale data sets and provides explanations
-for inconsistencies.
-In practice, this is used to identify unreliable data or to indicate missing reactions.
-Further, <code>iggy</code> addresses the problem of repairing networks and corresponding yet often discrepant
-measurements in order to re-establish their mutual consistency and predict unobserved variations
-even under inconsistency.</p>
-<p><code>optgraph</code> confronts interaction graph models with observed systems behavior from multiple experiments.
-<code>optgraph</code> computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.</p>
-<h2 id="downloads">Downloads</h2>
-<ul>
-<li>
-<p>You can find the precompiled binaries for 64bit linux and macOS on the <a href="https://github.com/bioasp/iggy/releases/latest">release page</a>.</p>
-</li>
-<li>
-<p>Sample data <a href="https://bioasp.github.io/iggy/downloads/demo_data.tar.gz">demo_data.tar.gz</a></p>
-</li>
-</ul>
-<h2 id="compile-yourself">Compile yourself</h2>
-<p>Clone the git repository:</p>
-<pre class="hljs"><code><div>git <span class="hljs-built_in">clone</span> https://github.com/bioasp/iggy.git
-cargo build --release
-</div></code></pre>
-<p>The executables can be found under <code>./target/release/</code></p>
-<h2 id="input-model--data">Input Model + Data</h2>
-<p><code>iggy</code> and <code>optgraph</code> work with two kinds of data.
-The first is representing an interaction graph model.
-The second is the experimental data, representing experimental condition and observed behavior.</p>
-<h3 id="model">Model</h3>
-<p>The model is represented as file in complex interaction format <code>CIF</code> as shown below.
-Lines in the <code>CIF</code> file specify a interaction between (multiple) source nodes and one target node.</p>
-<pre class="hljs"><code><div>shp2                        -&gt;  grb2_sos
+
+  <div id='content'>
+
+    <h1>
+      <a id="user-content-iggy---user-guide-version-221-dev" class="anchor" href="#iggy---user-guide-version-221-dev"
+        aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Iggy - User Guide (version
+      2.2.1-dev)
+    </h1>
+    <p>Sven Thiele</p>
+    <h2>
+      <a id="user-content-what-are-iggy-and-optgraph" class="anchor" href="#what-are-iggy-and-optgraph"
+        aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What are <code>iggy</code>
+      and <code>optgraph</code>
+    </h2>
+    <p><code>iggy</code> and <code>optgraph</code> are tools for consistency based analysis of influence graphs and
+      observed systems behavior (signed changes between two measured states).
+      For many (biological) systems are knowledge bases available that describe the interaction
+      of its components in terms of causal networks, boolean networks and influence graphs
+      where edges indicate either positive or negative effect of one node upon another.</p>
+    <p><code>iggy</code> implements methods to check the consistency of large-scale data sets and provides explanations
+      for inconsistencies.
+      In practice, this is used to identify unreliable data or to indicate missing reactions.
+      Further, <code>iggy</code> addresses the problem of repairing networks and corresponding yet often discrepant
+      measurements in order to re-establish their mutual consistency and predict unobserved variations
+      even under inconsistency.</p>
+    <p><code>optgraph</code> confronts interaction graph models with observed systems behavior from multiple
+      experiments.
+      <code>optgraph</code> computes networks fitting the observation data by removing (or adding) a minimal number of
+      edges in the given network.
+    </p>
+    <h2>
+      <a id="user-content-downloads" class="anchor" href="#downloads" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Downloads
+    </h2>
+    <ul>
+      <li>
+        <p>You can find the precompiled binaries for 64bit linux and macOS on the <a
+            href="https://github.com/bioasp/iggy/releases/latest">release page</a>.</p>
+      </li>
+      <li>
+        <p>Sample data <a href="https://bioasp.github.io/iggy/downloads/demo_data.tar.gz"
+            rel="nofollow">demo_data.tar.gz</a></p>
+      </li>
+    </ul>
+    <h2>
+      <a id="user-content-compile-yourself" class="anchor" href="#compile-yourself" aria-hidden="true"><span
+          aria-hidden="true" class="octicon octicon-link"></span></a>Compile yourself
+    </h2>
+    <p>Clone the git repository:</p>
+    <div class="highlight highlight-source-shell">
+      <pre>git clone https://github.com/bioasp/iggy.git
+cargo build --release</pre>
+    </div>
+    <p>The executables can be found under <code>./target/release/</code></p>
+    <h2>
+      <a id="user-content-input-model--data" class="anchor" href="#input-model--data" aria-hidden="true"><span
+          aria-hidden="true" class="octicon octicon-link"></span></a>Input Model + Data
+    </h2>
+    <p><code>iggy</code> and <code>optgraph</code> work with two kinds of data.
+      The first is representing an interaction graph model.
+      The second is the experimental data, representing experimental condition and observed behavior.</p>
+    <h3>
+      <a id="user-content-model" class="anchor" href="#model" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Model
+    </h3>
+    <p>The model is represented as file in complex interaction format <code>CIF</code> as shown below.
+      Lines in the <code>CIF</code> file specify a interaction between (multiple) source nodes and one target node.</p>
+    <pre lang="txt"><code>shp2                        -&gt;  grb2_sos
 !mtor_inhibitor             -&gt;  mtor
 ?jak2_p                     -&gt;  stat5ab_py
 !ras_gap &amp; grb2_sos         -&gt;  pi3k
 akt &amp; erk &amp; mtor &amp; pi3k     -&gt;  mtorc1
 gab1_bras_py                -&gt;  ras_gap
 gab1_ps &amp; jak2_p &amp; pi3k     -&gt;  gab1_bras_py
-</div></code></pre>
-<p>In our influence graph models, we have simple interactions like:
-in Line 1 for <code>shp2</code> <em>increases</em> <code>grb2_sos</code>
-and in Line 2 the <code>!</code> indicates that <code>mtor_inhibitor</code> tends to <em>decrease</em> <code>mtor</code>.
-In Line 3 the <code>?</code> indicates an unknown influence of <code>jak2_p</code> on <code>stat5ab_py</code>.
-Complex interactions can be composed with the <code>&amp;</code> operator to model a combined influence of multiple sources on a target.
-In Line 4 a decrease in <code>ras_gap</code> with an increase in <code>grb2_sos</code> tend to increase <code>pi3k</code>.</p>
-<h3 id="experimental-data">Experimental data</h3>
-<p>The experimental data is given in the file format shown below.
-Nodes which are perturbed in the experimental condition are denoted as <code>input</code>.
-The first line of the example below states that <code>depor</code> has been perturbed in the experiment.
-This means <code>depor</code> has been under the control of the experimentalist and its behavior must therefore not be explained.
-The behavior of a node can be either <code>+</code>, <code>-</code>, <code>0</code>, <code>NotPlus</code>, <code>NotMinus</code>.
-Line 2 states that an <em>increase</em> (<code>+</code>) was observed in <code>depor</code>,
-as it is declared an <code>input</code> this behavior has been caused by the experimentalist.
-Line 3 states that <code>stat5ab_py</code> has <em>decreased</em> (<code>-</code>) and
-line 4 states that <code>ras</code> has <em>not changed</em> (<code>0</code>).
-Line 5 states that an <em>uncertain decrease</em> (<code>NotPlus</code>) has been observed in <code>plcg</code> and
-line 6 states that an <em>uncertain increase</em> (<code>NotMinus</code>) has been observed in <code>mtorc1</code>.
-Line 7 states that <code>akt</code> is initially on the minimum level, this means it cannot further decrease, and
-line 8 states that <code>grb2_sos</code> is initially on the maximum level, this means it cannot further increase.</p>
-<pre class="hljs"><code><div>depor         = input
+</code></pre>
+    <p>In our influence graph models, we have simple interactions like:
+      in Line 1 for <code>shp2</code> <em>increases</em> <code>grb2_sos</code>
+      and in Line 2 the <code>!</code> indicates that <code>mtor_inhibitor</code> tends to <em>decrease</em>
+      <code>mtor</code>.
+      In Line 3 the <code>?</code> indicates an unknown influence of <code>jak2_p</code> on <code>stat5ab_py</code>.
+      Complex interactions can be composed with the <code>&amp;</code> operator to model a combined influence of
+      multiple sources on a target.
+      In Line 4 a decrease in <code>ras_gap</code> with an increase in <code>grb2_sos</code> tend to increase
+      <code>pi3k</code>.</p>
+    <h3>
+      <a id="user-content-experimental-data" class="anchor" href="#experimental-data" aria-hidden="true"><span
+          aria-hidden="true" class="octicon octicon-link"></span></a>Experimental data
+    </h3>
+    <p>The experimental data is given in the file format shown below.
+      Nodes which are perturbed in the experimental condition are denoted as <code>input</code>.
+      The first line of the example below states that <code>depor</code> has been perturbed in the experiment.
+      This means <code>depor</code> has been under the control of the experimentalist and its behavior must therefore
+      not be explained.
+      The behavior of a node can be either <code>+</code>, <code>-</code>, <code>0</code>, <code>NotPlus</code>,
+      <code>NotMinus</code>.
+      Line 2 states that an <em>increase</em> (<code>+</code>) was observed in <code>depor</code>,
+      as it is declared an <code>input</code> this behavior has been caused by the experimentalist.
+      Line 3 states that <code>stat5ab_py</code> has <em>decreased</em> (<code>-</code>) and
+      line 4 states that <code>ras</code> has <em>not changed</em> (<code>0</code>).
+      Line 5 states that an <em>uncertain decrease</em> (<code>NotPlus</code>) has been observed in <code>plcg</code>
+      and
+      line 6 states that an <em>uncertain increase</em> (<code>NotMinus</code>) has been observed in
+      <code>mtorc1</code>.
+      Line 7 states that <code>akt</code> is initially on the minimum level, this means it cannot further decrease, and
+      line 8 states that <code>grb2_sos</code> is initially on the maximum level, this means it cannot further increase.
+    </p>
+    <pre lang="txt"><code>depor         = input
 depor         = +
 stat5ab_py    = -
 ras_gap       = 0
@@ -439,54 +322,68 @@ jak2_p        = NotPlus
 mtorc1        = NotMinus
 akt           = MIN
 pi3k          = MAX
-</div></code></pre>
-<h3 id="consistency-notions">Consistency notions</h3>
-<p>The Iggy tools implement different constraints that inform the consistency notion under which the analysis are perform. In other words, what is considered a consistent behavior of a system. The defaults are:</p>
-<ul>
-<li>
-<p>All observed changes must be explained by a predecessor.</p>
-<p>This basic constraint is always turned on.</p>
-</li>
-<li>
-<p>All observed changes must be explained by an input.</p>
-<p>You can turn this off with the flag <code>--founded-constraints-off</code>.</p>
-</li>
-<li>
-<p>0-change must be explained.</p>
-<p>You can turn this constraint off with the flag <code>--fwd-propagation-off</code>.</p>
-</li>
-</ul>
-<p>Additional you can turn on the following constraint:</p>
-<ul>
-<li>An elementary path from an input must exist to explain changes.
-You can turn this constraint on with the flag <code>--elempath</code>.</li>
-</ul>
-<p>With the flag <code>--depmat</code> you can turn on a consistency notion that is used for the <em>dependency matrix</em>. This notion includes the <em>elementary path</em> constraint.</p>
-<p>For more information on the consistency notion see:</p>
-<ul>
-<li>
-<p><a href="http://dx.doi.org/10.1186/s12859-015-0733-7">Extended notions of sign consistency to relate experimental data to signaling and regulatory network topologies</a>,
-Sven Thiele, Luca Cerone, Julio Saez-Rodriguez, Anne Siegel, Carito Guziołowski, and Steffen Klamt, <em>BMC Bioinformatics</em>, 16(345), 2015.</p>
-</li>
-<li>
-<p><a href="https://sthiele.github.io/scm/">Sign consistency methods to reason over the transitional behavior of dynamic systems</a></p>
-</li>
-</ul>
-<p>For more information on the dependency matrix see:</p>
-<ul>
-<li><a href="doi:http://dx.doi.org/10.1186/1471-2105-7-56">A methodology for the structural and functional analysis of signaling and regulatory networks</a>, Klamt S, Saez-Rodriguez J, Lindquist J, Simeoni L, Gilles E., BMC Bioinforma. 2006; 7(1):56.</li>
-</ul>
-<h2 id="iggy">Iggy</h2>
-<p><code>iggy</code> performs consistency checks for an interaction model and a data profile.
-It computes explanations (minimal inconsistent cores <em>mics</em>) for inconsistencies
-and suggests repairs for model and data.</p>
-<p>The <em>mics</em> are connected parts of the model and indicate unreliable data or missing reactions.
-The repairs re-establish the mutual consistency between model and data, and enable predictions of unobserved behavior even under inconsistency.</p>
-<p>The typical usage of <code>iggy</code> is:</p>
-<pre class="hljs"><code><div>iggy -n network.cif -o observation.obs -l 10 -p
-</div></code></pre>
-<p>For more options, you can ask for help as follows:</p>
-<pre class="hljs"><code><div>&gt; iggy -h
+</code></pre>
+    <h3>
+      <a id="user-content-consistency-notions" class="anchor" href="#consistency-notions" aria-hidden="true"><span
+          aria-hidden="true" class="octicon octicon-link"></span></a>Consistency notions
+    </h3>
+    <p>The Iggy tools implement different constraints that inform the consistency notion under which the analysis are
+      perform. In other words, what is considered a consistent behavior of a system. The defaults are:</p>
+    <ul>
+      <li>
+        <p>All observed changes must be explained by a predecessor.</p>
+        <p>This basic constraint is always turned on.</p>
+      </li>
+      <li>
+        <p>All observed changes must be explained by an input.</p>
+        <p>You can turn this off with the flag <code>--founded-constraints-off</code>.</p>
+      </li>
+      <li>
+        <p>0-change must be explained.</p>
+        <p>You can turn this constraint off with the flag <code>--fwd-propagation-off</code>.</p>
+      </li>
+    </ul>
+    <p>Additional you can turn on the following constraint:</p>
+    <ul>
+      <li>An elementary path from an input must exist to explain changes.
+        You can turn this constraint on with the flag <code>--elempath</code>.</li>
+    </ul>
+    <p>With the flag <code>--depmat</code> you can turn on a consistency notion that is used for the <em>dependency
+        matrix</em>. This notion includes the <em>elementary path</em> constraint.</p>
+    <p>For more information on the consistency notion see:</p>
+    <ul>
+      <li>
+        <p><a href="http://dx.doi.org/10.1186/s12859-015-0733-7" rel="nofollow">Extended notions of sign consistency to
+            relate experimental data to signaling and regulatory network topologies</a>,
+          Sven Thiele, Luca Cerone, Julio Saez-Rodriguez, Anne Siegel, Carito Guziołowski, and Steffen Klamt, <em>BMC
+            Bioinformatics</em>, 16(345), 2015.</p>
+      </li>
+      <li>
+        <p><a href="https://sthiele.github.io/scm/" rel="nofollow">Sign consistency methods to reason over the
+            transitional behavior of dynamic systems</a></p>
+      </li>
+    </ul>
+    <p>For more information on the dependency matrix see:</p>
+    <ul>
+      <li>A methodology for the structural and functional analysis of signaling and regulatory networks, Klamt S,
+        Saez-Rodriguez J, Lindquist J, Simeoni L, Gilles E., BMC Bioinforma. 2006; 7(1):56.</li>
+    </ul>
+    <h2>
+      <a id="user-content-iggy" class="anchor" href="#iggy" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Iggy
+    </h2>
+    <p><code>iggy</code> performs consistency checks for an interaction model and a data profile.
+      It computes explanations (minimal inconsistent cores <em>mics</em>) for inconsistencies
+      and suggests repairs for model and data.</p>
+    <p>The <em>mics</em> are connected parts of the model and indicate unreliable data or missing reactions.
+      The repairs re-establish the mutual consistency between model and data, and enable predictions of unobserved
+      behavior even under inconsistency.</p>
+    <p>The typical usage of <code>iggy</code> is:</p>
+    <div class="highlight highlight-source-shell">
+      <pre>iggy -n network.cif -o observation.obs -l 10 -p</pre>
+    </div>
+    <p>For more options, you can ask for help as follows:</p>
+    <pre lang="txt"><code>&gt; iggy -h
 iggy 2.2.1-dev
 Sven Thiele &lt;sthiele78@gmail.com&gt;
 Iggy confronts interaction graph models with observations of (signed) changes between two measured
@@ -515,35 +412,46 @@ OPTIONS:
     -p, --show-predictions           Show predictions
         --scenfit                    Compute scenfit of the data, default is mcos
     -V, --version                    Print version information
-</div></code></pre>
-<h3 id="compute-minimal-correction-sets-mcos-or-scenfit-and-predictions-under-inconsistency">Compute minimal correction sets (mcos) or <em>scenfit</em> and predictions under inconsistency</h3>
-<p><code>iggy</code> implements two measures for inconsistency <em>minimal correction sets (mcos)</em> and <em>scenfit</em>. While <em>mcos</em> measures the minimal number of observations that cannot be explained, <em>scenfit</em> measures a minimal number of changes to the model to re-establish the mutual consistency between model and data.
-The default in iggy is <em>mcos</em> but <em>scenfit</em> can be used with the option <code>--scenfit</code>.</p>
-<p>With the option <code>--show-labelings, -l N</code> <code>iggy</code> computes at most <code>N</code> such labelings and repairs that are consistent.</p>
-<p>With the flag <code>--show-predictions, -p</code> <code>iggy</code> computes predictions under inconsistencies.
-More precisely the behaviors of the system that are invariant also under the minimal repairs.</p>
-<p><code>iggy</code> presents the results of its analysis as text output.
-The output of <code>iggy</code> can be redirected into a file using the <code>&gt;</code> operator.
-For example to write the results shown below into the file <code>myfile.txt</code> type:</p>
-<pre class="hljs"><code><div>iggy -n network.cif -o observations.obs -l 10 -p &gt; myfile.txt
-</div></code></pre>
-<p>In the following we will dissect the output generated by <code>iggy</code>.
-The first lines of the output state the constraints that have been used to analyze network and data.
-For our example, it is the default setting with the following constraints.
-For a deeper understanding of these constraints see <a href="https://dx.doi.org/10.1186%2Fs12859-015-0733-7">sthiele15</a>.</p>
-<pre class="hljs"><code><div>## Settings
+</code></pre>
+    <h3>
+      <a id="user-content-compute-minimal-correction-sets-mcos-or-scenfit-and-predictions-under-inconsistency"
+        class="anchor" href="#compute-minimal-correction-sets-mcos-or-scenfit-and-predictions-under-inconsistency"
+        aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Compute minimal correction
+      sets (mcos) or <em>scenfit</em> and predictions under inconsistency
+    </h3>
+    <p><code>iggy</code> implements two measures for inconsistency <em>minimal correction sets (mcos)</em> and
+      <em>scenfit</em>. While <em>mcos</em> measures the minimal number of observations that cannot be explained,
+      <em>scenfit</em> measures a minimal number of changes to the model to re-establish the mutual consistency between
+      model and data.
+      The default in iggy is <em>mcos</em> but <em>scenfit</em> can be used with the option <code>--scenfit</code>.</p>
+    <p>With the option <code>--show-labelings, -l N</code> <code>iggy</code> computes at most <code>N</code> such
+      labelings and repairs that are consistent.</p>
+    <p>With the flag <code>--show-predictions, -p</code> <code>iggy</code> computes predictions under inconsistencies.
+      More precisely the behaviors of the system that are invariant also under the minimal repairs.</p>
+    <p><code>iggy</code> presents the results of its analysis as text output.
+      The output of <code>iggy</code> can be redirected into a file using the <code>&gt;</code> operator.
+      For example to write the results shown below into the file <code>myfile.txt</code> type:</p>
+    <div class="highlight highlight-source-shell">
+      <pre>iggy -n network.cif -o observations.obs -l 10 -p <span class="pl-k">&gt;</span> myfile.txt</pre>
+    </div>
+    <p>In the following we will dissect the output generated by <code>iggy</code>.
+      The first lines of the output state the constraints that have been used to analyze network and data.
+      For our example, it is the default setting with the following constraints.
+      For a deeper understanding of these constraints see <a href="https://dx.doi.org/10.1186%2Fs12859-015-0733-7"
+        rel="nofollow">sthiele15</a>.</p>
+    <pre lang="txt"><code>## Settings
 
 - All observed changes must be explained by a predecessor.
 - 0-change must be explained.
 - All observed changes must be explained by an input.
-</div></code></pre>
-<p>Next, follow some statistics on the input data.
-The <em>network statistics</em> tells us that the influence graph model given as <code>network.cif</code>
-consists of <code>18</code> species nodes and <code>4</code> complex nodes,
-with <code>19</code> edges with activating influence
-and <code>6</code> edges with inhibiting influence
-and <code>1</code> edge with <code>Unknown</code>  influence.</p>
-<pre class="hljs"><code><div>Network file: network.cif
+</code></pre>
+    <p>Next, follow some statistics on the input data.
+      The <em>network statistics</em> tells us that the influence graph model given as <code>network.cif</code>
+      consists of <code>18</code> species nodes and <code>4</code> complex nodes,
+      with <code>19</code> edges with activating influence
+      and <code>6</code> edges with inhibiting influence
+      and <code>1</code> edge with <code>Unknown</code> influence.</p>
+    <pre lang="txt"><code>Network file: network.cif
 
 ## Network statistics
 
@@ -553,16 +461,21 @@ and <code>1</code> edge with <code>Unknown</code>  influence.</p>
 - Inhibitions: 6
 - Unknowns:    1
 
-</div></code></pre>
-<p>The following <em>observations statistics</em> tells us that the experimental data given as <code>observation.obs</code> consist of <code>14</code> observations from which all are nodes of the model. This leaves <code>4</code> nodes of the model unobserved. Further there are <code>0</code> observations of species that are not in the model.
-The experimental conditions has <code>2</code> perturbations marked as <code>input</code> nodes,
-and <code>1</code> node were observed with a <em>minimum level</em> <code>MIN</code> (resp. <em>maximum level</em> <code>MAX</code>).
-From the 14 observations <code>4</code> nodes were observed as increased <code>+</code>,
-<code>1</code> node <em>decreased</em> (<code>-</code>),
-<code>7</code> nodes did <em>not change</em> (<code>0</code>),
-<code>1</code> node were observed with an <em>uncertain decrease</em> (<code>NotPlus</code>),
-<code>1</code> node were observed with an <em>uncertain increase</em> (<code>NotMinus</code>).</p>
-<pre class="hljs"><code><div>Observation file: observations.obs
+</code></pre>
+    <p>The following <em>observations statistics</em> tells us that the experimental data given as
+      <code>observation.obs</code> consist of <code>14</code> observations from which all are nodes of the model. This
+      leaves <code>4</code> nodes of the model unobserved. Further there are <code>0</code> observations of species that
+      are not in the model.
+      The experimental conditions has <code>2</code> perturbations marked as <code>input</code> nodes,
+      and <code>1</code> node were observed with a <em>minimum level</em> <code>MIN</code> (resp. <em>maximum level</em>
+      <code>MAX</code>).
+      From the 14 observations <code>4</code> nodes were observed as increased <code>+</code>,
+      <code>1</code> node <em>decreased</em> (<code>-</code>),
+      <code>7</code> nodes did <em>not change</em> (<code>0</code>),
+      <code>1</code> node were observed with an <em>uncertain decrease</em> (<code>NotPlus</code>),
+      <code>1</code> node were observed with an <em>uncertain increase</em> (<code>NotMinus</code>).
+    </p>
+    <pre lang="txt"><code>Observation file: observations.obs
 
 ## Observations statistics
 
@@ -579,28 +492,31 @@ From the 14 observations <code>4</code> nodes were observed as increased <code>+
   - notPlus:              1
   - notMinus:             1
 
-</div></code></pre>
-<p>Then follow the results of the consistency analysis.
-Network and data are inconsistent
-and the size of a <em>minimal correction set</em> (<code>mcos</code>) is <code>2</code>.
-This means that at least <code>2</code> influences need to be added to restore consistency.
-For a deeper understanding of mcos see <a href="https://dx.doi.org/10.1371/journal.pcbi.1003204">samaga13</a>.
-Further, the output contains at most <code>10</code> consistent labeling including correction set.
-This is because we choose to set the flag <code>--show_labelings 10</code>.
-In our example we have <code>2</code> possible labelings.
-Each labeling represents a consistent behavior of the model (given mcos the corrections).
-<code>Labeling 1</code>,
-tells it is possible that
-<code>mek1</code> <em>increases</em> (<code>+</code>),
-<code>shp2_ph</code> and <code>mtorc</code> do <em>not change</em> (<code>0</code>) and that
-<code>stat5ab_py</code> <em>decrease</em> (<code>-</code>).
-The <code>Repairs</code> section tells us that this is a consistent behavior if <code>mtor</code> would receive a increasing influence and <code>socs1</code> would receive a decreasing influence,
-which is currently not included in the model.
-<code>Labeling 2</code>, represents an alternative behavior,
-here <code>mtorc1</code> does <em>increases</em> (<code>+</code>).
-Please note that in this example both labelings are consistent under the same correction set.
-In another example more than one minimal correction set could exists.</p>
-<pre class="hljs"><code><div>## Consistency results
+</code></pre>
+    <p>Then follow the results of the consistency analysis.
+      Network and data are inconsistent
+      and the size of a <em>minimal correction set</em> (<code>mcos</code>) is <code>2</code>.
+      This means that at least <code>2</code> influences need to be added to restore consistency.
+      For a deeper understanding of mcos see <a href="https://dx.doi.org/10.1371/journal.pcbi.1003204"
+        rel="nofollow">samaga13</a>.
+      Further, the output contains at most <code>10</code> consistent labeling including correction set.
+      This is because we choose to set the flag <code>--show_labelings 10</code>.
+      In our example we have <code>2</code> possible labelings.
+      Each labeling represents a consistent behavior of the model (given mcos the corrections).
+      <code>Labeling 1</code>,
+      tells it is possible that
+      <code>mek1</code> <em>increases</em> (<code>+</code>),
+      <code>shp2_ph</code> and <code>mtorc</code> do <em>not change</em> (<code>0</code>) and that
+      <code>stat5ab_py</code> <em>decrease</em> (<code>-</code>).
+      The <code>Repairs</code> section tells us that this is a consistent behavior if <code>mtor</code> would receive a
+      increasing influence and <code>socs1</code> would receive a decreasing influence,
+      which is currently not included in the model.
+      <code>Labeling 2</code>, represents an alternative behavior,
+      here <code>mtorc1</code> does <em>increases</em> (<code>+</code>).
+      Please note that in this example both labelings are consistent under the same correction set.
+      In another example more than one minimal correction set could exists.
+    </p>
+    <pre lang="txt"><code>## Consistency results
 
 scenfit: 2
 
@@ -651,17 +567,19 @@ scenfit: 2
   Repair set:
   - new increasing influence on mtor
   - new decreasing influence on socs1
-</div></code></pre>
-<p>Finally, the prediction results are listed.
-A prediction is a statement that hold under all labeling under all minimal repairs.
-For a formal definition of predictions see <a href="https://dx.doi.org/10.1186%2Fs12859-015-0733-7">sthiele15</a>.
-Here the predictions are that
-<code>gab1_ps</code> <em>always increases</em> (<code>+</code>),
-<code>stat5ab_py</code> <em>always decreases</em> (<code>-</code>),
-<code>shp2</code> always stays <em>unchanged</em> (<code>0</code>),
-<code>mtorc1</code> <em>never decreases</em> (<code>NotMinus</code>), and
-<code>brb2</code> always stays <em>never increases</em> (<code>NotPlus</code>),</p>
-<pre class="hljs"><code><div>## Predictions
+</code></pre>
+    <p>Finally, the prediction results are listed.
+      A prediction is a statement that hold under all labeling under all minimal repairs.
+      For a formal definition of predictions see <a href="https://dx.doi.org/10.1186%2Fs12859-015-0733-7"
+        rel="nofollow">sthiele15</a>.
+      Here the predictions are that
+      <code>gab1_ps</code> <em>always increases</em> (<code>+</code>),
+      <code>stat5ab_py</code> <em>always decreases</em> (<code>-</code>),
+      <code>shp2</code> always stays <em>unchanged</em> (<code>0</code>),
+      <code>mtorc1</code> <em>never decreases</em> (<code>NotMinus</code>), and
+      <code>brb2</code> always stays <em>never increases</em> (<code>NotPlus</code>),
+    </p>
+    <pre lang="txt"><code>## Predictions
 
 mek1 = +
 erk = +
@@ -690,19 +608,25 @@ brb = CHANGE
 - predicted notPlus  : 1
 - predicted notMinus : 1
 - predicted CHANGE   : 1
-</div></code></pre>
-<p>For more information on minimal correction sets <em>mcos</em> see:</p>
-<ul>
-<li><a href="doi:http://dx.doi.org/10.1371/journal.pcbi.1003204">Detecting and Removing  Inconsistencies between Experimental Data and Signaling Network Topologies Using Integer Linear Programming on Interaction Graphs.</a>
-Melas IN, Samaga R, Alexopoulos LG, Klamt S. , PLoS Comput Biol. 2013; 9(9):1003204.</li>
-</ul>
-<h3 id="compute-minimal-inconsistent-cores---mics">Compute minimal inconsistent cores <code>--mics</code></h3>
-<p>Iggy computes minimal inconsistent cores <em>mics</em> for inconsistent model and data.
-The <em>mics</em> are connected parts of the model and indicate unreliable data or missing reactions.
-To compute the minimal inconsistent cores use the flag <code>--mics</code> as follows:</p>
-<pre class="hljs"><code><div>iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics
-</div></code></pre>
-<pre class="hljs"><code><div># Iggy Report
+</code></pre>
+    <p>For more information on minimal correction sets <em>mcos</em> see:</p>
+    <ul>
+      <li>Detecting and Removing Inconsistencies between Experimental Data and Signaling Network Topologies Using
+        Integer Linear Programming on Interaction Graphs.
+        Melas IN, Samaga R, Alexopoulos LG, Klamt S. , PLoS Comput Biol. 2013; 9(9):1003204.</li>
+    </ul>
+    <h3>
+      <a id="user-content-compute-minimal-inconsistent-cores---mics" class="anchor"
+        href="#compute-minimal-inconsistent-cores---mics" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Compute minimal inconsistent cores <code>--mics</code>
+    </h3>
+    <p>Iggy computes minimal inconsistent cores <em>mics</em> for inconsistent model and data.
+      The <em>mics</em> are connected parts of the model and indicate unreliable data or missing reactions.
+      To compute the minimal inconsistent cores use the flag <code>--mics</code> as follows:</p>
+    <div class="highlight highlight-source-shell">
+      <pre>iggy -n data/Yeast/yeast_guelzim.cif  -o data/Yeast/yeast_snf2.obs --mics</pre>
+    </div>
+    <pre lang="txt"><code># Iggy Report
 
 ## Settings
 
@@ -767,21 +691,31 @@ mcos: 530
   YDR007W YPL187W YLR452C YAL038W YPL256C YHR084W YNL210W YOR159C YCL030C YMR199W STA3 YDR522C YCR018C YHR174W YNL216W YJL106W STA1 YCL067C YBR083W YGL089C YJL157C STA2 YIR019C YCR012W YLR403W YCL066W YDR523C YOR212W YOL086C YIL099W YKL209C YGR044C YIL072W YHL022C YMR133W YDR103W YKL178C YJR094C YGL008C YCL027W YIL015W YDR461W YOR077W YGR254W YFL026W YNL145W YHR014W YOL006C YJR004C YLR113W 
 - mic 13:
   YMR021C YGL043W YNL314W YCR093W YML010W YIR023W YBR112C YDL106C YOR290C YOL067C YGR288W YHL027W YCR065W YER040W YCR097W YOL051W YFL031W YLR451W YLR014C YGL166W YHR119W YBR049C YMR070W YKR206W YMR042W YBL021C YDR216W YDL170W YBL093C YPL082C YKR099W YDR034C YDR176W YBR297W YGL237C YGL073W YBR279W YJR060W YCR084C YMR043W YDR123C YOL108C YBR289W YER169W YPL075W YOR363C YDR421W YIL101C YJL176C YDR392W YGL013C YDR043C YNR052C YML007W YOL116W YGL209W YOR344C YLR098C YER161C YMR037C YKL038W YEL009C YGL254W YKL015W YML099C YOR140W YHL025W YFR034C YDR448W YHR152W YGL255W YDR423C YDL056W YGL025C YKL062W YOR358W YKL032C YOR230W YER108C 
-</div></code></pre>
-<p>For more information on minimal inconsistent cores see:</p>
-<ul>
-<li><a href="http://dx.doi.org/10.1017/S1471068410000554">Detecting Inconsistencies in Large Biological Networks with Answer Set Programming</a>,
-Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
-<em>Theory and Practice of Logic Programming</em>, 11(2-3), pages 323-360, 2011.</li>
-</ul>
-<h2 id="optgraph">Optgraph</h2>
-<p><code>optgraph</code> confronts interaction graph models with observed systems behavior from multiple experiments.
-<code>optgraph</code> computes networks fitting the observation data by removing (or adding) a minimal number of edges in the given network.</p>
-<p>Typical usage is:</p>
-<pre class="hljs"><code><div>optgraph -n network.cif -o observations_dir/ --show-repairs 10
-</div></code></pre>
-<p>For more options, you can ask for help as follows:</p>
-<pre class="hljs"><code><div>&gt; optgraph -h
+</code></pre>
+    <p>For more information on minimal inconsistent cores see:</p>
+    <ul>
+      <li>
+        <a href="http://dx.doi.org/10.1017/S1471068410000554" rel="nofollow">Detecting Inconsistencies in Large
+          Biological Networks with Answer Set Programming</a>,
+        Martin Gebser, Torsten Schaub, Sven Thiele, and Philippe Veber,
+        <em>Theory and Practice of Logic Programming</em>, 11(2-3), pages 323-360, 2011.
+      </li>
+    </ul>
+    <h2>
+      <a id="user-content-optgraph" class="anchor" href="#optgraph" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Optgraph
+    </h2>
+    <p><code>optgraph</code> confronts interaction graph models with observed systems behavior from multiple
+      experiments.
+      <code>optgraph</code> computes networks fitting the observation data by removing (or adding) a minimal number of
+      edges in the given network.
+    </p>
+    <p>Typical usage is:</p>
+    <div class="highlight highlight-source-shell">
+      <pre>optgraph -n network.cif -o observations_dir/ --show-repairs 10</pre>
+    </div>
+    <p>For more options, you can ask for help as follows:</p>
+    <pre lang="txt"><code>&gt; optgraph -h
 optgraph 2.2.1-dev
 Sven Thiele &lt;sthiele78@gmail.com&gt;
 Optgraph confronts interaction graph models with observations of (signed) changes between two
@@ -807,11 +741,15 @@ OPTIONS:
     -o, --observations &lt;DIR&gt;           Directory of observations in bioquali format
     -r, --show-repairs &lt;N&gt;             Show N repairs, default is OFF, 0=all
     -V, --version                      Print version information
-</div></code></pre>
-<h3 id="example">Example</h3>
-<pre class="hljs"><code><div>optgraph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph
-</div></code></pre>
-<pre class="hljs"><code><div># Optgraph Report
+</code></pre>
+    <h3>
+      <a id="user-content-example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true"
+          class="octicon octicon-link"></span></a>Example
+    </h3>
+    <div class="highlight highlight-source-shell">
+      <pre>optgraph -n in_silico_HEK293/v1_comp_BN.cif -o in_silico_HEK293/prior_data --depmat  -r 0 -m optgraph</pre>
+    </div>
+    <pre lang="txt"><code># Optgraph Report
 
 ## Settings
 
@@ -878,11 +816,17 @@ The network and data can reach a scenfit of 0.
   - remove edge: !mek1 -&gt; shp2 
   - add edge: mek1 -&gt; gab1_ps 
 
-</div></code></pre>
-<p>For more information on <em>OptGraph</em> see:</p>
-<ul>
-<li><a href="https://doi.org/10.1109/TCBB.2018.2812184">Designing optimal experiments to discriminate interaction graph models</a>, Sven Thiele, Sandra Heise, Wiebke Hessenkemper, Hannes Bongartz, Melissa Fensky, Fred Schaper, Steffen Klamt, <em>IEEE/ACM Trans. Comput. Biol. Bioinform</em>, 16(3), 2019.</li>
-</ul>
+</code></pre>
+    <p>For more information on <em>OptGraph</em> see:</p>
+    <ul>
+      <li>
+        <a href="https://doi.org/10.1109/TCBB.2018.2812184" rel="nofollow">Designing optimal experiments to discriminate
+          interaction graph models</a>, Sven Thiele, Sandra Heise, Wiebke Hessenkemper, Hannes Bongartz, Melissa Fensky,
+        Fred Schaper, Steffen Klamt, <em>IEEE/ACM Trans. Comput. Biol. Bioinform</em>, 16(3), 2019.
+      </li>
+    </ul>
 
+  </div>
 </body>
+
 </html>
