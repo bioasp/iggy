@@ -751,9 +751,9 @@ pub fn get_predictions_under_mcos(
     ctl.add("base", &[], PRG_KEEP_OBSERVATIONS)?;
 
     if setting.os {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+        ctl.add("base", &[], PRG_PREDICTIONS)?;
     } else {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+        ctl.add("base", &[], PRG_PREDICTIONS_DM)?;
     }
 
     // ground & solve
@@ -800,9 +800,9 @@ pub fn get_predictions_under_scenfit(
     ctl.add("base", &[], PRG_KEEP_INPUTS)?;
 
     if setting.os {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS)?;
+        ctl.add("base", &[], PRG_PREDICTIONS)?;
     } else {
-        ctl.add("base", &[], PRG_SHOW_PREDICTIONS_DM)?;
+        ctl.add("base", &[], PRG_PREDICTIONS_DM)?;
     }
 
     // ground & solve
