@@ -92,8 +92,8 @@ pub struct ObsELabel {
 impl fmt::Display for ObsELabel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.sign {
-            EdgeSign::Plus => write!(f, "{} -> {} ", self.start, self.target),
-            EdgeSign::Minus => write!(f, "!{} -> {} ", self.start, self.target),
+            EdgeSign::Plus => write!(f, "{} -> {}", self.start, self.target),
+            EdgeSign::Minus => write!(f, "!{} -> {}", self.start, self.target),
         }
     }
 }
@@ -844,7 +844,7 @@ pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
             Ok(NodeId::And(s.to_string()))
         }
         _ => {
-            panic!("unmatched symbol: {symbol}");
+            panic!("unmatched node type: {symbol}");
         }
     }
 }
@@ -1035,7 +1035,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
             })
         }
         _ => {
-            panic!("unmatched symbol: {symbol}");
+            panic!("unmatched repair type: {symbol}");
         }
     }
 }
@@ -1564,9 +1564,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 let id = symbol.arguments()?[0];
                 mics.push(id);
             }
-            _ => {
-                panic!("unmatched symbol: {symbol}");
-            }
+            _ => continue,
         }
     }
     Ok(mics)
@@ -1623,9 +1621,7 @@ fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp
             "new_influence" => {
                 err.push(into_repair(symbol)?);
             }
-            _ => {
-                panic!("unmatched symbol: {symbol}");
-            }
+            _ => continue,
         }
     }
     Ok((vlabels, err))
@@ -1649,9 +1645,7 @@ fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
             "new_influence" => {
                 rep.push(*symbol);
             }
-            _ => {
-                panic!("unmatched symbol: {symbol}");
-            }
+            _ => continue,
         }
     }
     Ok(rep)
@@ -1665,9 +1659,7 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
             "flip" => {
                 rep.push(*symbol);
             }
-            _ => {
-                panic!("unmatched symbol: {symbol}");
-            }
+            _ => continue,
         }
     }
     Ok(rep)

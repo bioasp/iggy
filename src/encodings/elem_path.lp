@@ -1,8 +1,8 @@
 % new inputs through repair
-input(E,or(\"unknownup\"))    :- new_influence(E,X,S).
-vlabel(E,or(\"unknownup\"),1) :- new_influence(E,X,S).
-elabel(or(\"unknownup\"), X, 1)   :- new_influence(E,X,1).
-elabel(or(\"unknownup\"), X,-1)   :- new_influence(E,X,-1).
+input(E,or("unknownup"))    :- new_influence(E,X,S).
+vlabel(E,or("unknownup"),1) :- new_influence(E,X,S).
+elabel(or("unknownup"), X, 1)   :- new_influence(E,X,1).
+elabel(or("unknownup"), X,-1)   :- new_influence(E,X,-1).
 
 % in a network exists under Condition E a positive path to X
 
