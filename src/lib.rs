@@ -2,9 +2,9 @@ pub mod cif_parser;
 use cif_parser::EdgeSign;
 pub mod profile_parser;
 use clingo::{
-    defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase, FunctionHandler,
-    GenericControl, GenericSolveHandle, ast::Location, OptimalModels, Part, ShowType, SolveMode, Symbol,
-    SymbolType, ToSymbol,
+    ast::Location, defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase,
+    FunctionHandler, GenericControl, GenericSolveHandle, OptimalModels, Part, ShowType, SolveMode,
+    Symbol, SymbolType, ToSymbol,
 };
 use profile_parser::{Behavior, ProfileId};
 
@@ -106,8 +106,8 @@ pub enum NodeId {
 impl fmt::Display for NodeId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            NodeId::Or(s) => write!(f, "{}", s),
-            NodeId::And(s) => write!(f, "{}", s),
+            NodeId::Or(s) => write!(f, "{s}"),
+            NodeId::And(s) => write!(f, "{s}"),
         }
     }
 }
@@ -135,74 +135,74 @@ pub enum RepairOp {
 impl fmt::Display for RepairOp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RepairOp::AddEdge(e) => write!(f, "add edge: {}", e),
-            RepairOp::RemoveEdge(e) => write!(f, "remove edge: {}", e),
-            RepairOp::FlipEdgeDirection(e) => write!(f, "flip direction: {}", e),
+            RepairOp::AddEdge(e) => write!(f, "add edge: {e}"),
+            RepairOp::RemoveEdge(e) => write!(f, "remove edge: {e}"),
+            RepairOp::FlipEdgeDirection(e) => write!(f, "flip direction: {e}"),
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::PlusToMinus,
             } => {
-                write!(f, "flip {}: + to -", node)
+                write!(f, "flip {node}: + to -")
             }
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::PlusToZero,
-            } => write!(f, "flip {}: + to 0", node),
+            } => write!(f, "flip {node}: + to 0"),
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::ZeroToMinus,
             } => {
-                write!(f, "flip {}: 0 to -", node)
+                write!(f, "flip {node}: 0 to -")
             }
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::ZeroToPlus,
-            } => write!(f, "flip {}: 0 to +", node),
+            } => write!(f, "flip {node}: 0 to +"),
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::MinusToPlus,
             } => {
-                write!(f, "flip {}: - to +", node)
+                write!(f, "flip {node}: - to +")
             }
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::MinusToZero,
             } => {
-                write!(f, "flip {}: - to 0", node)
+                write!(f, "flip {node}: - to 0")
             }
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::NotPlusToPlus,
             } => {
-                write!(f, "flip {}: notPlus to +", node)
+                write!(f, "flip {node}: notPlus to +")
             }
             RepairOp::FlipNodeSign {
                 profile: _,
                 node,
                 direction: Direction::NotMinusToMinus,
             } => {
-                write!(f, "flip {}: notMinus to -", node)
+                write!(f, "flip {node}: notMinus to -")
             }
             RepairOp::NewInfluence {
                 profile: _,
                 target,
                 sign: EdgeSign::Plus,
             } => {
-                write!(f, "new increasing influence on {}", target)
+                write!(f, "new increasing influence on {target}")
             }
             RepairOp::NewInfluence {
                 profile: _,
                 target,
                 sign: EdgeSign::Minus,
             } => {
-                write!(f, "new decreasing influence on {}", target)
+                write!(f, "new decreasing influence on {target}")
             }
         }
     }
@@ -216,11 +216,11 @@ pub fn compute_auto_inputs(graph: &FactBase, json: bool) -> Result<FactBase> {
     if json {
         let y: Vec<NodeId> = x.collect();
         let serialized = serde_json::to_string(&y)?;
-        println!(",\"Computed input nodes\":{}", serialized);
+        println!(",\"Computed input nodes\":{serialized}");
     } else {
         println!("\nComputed input nodes: {}", new_inputs.len());
         for y in x {
-            println!("- {}", y);
+            println!("- {y}");
         }
     }
     Ok(new_inputs)
@@ -266,39 +266,38 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
                 match atom.name()? {
                     "contradiction1" => {
                         v.push(format!(
-                            "Simultaneous 0 and + behavior in node {} is contradictory.",
-                            node
+                            "Simultaneous 0 and + behavior in node {node} is contradictory."
                         ));
                     }
                     "contradiction2" => {
                         v.push(format!(
-                            "Simultaneous 0 and - behavior in node {} is contradictory.",
-                            node
+                            "Simultaneous 0 and - behavior in node {node} is contradictory."
                         ));
                     }
                     "contradiction3" => {
                         v.push(format!(
-                            "Simultaneous + and - behavior in node {} is contradictory.",
-                            node
+                            "Simultaneous + and - behavior in node {node} is contradictory."
                         ));
                     }
                     "contradiction4" => {
                         v.push(format!(
-                            "Simultaneous notMinus and - behavior in node {} is contradictory.",
-                            node
+                            "Simultaneous notMinus and - behavior in node {node} is contradictory."
                         ));
                     }
                     "contradiction5" => {
                         v.push(format!(
-                            "Simultaneous notPlus and + behavior in node {} is contradictory.",
-                            node
+                            "Simultaneous notPlus and + behavior in node {node} is contradictory."
                         ));
                     }
                     "contradiction6" => {
-                        v.push(format!("Behavior -(decrease) while initial level is set to Min in node {} is contradictory.", node));
+                        v.push(format!(
+                            "Behavior -(decrease) while initial level is set to Min in node {node} is contradictory."
+                        ));
                     }
                     "contradiction7" => {
-                        v.push(format!("Behavior +(increase) while initial level is set to Max in node {} is contradictory.", node));
+                        v.push(format!(
+                            "Behavior +(increase) while initial level is set to Max in node {node} is contradictory."
+                        ));
                     }
                     _ => {
                         v.push("Unknown contradiction in observations".to_string());
@@ -369,7 +368,7 @@ fn member(elem: Symbol, list: Symbol) -> Symbol {
                 Symbol::create_id("false", true).unwrap()
             }
         }
-        Err(e) => panic!("symbol_type() returned error: {}", e),
+        Err(e) => panic!("symbol_type() returned error: {e}"),
     }
 }
 
@@ -387,7 +386,7 @@ impl FunctionHandler for MemberFH {
             let res = member(element, list);
             Ok(vec![res])
         } else {
-            eprintln!("name: {}", name);
+            eprintln!("name: {name}");
             Err(ExternalError {
                 msg: "unknown external function!",
             })
@@ -568,7 +567,7 @@ pub fn get_scenfit_labelings(
     info!("Compute scenfit labelings ...");
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
-        format!("{}", number),
+        format!("{number}"),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
@@ -678,7 +677,7 @@ pub fn get_mcos_labelings(
 
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
-        format!("{}", number),
+        format!("{number}"),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
@@ -725,7 +724,7 @@ pub fn get_predictions_under_mcos(
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
-        // format!("--opt-bound={}",opt)
+        // format!("--opt-bound={opt}")
     ])?;
 
     ctl.add_facts(graph)?;
@@ -774,7 +773,7 @@ pub fn get_predictions_under_scenfit(
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--enum-mode=cautious".to_string(),
-        // format!("--opt-bound={}",opt)
+        // format!("--opt-bound={opt}")
     ])?;
 
     ctl.add_facts(graph)?;
@@ -845,7 +844,7 @@ pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
             Ok(NodeId::And(s.to_string()))
         }
         _ => {
-            panic!("unmatched symbol: {}", symbol);
+            panic!("unmatched symbol: {symbol}");
         }
     }
 }
@@ -858,7 +857,7 @@ pub fn into_behavior(symbol: Symbol) -> Result<Behavior> {
         "notMinus" => Ok(Behavior::NotMinus),
         "change" => Ok(Behavior::Change),
         x => {
-            panic!("Unexpected behavior: {}", x);
+            panic!("Unexpected behavior: {x}");
         }
     }
 }
@@ -1036,7 +1035,7 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
             })
         }
         _ => {
-            panic!("unmatched symbol: {}", symbol);
+            panic!("unmatched symbol: {symbol}");
         }
     }
 }
@@ -1235,7 +1234,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
-        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
+        format!("--opt-mode=optN,{scenfit},{repair_score}"),
         "--project".to_string(),
     ])?;
 
@@ -1310,7 +1309,7 @@ pub fn get_opt_add_remove_edges(
     let part = Part::new("base", vec![])?;
     let parts = vec![part];
 
-    ctl.ground(&parts).expect("ground did not work.");
+    ctl.ground(&parts)?;
 
     // solve
     let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
@@ -1332,7 +1331,7 @@ pub fn get_opt_repairs_add_remove_edges(
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
-        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
+        format!("--opt-mode=optN,{scenfit},{repair_score}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -1427,7 +1426,7 @@ pub fn get_opt_repairs_flip_edges(
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
-        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
+        format!("--opt-mode=optN,{scenfit},{repair_score}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -1518,7 +1517,7 @@ pub fn get_opt_repairs_remove_edges(
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
         "--project".to_string(),
-        format!("--opt-mode=optN,{},{}", scenfit, repair_score),
+        format!("--opt-mode=optN,{scenfit},{repair_score}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -1566,7 +1565,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 mics.push(id);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol);
+                panic!("unmatched symbol: {symbol}");
             }
         }
     }
@@ -1625,7 +1624,7 @@ fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp
                 err.push(into_repair(symbol)?);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol);
+                panic!("unmatched symbol: {symbol}");
             }
         }
     }
@@ -1651,7 +1650,7 @@ fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 rep.push(*symbol);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol);
+                panic!("unmatched symbol: {symbol}");
             }
         }
     }
@@ -1667,7 +1666,7 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
                 rep.push(*symbol);
             }
             _ => {
-                panic!("unmatched symbol: {}", symbol);
+                panic!("unmatched symbol: {symbol}");
             }
         }
     }
@@ -1727,13 +1726,13 @@ fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
                             change.push(id.arguments()?[0].string()?.to_string());
                         }
                         x => {
-                            panic!("Unexpected predicted behavior: {}", x);
+                            panic!("Unexpected predicted behavior: {x}");
                         }
                     }
                 }
             }
             _ => {
-                panic!("Unexpected predicate: {}", symbol);
+                panic!("Unexpected predicate: {symbol}");
             }
         }
     }

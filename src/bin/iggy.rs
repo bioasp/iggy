@@ -113,7 +113,7 @@ fn run() -> Result<()> {
     let network_statistics = ggraph.statistics();
     if opt.json {
         let serialized = serde_json::to_string(&network_statistics)?;
-        println!(",\"Network statistics\":{}", serialized);
+        println!(",\"Network statistics\":{serialized}");
     } else {
         network_statistics.print();
     }
@@ -134,7 +134,7 @@ fn run() -> Result<()> {
             let observations_statistics = observations_statistics(&pprofile, &ggraph);
             if opt.json {
                 let serialized = serde_json::to_string(&observations_statistics)?;
-                println!(",\"Observations Statistics\":{}", serialized);
+                println!(",\"Observations Statistics\":{serialized}");
             } else {
                 observations_statistics.print();
             }
@@ -181,9 +181,9 @@ fn run() -> Result<()> {
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
-                println!(",\"scenfit\":{}", scenfit);
+                println!(",\"scenfit\":{scenfit}");
             } else {
-                println!("scenfit: {}\n", scenfit);
+                println!("scenfit: {scenfit}\n");
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
@@ -209,7 +209,7 @@ fn run() -> Result<()> {
 
             if opt.json {
                 let serialized = serde_json::to_string(&predictions)?;
-                println!(",\"Predictions\":{}", serialized);
+                println!(",\"Predictions\":{serialized}");
             } else {
                 print_predictions(&predictions);
             }
@@ -227,9 +227,9 @@ fn run() -> Result<()> {
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
-                println!(",\"mcos\":{}", mcos);
+                println!(",\"mcos\":{mcos}");
             } else {
-                println!("mcos: {}\n", mcos);
+                println!("mcos: {mcos}\n");
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
@@ -253,7 +253,7 @@ fn run() -> Result<()> {
             let predictions = get_predictions_under_mcos(&graph, &profile, &new_inputs, &setting)?;
             if opt.json {
                 let serialized = serde_json::to_string(&predictions)?;
-                println!(",\"Predictions\":{}", serialized);
+                println!(",\"Predictions\":{serialized}");
             } else {
                 print_predictions(&predictions);
             }
@@ -284,7 +284,7 @@ fn get_setting(opt: &Opt) -> Setting {
     if opt.json {
         println!("\"Iggy settings\":{}", setting.to_json());
     } else {
-        print!("{}", setting)
+        print!("{setting}")
     }
     setting
 }
@@ -393,7 +393,7 @@ fn print_mics(mics: Mics) -> Result<()> {
             print!("- mic {}:\n  ", count + 1);
             for e in mic.clone() {
                 let node = into_node_id(e)?;
-                print!("{} ", node);
+                print!("{node} ");
             }
             println!();
             oldmic = mic;
@@ -407,14 +407,14 @@ fn print_json_mics(mut mics: Mics) -> Result<()> {
     if let Some(mic) = mics.next() {
         let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
         let serialized = serde_json::to_string(&nodes)?;
-        println!("{}", serialized);
+        println!("{serialized}");
         let mut oldmic = mic;
 
         for mic in mics {
             if oldmic != mic {
                 let nodes: Vec<NodeId> = mic.iter().map(|y| into_node_id(*y).unwrap()).collect();
                 let serialized = serde_json::to_string(&nodes)?;
-                println!(", {}", serialized);
+                println!(", {serialized}");
                 oldmic = mic;
             }
         }
@@ -433,7 +433,7 @@ fn print_labelings(labelings: LabelsRepair) -> Result<()> {
 
         println!("\n  Repair set:");
         for fix in repairs {
-            println!("  - {}", fix);
+            println!("  - {fix}");
         }
     }
     Ok(())
@@ -443,18 +443,18 @@ fn print_json_labelings(mut labelings: LabelsRepair) -> Result<()> {
 
     if let Some((labels, repairs)) = labelings.next() {
         let serialized = serde_json::to_string(&labels)?;
-        println!("{{\"labels\":{}", serialized);
+        println!("{{\"labels\":{serialized}");
 
         let serialized = serde_json::to_string(&repairs)?;
-        println!(",\"repairs\":{}", serialized);
+        println!(",\"repairs\":{serialized}");
         println!("}}");
 
         for (labels, repairs) in labelings {
             let serialized = serde_json::to_string(&labels)?;
-            println!(", {{\"labels\":{}", serialized);
+            println!(", {{\"labels\":{serialized}");
 
             let serialized = serde_json::to_string(&repairs)?;
-            println!(",\"repairs\":{}", serialized);
+            println!(",\"repairs\":{serialized}");
             println!("}}");
         }
     }
@@ -488,10 +488,10 @@ fn print_predictions(predictions: &[Prediction]) {
         }
     }
     println!("\n## Prediction statistics\n");
-    println!("- predicted +        : {}", plus);
-    println!("- predicted -        : {}", minus);
-    println!("- predicted 0        : {}", zero);
-    println!("- predicted notPlus  : {}", not_plus);
-    println!("- predicted notMinus : {}", not_minus);
-    println!("- predicted CHANGE   : {}", change);
+    println!("- predicted +        : {plus}");
+    println!("- predicted -        : {minus}");
+    println!("- predicted 0        : {zero}");
+    println!("- predicted notPlus  : {not_plus}");
+    println!("- predicted notMinus : {not_minus}");
+    println!("- predicted CHANGE   : {change}");
 }

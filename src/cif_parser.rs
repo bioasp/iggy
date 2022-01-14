@@ -135,7 +135,7 @@ impl Graph {
                 for expr in l {
                     match expr {
                         Expression::Negated(s) => {
-                            inner.push(format!("!{}", s));
+                            inner.push(format!("!{s}"));
                             neg.push(s);
                         }
                         Expression::Plain(s) => {
@@ -143,7 +143,7 @@ impl Graph {
                             pos.push(s);
                         }
                         Expression::Unknown(s) => {
-                            inner.push(format!("?{}", s));
+                            inner.push(format!("?{s}"));
                             unk.push(s);
                         }
                     };

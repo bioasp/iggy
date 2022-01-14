@@ -129,7 +129,7 @@ fn run() -> Result<()> {
     let network_statistics = ggraph.statistics();
     if opt.json {
         let serialized = serde_json::to_string(&network_statistics)?;
-        println!(",\"Network statistics\":{}", serialized);
+        println!(",\"Network statistics\":{serialized}");
     } else {
         network_statistics.print();
     }
@@ -150,7 +150,7 @@ fn run() -> Result<()> {
         let observationfile = entry?.path();
         let name = format!("{}", observationfile.display());
         if !opt.json {
-            println!("- {}", name);
+            println!("- {name}");
         }
         let f = File::open(&observationfile)?;
         observation_files.push(observationfile);
@@ -164,16 +164,14 @@ fn run() -> Result<()> {
                 Ok(_) => {
                     warn!("Contradictory observations. Please correct them!");
                     profiles = Err(anyhow!(
-                        "\nInconsistent observations in {}\n- {}",
-                        name,
+                        "\nInconsistent observations in {name}\n- {}",
                         reasons.join("\n- ")
                     ));
                 }
                 Err(ref e) => {
                     warn!("Contradictory observations. Please correct them!");
                     profiles = Err(anyhow!(
-                        "\nInconsistent observations in {}\n- {}\n{}",
-                        name,
+                        "\nInconsistent observations in {name}\n- {}\n{}",
                         reasons.join("\n- "),
                         e
                     ))
@@ -213,10 +211,10 @@ fn run() -> Result<()> {
             let (scenfit, repair_score, redges) =
                 get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs)?;
             if opt.json {
-                println!(",\"scenfit\":{}", scenfit);
-                println!(",\"repair score\":{}", repair_score);
+                println!(",\"scenfit\":{scenfit}");
+                println!(",\"repair score\":{repair_score}");
             } else {
-                println!("The network and data can reach a scenfit of {}.", scenfit);
+                println!("The network and data can reach a scenfit of {scenfit}.");
             }
             (scenfit, repair_score, redges)
             //   with {} removals and {} additions.", repairs, edges.len());
@@ -226,13 +224,10 @@ fn run() -> Result<()> {
             let (scenfit, repair_score) =
                 get_opt_add_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
             if opt.json {
-                println!(",\"scenfit\":{}", scenfit);
-                println!(",\"repair score\":{}", repair_score);
+                println!(",\"scenfit\":{scenfit}");
+                println!(",\"repair score\":{repair_score}");
             } else {
-                println!(
-                    "The network and data can reach a scenfit of {} with repairs of score {}",
-                    scenfit, repair_score
-                );
+                println!("The network and data can reach a scenfit of {scenfit} with repairs of score {repair_score}");
             }
             (scenfit, repair_score, vec![])
         }
@@ -241,13 +236,10 @@ fn run() -> Result<()> {
             let (scenfit, repair_score) =
                 get_opt_flip_edges(&graph, &profiles, &new_inputs, &setting)?;
             if opt.json {
-                println!(",\"scenfit\":{}", scenfit);
-                println!(",\"repair score\":{}", repair_score);
+                println!(",\"scenfit\":{scenfit}");
+                println!(",\"repair score\":{repair_score}");
             } else {
-                println!(
-                    "The network and data can reach a scenfit of {} with {} flipped edges",
-                    scenfit, repair_score
-                );
+                println!("The network and data can reach a scenfit of {scenfit} with {repair_score} flipped edges");
             }
             (scenfit, repair_score, vec![])
         }
@@ -256,12 +248,11 @@ fn run() -> Result<()> {
             let (scenfit, repair_score) =
                 get_opt_remove_edges(&graph, &profiles, &new_inputs, &setting)?;
             if opt.json {
-                println!(",\"scenfit\":{}", scenfit);
-                println!(",\"repair score\":{}", repair_score);
+                println!(",\"scenfit\":{scenfit}");
+                println!(",\"repair score\":{repair_score}");
             } else {
                 println!(
-                    "The network and data can reach a scenfit of {} with {} removed edges.",
-                    scenfit, repair_score
+                    "The network and data can reach a scenfit of {scenfit} with {repair_score} removed edges."
                 );
             }
             (scenfit, repair_score, vec![])
@@ -332,13 +323,13 @@ fn run() -> Result<()> {
                     .collect();
 
                 let serialized = serde_json::to_string(&repairs)?;
-                println!(",\"Repair sets\":{}", serialized);
+                println!(",\"Repair sets\":{serialized}");
             } else {
                 for (count, r) in repairs.iter().enumerate() {
                     println!("\n- Repair set {}: ", count + 1);
                     for e in r {
                         let repair_op = into_repair(e)?;
-                        println!("  - {}", repair_op);
+                        println!("  - {repair_op}");
                     }
                 }
             }
@@ -369,7 +360,7 @@ fn get_setting(opt: &Opt) -> Setting {
     if opt.json {
         println!("\"Iggy settings\":{}", setting.to_json());
     } else {
-        print!("{}", setting)
+        print!("{setting}")
     }
     setting
 }
