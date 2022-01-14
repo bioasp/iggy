@@ -143,7 +143,7 @@ fn run() -> Result<()> {
     if opt.json {
         print!(",\"Observation files\":");
     } else {
-        println!("\nObservation files:");
+        println!("\nObservation files:\n");
     }
     let mut profiles = Ok(FactBase::new());
     for entry in directory {
@@ -326,7 +326,7 @@ fn run() -> Result<()> {
                 println!(",\"Repair sets\":{serialized}");
             } else {
                 for (count, r) in repairs.iter().enumerate() {
-                    println!("\n- Repair set {}: ", count + 1);
+                    println!("\n- Repair set {}:", count + 1);
                     for e in r {
                         let repair_op = into_repair(e)?;
                         println!("  - {repair_op}");

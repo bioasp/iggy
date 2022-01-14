@@ -176,14 +176,14 @@ fn run() -> Result<()> {
             if opt.json {
                 println!(",\"scenfit\":0");
             } else {
-                println!("scenfit: 0\n");
+                println!("scenfit: 0");
             }
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
                 println!(",\"scenfit\":{scenfit}");
             } else {
-                println!("scenfit: {scenfit}\n");
+                println!("scenfit: {scenfit}");
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
@@ -222,14 +222,14 @@ fn run() -> Result<()> {
             if opt.json {
                 println!(",\"mcos\":0");
             } else {
-                println!("mcos: 0\n");
+                println!("mcos: 0");
             }
         } else {
             info!("The network and data are inconsistent");
             if opt.json {
                 println!(",\"mcos\":{mcos}");
             } else {
-                println!("mcos: {mcos}\n");
+                println!("mcos: {mcos}");
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(&graph, &profile, &new_inputs, &setting)?;
@@ -425,9 +425,7 @@ fn print_json_mics(mut mics: Mics) -> Result<()> {
 
 fn print_labelings(labelings: LabelsRepair) -> Result<()> {
     for (count, (labels, repairs)) in labelings.enumerate() {
-        if count > 0 {
-            println!();
-        }
+        println!();
         println!("- Labeling {}:", count + 1);
         print_labels(&labels);
 
