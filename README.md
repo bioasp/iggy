@@ -56,6 +56,7 @@ OPTIONS:
                                      input
         --founded-constraints-off    Disable foundedness constraints
         --fwd-propagation-off        Disable forward propagation constraints
+    -c, --count-labelings <N>        Count-labelings, default is OFF, 0=all
     -h, --help                       Print help information
         --json                       Print JSON output
     -l, --show-labelings <N>         Show N labelings, default is OFF, 0=all
