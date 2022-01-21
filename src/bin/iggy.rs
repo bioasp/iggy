@@ -70,7 +70,7 @@ struct Opt {
     max_labelings: Option<u32>,
     
        /// Show count labelings
-    #[clap(short = "c", long = "count-labelings")]
+    #[clap(short = 'c', long = "count-labelings")]
     count_labelings: Option<u32>,
 
     /// Show predictions
@@ -253,7 +253,7 @@ fn run() -> Result<()> {
             }
         }
          if let Some(count_labelings) = opt.count_labelings {
-              let l = count_mcos_labelings(&graph, &profile, &new_inputs, count_labelings, &setting);
+              let l = count_mcos_labelings(&graph, &profile, &new_inputs, count_labelings, &setting)?;
 		if opt.json {
                 print_json_labelings(l)?;
             } else {
@@ -481,7 +481,7 @@ fn count_mcos_labelings(
     setting: &SETTING,
 ) {
     print!("\nCompute mcos labelings ... ");
-    let models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap();
+    let models = get_mcos_labelings(&graph, &profile, &inputs, number, &setting).unwrap()?;
     println!("done.");
     let mut count = 0;
     for _labels in models {
