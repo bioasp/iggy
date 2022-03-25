@@ -7,16 +7,22 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    # strategy:
-    #   matrix:
-    #     python-version: [3.7, 3.8, 3.9]
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+        # python-version: [3.7, 3.8, 3.9, "3.10"]
     steps:
       - uses: actions/checkout@v2
+
+      # First build with cargo otherwise no native static clingo lib is found ???
+      - name: Cargo build
+        run: cargo build --release --verbose
+
       - uses: messense/maturin-action@v1
         with:
           manylinux: auto
           command: build
-          args: --release -o dist --interpreter python3.7
+          args: --release -o dist --interpreter python${{matrix.python-version}}
 
       - name: Upload wheels
         uses: actions/upload-artifact@v2
@@ -39,9 +45,18 @@ jobs:
   #         path: dist
 
   # macos:
+  #   env:
+  #     MACOSX_DEPLOYMENT_TARGET: "11.0"
+
   #   runs-on: macos-latest
   #   steps:
   #     - uses: actions/checkout@v2
+
+  #     # First build with cargo otherwise no native static clingo lib is found ???
+  #     - name: Cargo build
+  #       run: |
+  #         cargo build --release --verbose
+
   #     - uses: messense/maturin-action@v1
   #       with:
   #         command: build
