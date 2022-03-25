@@ -1,3 +1,26 @@
+use cif_parser::Graph;
+use pyo3::exceptions::{PyException, PyIOError};
+use pyo3::prelude::*;
+
+/// reads a file in CIF and returns the corresponding Graph.
+#[pyfunction]
+fn read_cif(file_name: &str) -> PyResult<Graph> {
+    use std::fs::File;
+    match File::open(file_name) {
+        Ok(file) => match cif_parser::read(&file) {
+            Ok(graph) => Ok(graph),
+            Err(e) => Err(PyException::new_err(format!("{e}"))),
+        },
+        Err(e) => Err(PyIOError::new_err(e)),
+    }
+}
+/// A Python module implemented in Rust.
+#[pymodule]
+fn iggy(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(read_cif, m)?)?;
+    Ok(())
+}
+
 pub mod cif_parser;
 use cif_parser::EdgeSign;
 pub mod profile_parser;

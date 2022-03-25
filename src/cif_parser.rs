@@ -1,6 +1,7 @@
 use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
 use anyhow::Result;
 use clingo::*;
+use pyo3::prelude::*;
 use serde::Serialize;
 use std::fmt;
 use std::fs::File;
@@ -53,6 +54,7 @@ pub struct Edge {
     target: NodeId,
 }
 
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct Graph {
     or_nodes: Vec<NodeId>,
