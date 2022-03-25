@@ -131,7 +131,7 @@ fn run() -> Result<()> {
         let serialized = serde_json::to_string(&network_statistics)?;
         println!(",\"Network statistics\":{serialized}");
     } else {
-        network_statistics.print();
+        println!("{network_statistics}");
     }
 
     let directory = fs::read_dir(&opt.observations_dir).context(format!(

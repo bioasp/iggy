@@ -2,6 +2,7 @@ use crate::{FactBase, NodeId, ObsELabel, ToSymbol};
 use anyhow::Result;
 use clingo::*;
 use serde::Serialize;
+use std::fmt;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -69,15 +70,14 @@ pub struct NetworkStatistics {
     inhibitions: usize,
     unknowns: usize,
 }
-impl NetworkStatistics {
-    pub fn print(&self) {
-        println!("\n## Network statistics\n");
-        println!("- OR nodes (species): {}", self.or_nodes);
-        println!("- AND nodes (complex regulation): {}", self.and_nodes);
-        println!("- Activations: {}", self.activations);
-        println!("- Inhibitions: {}", self.inhibitions);
-        println!("- Unknowns:    {}", self.unknowns);
-        // println!("          Dual = {}", len(unspecified))
+impl fmt::Display for NetworkStatistics {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "\n## Network statistics\n\n- OR nodes (species): {}\n- AND nodes (complex regulation): {}\n- Activations: {}\n- Inhibitions: {}\n- Unknowns:    {}",
+            // "- Dual = {}"
+            self.or_nodes, self.and_nodes, self.activations, self.inhibitions, self.unknowns
+        )
     }
 }
 
