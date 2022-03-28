@@ -12,8 +12,7 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [maxOS-latest]
-        # os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macOS-latest]
         # os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: [3.8]
         # python-version: [3.7, 3.8, 3.9, "3.10"]
@@ -21,9 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # First build with cargo otherwise no native static clingo lib is found ???
-      - name: Cargo build
-        run: cargo build --release --verbose
+      # # First build with cargo otherwise no native static clingo lib is found ???
+      # - name: Cargo build
+      #   run: cargo build --release --verbose
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
