@@ -1,8 +1,6 @@
 name: CI python package
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   linux:
@@ -17,6 +15,9 @@ jobs:
       # First build with cargo otherwise no native static clingo lib is found ???
       - name: Cargo build
         run: cargo build --release --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
 
       - uses: messense/maturin-action@v1
         with:
