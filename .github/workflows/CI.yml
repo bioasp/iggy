@@ -45,28 +45,28 @@ jobs:
   #         name: wheels
   #         path: dist
 
-  # macos:
-  #   env:
-  #     MACOSX_DEPLOYMENT_TARGET: "11.0"
+  macos:
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
 
-  #   runs-on: macos-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
 
-  #     # First build with cargo otherwise no native static clingo lib is found ???
-  #     - name: Cargo build
-  #       run: |
-  #         cargo build --release --verbose
+      # First build with cargo otherwise no native static clingo lib is found ???
+      - name: Cargo build
+        run: |
+          cargo build --release --verbose
 
-  #     - uses: messense/maturin-action@v1
-  #       with:
-  #         command: build
-  #         args: --release --no-sdist -o dist --universal2
-  #     - name: Upload wheels
-  #       uses: actions/upload-artifact@v2
-  #       with:
-  #         name: wheels
-  #         path: dist
+      - uses: messense/maturin-action@v1
+        with:
+          command: build
+          args: --release --no-sdist -o dist --universal2
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
 
   # release:
   #   name: Release
