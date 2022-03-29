@@ -9,10 +9,9 @@ publish = false
 edition = "2021"
 
 [lib]
-name = "iggy_python_module"
+name = "iggy"
 crate-type = ["cdylib"]
 
 [dependencies]
 iggy = { path = "../" }
 pyo3 = { version = "0.16.1", features = ["extension-module"] }
-

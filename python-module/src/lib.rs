@@ -26,7 +26,7 @@ fn print_graph(graph: &PGraph) -> PyResult<bool> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn iggy_python_module(_py: Python, m: &PyModule) -> PyResult<()> {
+fn iggy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(read_cif, m)?)?;
     m.add_function(wrap_pyfunction!(print_graph, m)?)?;
     Ok(())
