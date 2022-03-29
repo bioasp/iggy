@@ -1,0 +1,18 @@
+[package]
+name = "iggy-python-module"
+version = "2.2.1-dev"
+authors = ["Sven Thiele <sthiele78@gmail.com>"]
+description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
+documentation = "bioasp.github.io/iggy"
+repository = "https://github.com/bioasp/iggy"
+publish = false
+edition = "2021"
+
+[lib]
+name = "iggy_python_module"
+crate-type = ["cdylib"]
+
+[dependencies]
+iggy = { path = "../iggy-rs" }
+pyo3 = { version = "0.16.1", features = ["extension-module"] }
+
