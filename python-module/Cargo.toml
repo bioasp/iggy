@@ -13,6 +13,6 @@ name = "iggy_python_module"
 crate-type = ["cdylib"]
 
 [dependencies]
-iggy = { path = "../iggy-rs" }
+iggy = { path = "../" }
 pyo3 = { version = "0.16.1", features = ["extension-module"] }
 
