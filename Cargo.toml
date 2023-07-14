@@ -3,11 +3,13 @@ name = "iggy"
 version = "2.2.1-dev"
 authors = ["Sven Thiele <sthiele78@gmail.com>"]
 description = "Influence graph analysis, consistency check, diagnosis, repair and prediction."
-readme = "README.md"
-documentation = "bioasp.github.io/iggy"
 repository = "https://github.com/bioasp/iggy"
 publish = false
 edition = "2021"
+
+[lib]
+name = "iggy"
+crate-type = ["rlib"]
 
 # [features]
 # static-linking = ["clingo/static-linking"]
@@ -20,6 +22,5 @@ anyhow = "1.0"
 log = "*"
 stderrlog = "0.5"
 peg = "0.8"
-
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
