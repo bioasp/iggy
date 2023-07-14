@@ -33,7 +33,7 @@ struct Vertex {
     node: NodeId,
 }
 // #[derive(ToSymbol)]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EdgeSign {
     Plus,
     Minus,
@@ -74,7 +74,7 @@ impl fmt::Display for NetworkStatistics {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "\n## Network statistics\n\n- OR nodes (species): {}\n- AND nodes (complex regulation): {}\n- Activations: {}\n- Inhibitions: {}\n- Unknowns:    {}",
+            "- OR nodes (species): {}\n- AND nodes (complex regulation): {}\n- Activations: {}\n- Inhibitions: {}\n- Unknowns:    {}",
             // "- Dual = {}"
             self.or_nodes, self.and_nodes, self.activations, self.inhibitions, self.unknowns
         )
@@ -180,21 +180,21 @@ impl Graph {
         for node in &self.and_nodes {
             facts.insert(&Vertex { node: node.clone() });
         }
-        for &(ref s, ref t) in &self.p_edges {
+        for (s, t) in &self.p_edges {
             facts.insert(&ObsELabel {
                 start: s.clone(),
                 target: t.clone(),
                 sign: EdgeSign::Plus,
             });
         }
-        for &(ref s, ref t) in &self.n_edges {
+        for (s, t) in &self.n_edges {
             facts.insert(&ObsELabel {
                 start: s.clone(),
                 target: t.clone(),
                 sign: EdgeSign::Minus,
             });
         }
-        for &(ref s, ref t) in &self.n_edges {
+        for (s, t) in &self.n_edges {
             facts.insert(&Edge {
                 start: s.clone(),
                 target: t.clone(),

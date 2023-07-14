@@ -97,21 +97,18 @@ pi3k          = MAX
 The Iggy tools implement different constraints that inform the consistency notion under which the analysis are perform. In other words, what is considered a consistent behavior of a system. The defaults are:
 
 - All observed changes must be explained by a predecessor.
-
-    This basic constraint is always turned on.
+  >  This basic constraint is always turned on.
 
 - All observed changes must be explained by an input.
-
-    You can turn this off with the flag `--founded-constraints-off`.
+  >  You can turn this off with the flag `--founded-constraints-off`.
 
 - 0-change must be explained.
-
-   You can turn this constraint off with the flag `--fwd-propagation-off`.
+  > You can turn this constraint off with the flag `--fwd-propagation-off`.
 
 Additional you can turn on the following constraint:
 
 - An elementary path from an input must exist to explain changes.
-   You can turn this constraint on with the flag `--elempath`.
+  > You can turn this constraint on with the flag `--elempath`.
 
 With the flag `--depmat` you can turn on a consistency notion that is used for the *dependency matrix*. This notion includes the *elementary path* constraint.
 
@@ -223,7 +220,6 @@ Network file: network.cif
 - Activations: 19
 - Inhibitions: 6
 - Unknowns:    1
-
 ```
 
 The following *observations statistics* tells us that the experimental data given as `observation.obs` consist of `14` observations from which all are nodes of the model. This leaves `4` nodes of the model unobserved. Further there are `0` observations of species that are not in the model.
@@ -252,7 +248,6 @@ Observation file: observations.obs
   - 0:                    7
   - notPlus:              1
   - notMinus:             1
-
 ```
 
 Then follow the results of the consistency analysis.
@@ -534,7 +529,6 @@ Observation files:
 
 ## Consistency results
 
-
 The network and data can reach a scenfit of 0.
 
 - Repair set 1: 
@@ -576,7 +570,6 @@ The network and data can reach a scenfit of 0.
   - remove edge: mek1 -> stat5ab_py 
   - remove edge: !mek1 -> shp2 
   - add edge: mek1 -> gab1_ps 
-
 ```
 
 For more information on *OptGraph* see:

@@ -21,7 +21,7 @@ pub struct Observation {
     pub behavior: Behavior,
 }
 pub type ProfileId = String;
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Behavior {
     Plus,
     Minus,
@@ -144,7 +144,6 @@ pub fn read(file: &File, id: &str) -> Result<Profile> {
                 PStatement::Plus(s) => {
                     observations.push(Observation {
                         node: NodeId::Or(s),
-
                         behavior: Behavior::Plus,
                     });
                 }

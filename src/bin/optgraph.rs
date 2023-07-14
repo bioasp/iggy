@@ -61,6 +61,10 @@ struct Opt {
     #[clap(short = 'm', long)]
     repair_mode: Option<RepairMode>,
 
+    /// Multithreading
+    #[clap(short = 't', long, value_name = "N", default_value_t = 1)]
+    threads: u8,
+
     /// Print JSON output
     #[clap(long)]
     json: bool,
@@ -108,6 +112,7 @@ fn main() {
 }
 fn run() -> Result<()> {
     let opt = Opt::parse();
+    let mut out = std::io::stdout();
     if opt.json {
         println!("{{");
     } else {
@@ -194,7 +199,13 @@ fn run() -> Result<()> {
     let new_inputs = {
         if opt.auto_inputs {
             info!("Computing input nodes ...");
-            compute_auto_inputs(&graph, opt.json)?
+            let inputs = guess_inputs(&graph)?;
+            if opt.json {
+                write_auto_inputs_json(&mut out, &inputs)?;
+            } else {
+                write_auto_inputs_md(&mut out, &inputs)?
+            }
+            inputs
         } else {
             FactBase::new()
         }
@@ -209,7 +220,7 @@ fn run() -> Result<()> {
             info!("Computing repair through add/removing edges ... ");
             info!("using greedy method ... ");
             let (scenfit, repair_score, redges) =
-                get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs)?;
+                get_opt_add_remove_edges_greedy(&graph, &profiles, &new_inputs, opt.threads)?;
             if opt.json {
                 println!(",\"scenfit\":{scenfit}");
                 println!(",\"repair score\":{repair_score}");
@@ -275,6 +286,7 @@ fn run() -> Result<()> {
                             scenfit,
                             repair_score,
                             max_repairs,
+                            opt.threads,
                         )?;
 
                         for i in removes {

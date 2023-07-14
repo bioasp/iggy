@@ -1,21 +1,27 @@
-pub mod cif_parser;
-use cif_parser::EdgeSign;
-pub mod profile_parser;
+use anyhow::Result;
 use clingo::{
     ast::Location, defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase,
     FunctionHandler, GenericControl, GenericSolveHandle, OptimalModels, Part, ShowType, SolveMode,
     Symbol, SymbolType, ToSymbol,
 };
+use log::info;
+use serde::Serialize;
+use std::{fmt, io::Write};
+use thiserror::Error;
+
+pub mod cif_parser;
+use cif_parser::EdgeSign;
+
+pub mod profile_parser;
 use profile_parser::{Behavior, ProfileId};
 
 /// This module contains the queries which can be asked to the model and data.
 pub mod encodings;
-use anyhow::Result;
 use encodings::*;
-use log::info;
-use serde::Serialize;
-use std::fmt;
-use thiserror::Error;
+
+pub mod misc;
+#[cfg(test)]
+mod tests;
 
 type ControlWithFH = GenericControl<Non, Non, Non, MemberFH>;
 type SolveHandleWithFH<FH> = GenericSolveHandle<Non, Non, Non, FH, Non>;
@@ -83,7 +89,7 @@ impl IggyError {
     }
 }
 
-#[derive(Debug, Clone, ToSymbol, Serialize)]
+#[derive(Debug, Clone, ToSymbol, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ObsELabel {
     start: NodeId,
     target: NodeId,
@@ -111,12 +117,13 @@ impl fmt::Display for NodeId {
         }
     }
 }
+#[derive(Debug)]
 pub enum CheckResult {
     Consistent,
     Inconsistent(Vec<String>),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RepairOp {
     AddEdge(ObsELabel),
     RemoveEdge(ObsELabel),
@@ -208,22 +215,27 @@ impl fmt::Display for RepairOp {
     }
 }
 
-pub fn compute_auto_inputs(graph: &FactBase, json: bool) -> Result<FactBase> {
-    let new_inputs = guess_inputs(graph)?;
-    let x = new_inputs
+pub fn write_auto_inputs_md(mut out: impl Write, inputs: &FactBase) -> Result<()> {
+    let x = inputs
         .iter()
         .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
-    if json {
-        let y: Vec<NodeId> = x.collect();
-        let serialized = serde_json::to_string(&y)?;
-        println!(",\"Computed input nodes\":{serialized}");
-    } else {
-        println!("\nComputed input nodes: {}", new_inputs.len());
-        for y in x {
-            println!("- {y}");
-        }
+
+    writeln!(out, "\nComputed input nodes: {}", inputs.len())?;
+    for y in x {
+        writeln!(out, "- {y}")?;
     }
-    Ok(new_inputs)
+    Ok(())
+}
+
+pub fn write_auto_inputs_json(mut out: impl Write, inputs: &FactBase) -> Result<()> {
+    let x = inputs
+        .iter()
+        .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
+
+    let y: Vec<NodeId> = x.collect();
+    let serialized = serde_json::to_string(&y)?;
+    writeln!(out, ",\"Computed input nodes\":{serialized}")?;
+    Ok(())
 }
 
 pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
@@ -465,12 +477,13 @@ fn get_optimum<FH: FunctionHandler>(handle: &mut SolveHandleWithFH<FH>) -> Resul
     }
 }
 
-/// return the minimal inconsistent cores
+/// Return the minimal inconsistent cores
 pub fn get_minimal_inconsistent_cores(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
+    threads: u8,
 ) -> Result<Mics> {
     info!("Computing minimal inconsistent cores (mic\'s) ...");
     // create a control object and pass command line arguments
@@ -479,6 +492,7 @@ pub fn get_minimal_inconsistent_cores(
         "--dom-mod=5,16".to_string(),
         "--heu=Domain".to_string(),
         "--enum-mode=domRec".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -496,32 +510,34 @@ pub fn get_minimal_inconsistent_cores(
 }
 pub struct Mics(AllModels<Non, Non, Non, MemberFH, Non>);
 impl Iterator for Mics {
-    type Item = Vec<Symbol>;
+    type Item = Vec<NodeId>;
     fn next(&mut self) -> Option<Self::Item> {
         match self.0.next() {
             None => None,
             Some(model) => {
                 let extract = extract_mics(&model.symbols);
                 match extract {
-                    Ok(x) => Some(x),
+                    Ok(x) => Some(x.iter().map(|s| into_node_id(*s).unwrap()).collect()),
                     _ => None,
                 }
             }
         }
     }
 }
-/// returns the scenfit of data and model
+/// Returns the scenfit of data and model
 pub fn get_scenfit(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
+    threads: u8,
 ) -> Result<i64> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -552,25 +568,27 @@ pub fn get_scenfit(
     Ok(get_optimum(&mut handle)?[0])
 }
 
-/// returns a vector of scenfit labelings of data and model
+/// Returns a vector of scenfit labelings of data and model
 ///
 /// # Arguments:
 ///
-/// + number - maximal number of labelings
+/// + max_labelings - maximal number of labelings
 pub fn get_scenfit_labelings(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    number: u32,
+    max_labelings: u32,
     setting: &Setting,
+    threads: u8,
 ) -> Result<LabelsRepair> {
     info!("Compute scenfit labelings ...");
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
-        format!("{number}"),
+        format!("{max_labelings}"),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -619,18 +637,20 @@ impl Iterator for LabelsRepair {
         }
     }
 }
-/// returns the mcos of data and model
+/// Returns the mcos of data and model
 pub fn get_mcos(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
+    threads: u8,
 ) -> Result<i64> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "0".to_string(),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -661,26 +681,28 @@ pub fn get_mcos(
     Ok(get_optimum(&mut handle)?[0])
 }
 
-/// returns a vector of mcos labelings of data and model
+/// Returns a vector of mcos labelings of data and model
 ///
 /// # Arguments:
 ///
-/// + number - maximal number of labelings
+/// + max_labelings - maximal number of labelings
 pub fn get_mcos_labelings(
     graph: &FactBase,
     profile: &FactBase,
     inputs: &FactBase,
-    number: u32,
+    max_labelings: u32,
     setting: &Setting,
+    threads: u8,
 ) -> Result<LabelsRepair> {
     info!("Compute mcos labelings ...");
 
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
-        format!("{number}"),
+        format!("{max_labelings}"),
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -861,7 +883,7 @@ pub fn into_behavior(symbol: Symbol) -> Result<Behavior> {
         }
     }
 }
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
     PlusToZero,
     PlusToMinus,
@@ -1040,16 +1062,18 @@ pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
     }
 }
 
-/// only apply with elementary path consistency notion
+/// **Attention**: Only apply with elementary path consistency notion
 pub fn get_opt_add_remove_edges_greedy(
     graph: &FactBase,
     profiles: &FactBase,
     inputs: &FactBase,
+    threads: u8,
 ) -> Result<(i64, i64, std::vec::Vec<FactBase>)> {
     let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
         "--project".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -1220,7 +1244,7 @@ pub fn get_opt_add_remove_edges_greedy(
     Ok((bscenfit, brepscore, redges))
 }
 
-/// only apply with elementary path consistency notion
+/// **Attention**: Only apply with elementary path consistency notion
 pub fn get_opt_repairs_add_remove_edges_greedy(
     graph: &FactBase,
     profiles: &FactBase,
@@ -1229,6 +1253,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     scenfit: i64,
     repair_score: i64,
     max_solutions: u32,
+    threads: u8,
 ) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
@@ -1236,6 +1261,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
         "--opt-strategy=5".to_string(),
         format!("--opt-mode=optN,{scenfit},{repair_score}"),
         "--project".to_string(),
+        format!("-t {threads}"),
     ])?;
 
     ctl.add_facts(graph)?;
@@ -1666,7 +1692,7 @@ fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
 }
 type Predictions = Vec<Prediction>;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Prediction {
     pub node: String,
     pub behavior: Behavior,
