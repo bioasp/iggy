@@ -1,15 +1,11 @@
-use anyhow::{anyhow, Context, Ok, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use clingo::FactBase;
 use log::{error, info, warn};
 use std::{fs::File, io::Write, path::PathBuf};
 use stderrlog;
 
-use iggy::cif_parser;
-use iggy::misc::*;
-use iggy::profile_parser;
-use iggy::CheckResult::Inconsistent;
-use iggy::*;
+use iggy::{cif_parser::Graph, misc::*, CheckResult::Inconsistent, *};
 
 /// Iggy confronts interaction graph models with observations of (signed) changes between two measured states
 /// (including uncertain observations).
@@ -84,6 +80,7 @@ fn main() {
         .init()
         .unwrap();
     if let Err(err) = run() {
+        println!("\n## Error\n\n{err}");
         error!("{:?}", err);
         std::process::exit(1);
     }
@@ -98,29 +95,8 @@ fn run() -> Result<()> {
         writeln!(out, "# Iggy Report")?;
     }
 
-    info!("Reading network model ...");
-    if opt.json {
-        writeln!(out, "\"Network file\":{:?}", opt.network_file)?;
-    } else {
-        writeln!(
-            out,
-            "\n## Network\n\n- Filename: {}",
-            opt.network_file.display()
-        )?;
-    }
-    let f = File::open(&opt.network_file)
-        .context(format!("unable to open '{}'", opt.network_file.display()))?;
-
-    let ggraph = cif_parser::read(&f)
-        .context(format!("unable to parse '{}'", opt.network_file.display()))?;
-    let graph = ggraph.to_facts();
-    let network_statistics = ggraph.statistics();
-    if opt.json {
-        let serialized = serde_json::to_string(&network_statistics)?;
-        writeln!(out, ",\"Network statistics\":{serialized}")?;
-    } else {
-        writeln!(out, "{network_statistics}")?;
-    }
+    let graph = read_network(&opt, &mut out)?;
+    let graph_facts = graph.to_facts();
 
     let profile = {
         if let Some(observationfile) = &opt.observations_file {
@@ -139,7 +115,7 @@ fn run() -> Result<()> {
             let pprofile = profile_parser::read(&f, "x1")
                 .context(format!("unable to parse '{}'", observationfile.display()))?;
 
-            let observations_statistics = observations_statistics(&pprofile, &ggraph);
+            let observations_statistics = observations_statistics(&pprofile, &graph);
             if opt.json {
                 let serialized = serde_json::to_string(&observations_statistics)?;
                 writeln!(out, ",\"Observations Statistics\":{serialized}")?;
@@ -166,28 +142,16 @@ fn run() -> Result<()> {
 
     let setting = get_setting(&opt);
     if opt.json {
-        writeln!(out, ",\"Iggy settings\":{}", setting.to_json())?;
+        write_setting_json(&mut out, &setting)?;
     } else {
-        write!(out, "{setting}")?;
+        write_setting_md(&mut out, &setting)?;
     }
 
-    let auto_inputs = {
-        if opt.auto_inputs {
-            info!("Computing input nodes ...");
-            let inputs = guess_inputs(&graph)?;
-            if opt.json {
-                write_auto_inputs_json(&mut out, &inputs)?;
-            } else {
-                write_auto_inputs_md(&mut out, &inputs)?
-            }
-            inputs
-        } else {
-            FactBase::new()
-        }
-    };
+    let auto_inputs = compute_auto_inputs(&opt, &graph_facts, &mut out)?;
+
     if opt.scenfit {
         info!("Computing scenfit of network and data ...");
-        let scenfit = get_scenfit(&graph, &profile, &auto_inputs, &setting, opt.threads)?;
+        let scenfit = get_scenfit(&graph_facts, &profile, &auto_inputs, &setting, opt.threads)?;
 
         if scenfit == 0 {
             info!("The network and data are consistent");
@@ -205,7 +169,7 @@ fn run() -> Result<()> {
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(
-                    &graph,
+                    &graph_facts,
                     &profile,
                     &auto_inputs,
                     &setting,
@@ -220,7 +184,7 @@ fn run() -> Result<()> {
         }
         if let Some(max_labelings) = opt.max_labelings {
             let l = get_scenfit_labelings(
-                &graph,
+                &graph_facts,
                 &profile,
                 &auto_inputs,
                 max_labelings,
@@ -236,7 +200,7 @@ fn run() -> Result<()> {
         if opt.show_predictions {
             info!("Compute predictions ...");
             let predictions =
-                get_predictions_under_scenfit(&graph, &profile, &auto_inputs, &setting)?;
+                get_predictions_under_scenfit(&graph_facts, &profile, &auto_inputs, &setting)?;
 
             if opt.json {
                 write_json_predictions(&mut out, &predictions)?;
@@ -246,7 +210,7 @@ fn run() -> Result<()> {
         }
     } else {
         info!("Computing mcos of network and data ...");
-        let mcos = get_mcos(&graph, &profile, &auto_inputs, &setting, opt.threads)?;
+        let mcos = get_mcos(&graph_facts, &profile, &auto_inputs, &setting, opt.threads)?;
         if mcos == 0 {
             info!("The network and data are consistent");
             if opt.json {
@@ -263,7 +227,7 @@ fn run() -> Result<()> {
             }
             if opt.mics {
                 let mics = get_minimal_inconsistent_cores(
-                    &graph,
+                    &graph_facts,
                     &profile,
                     &auto_inputs,
                     &setting,
@@ -278,7 +242,7 @@ fn run() -> Result<()> {
         }
         if let Some(max_labelings) = opt.max_labelings {
             let l = get_mcos_labelings(
-                &graph,
+                &graph_facts,
                 &profile,
                 &auto_inputs,
                 max_labelings,
@@ -293,7 +257,8 @@ fn run() -> Result<()> {
         }
         if opt.show_predictions {
             info!("Compute predictions ...");
-            let predictions = get_predictions_under_mcos(&graph, &profile, &auto_inputs, &setting)?;
+            let predictions =
+                get_predictions_under_mcos(&graph_facts, &profile, &auto_inputs, &setting)?;
             if opt.json {
                 write_json_predictions(&mut out, &predictions)?;
             } else {
@@ -305,6 +270,29 @@ fn run() -> Result<()> {
         print!("}}");
     }
     Ok(())
+}
+
+fn compute_auto_inputs(
+    opt: &Opt,
+    graph_facts: &FactBase,
+    out: &mut std::io::Stdout,
+) -> Result<FactBase, anyhow::Error> {
+    let auto_inputs = {
+        if opt.auto_inputs {
+            info!("Computing input nodes ...");
+            let inputs = get_auto_inputs(graph_facts)?;
+            let node_ids = get_node_ids_from_inputs(&inputs)?;
+            if opt.json {
+                write_auto_inputs_json(out, &node_ids)?;
+            } else {
+                write_auto_inputs_md(out, &node_ids)?
+            }
+            inputs
+        } else {
+            FactBase::new()
+        }
+    };
+    Ok(auto_inputs)
 }
 
 fn get_setting(opt: &Opt) -> Setting {
@@ -324,4 +312,29 @@ fn get_setting(opt: &Opt) -> Setting {
         }
     };
     setting
+}
+
+fn read_network(opt: &Opt, mut out: impl Write) -> Result<Graph> {
+    info!("Reading network model ...");
+    if opt.json {
+        writeln!(out, "\"Network file\":{:?}", opt.network_file)?;
+    } else {
+        writeln!(
+            out,
+            "\n## Network\n\n- Filename: {}",
+            opt.network_file.display()
+        )?;
+    }
+    let f = File::open(&opt.network_file)
+        .context(format!("unable to open '{}'", opt.network_file.display()))?;
+    let graph = cif_parser::read(&f)
+        .context(format!("unable to parse '{}'", opt.network_file.display()))?;
+    let network_statistics = graph.statistics();
+    if opt.json {
+        let serialized = serde_json::to_string(&network_statistics)?;
+        writeln!(out, ",\"Network statistics\":{serialized}")?;
+    } else {
+        writeln!(out, "{network_statistics}")?;
+    }
+    Ok(graph)
 }

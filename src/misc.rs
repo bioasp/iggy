@@ -19,6 +19,44 @@ fn find_node_in_nodes(nodes: &[NodeId], node_id: &NodeId) -> bool {
     false
 }
 
+pub fn write_setting_json(mut out: impl Write, setting: &Setting) -> Result<(), std::io::Error> {
+    writeln!(
+        out,
+        ",\"setting\":{{\"depmat\":{},\"elempath\":{},\"forward-propagation\":{},\"founded-constraints\":{}}}",
+        !setting.os, setting.ep, setting.fp, setting.fc
+    )
+}
+
+pub fn write_setting_md(mut out: impl Write, setting: &Setting) -> Result<(), std::io::Error> {
+    writeln!(out, "\n## Settings\n")?;
+    if !setting.os {
+        writeln!(out, "- Dependency matrix combines multiple states.")?;
+        writeln!(
+            out,
+            "- An elementary path from an input must exist to explain changes."
+        )?;
+    } else {
+        writeln!(
+            out,
+            "- All observed changes must be explained by a predecessor."
+        )?;
+
+        if setting.ep {
+            writeln!(
+                out,
+                "- An elementary path from an input must exist to explain changes."
+            )?;
+        }
+        if setting.fp {
+            writeln!(out, "- 0-change must be explained.")?;
+        }
+        if setting.fc {
+            writeln!(out, "- All observed changes must be explained by an input.")?;
+        }
+    }
+    write!(out, "")
+}
+
 #[derive(Serialize, Debug)]
 pub struct ObservationsStatistics {
     observed: usize,     // observed nodes of the model
@@ -38,7 +76,7 @@ pub struct ObservationsStatistics {
 pub fn write_observation_statistics(
     mut out: impl Write,
     stats: &ObservationsStatistics,
-) -> Result<()> {
+) -> Result<(), std::io::Error> {
     // writeln!(out, "\n## Observations statistics\n")?;
     writeln!(out, "- Observed model nodes:   {}", stats.observed)?;
     writeln!(out, "- Unobserved model nodes: {}", stats.unobserved)?;
@@ -103,12 +141,34 @@ pub fn observations_statistics(profile: &Profile, graph: &Graph) -> Observations
     }
 }
 
-pub fn write_mics(mut out: impl Write, mics: impl Iterator<Item = Vec<NodeId>>) -> Result<()> {
+pub fn write_auto_inputs_md(
+    mut out: impl Write,
+    inputs: &Vec<NodeId>,
+) -> Result<(), std::io::Error> {
+    writeln!(out, "\nComputed input nodes: {}", inputs.len())?;
+    for y in inputs {
+        writeln!(out, "- {y}")?;
+    }
+    Ok(())
+}
+pub fn write_auto_inputs_json(
+    mut out: impl Write,
+    inputs: &[NodeId],
+) -> Result<(), std::io::Error> {
+    let serialized = serde_json::to_string(&inputs)?;
+    writeln!(out, ",\"computed input nodes\":{serialized}")?;
+    Ok(())
+}
+
+pub fn write_mics(
+    mut out: impl Write,
+    mics: impl Iterator<Item = Vec<NodeId>>,
+) -> Result<(), std::io::Error> {
     writeln!(out, "\n## Minimal inconsistent cores")?;
     let mut oldmic = vec![];
     for (count, mic) in mics.enumerate() {
         if oldmic != *mic {
-            write!(out, "\n- mic {}:\n", count + 1)?;
+            write!(out, "\n{}. Mic:\n", count + 1)?;
             for node in mic.clone() {
                 writeln!(out, "  - {node}")?;
             }
@@ -117,18 +177,19 @@ pub fn write_mics(mut out: impl Write, mics: impl Iterator<Item = Vec<NodeId>>) 
     }
     Ok(())
 }
-pub fn write_json_mics(mut out: impl Write, mics: impl Iterator<Item = Vec<NodeId>>) -> Result<()> {
+pub fn write_json_mics(
+    mut out: impl Write,
+    mics: impl Iterator<Item = Vec<NodeId>>,
+) -> Result<(), std::io::Error> {
     writeln!(out, ",\"mics\":[")?;
 
     let mut oldmic = vec![];
     for (c, mic) in mics.enumerate() {
-        let serialized = serde_json::to_string(&mic)?;
         if c == 0 {
-            writeln!(out, "{serialized}")?;
+            writeln!(out, "  {}", serde_json::to_string(&mic)?)?;
             oldmic = mic;
         } else if oldmic != mic {
-            let serialized = serde_json::to_string(&mic)?;
-            writeln!(out, ", {serialized}")?;
+            writeln!(out, " ,{}", serde_json::to_string(&mic)?)?;
             oldmic = mic;
         }
     }
@@ -139,10 +200,10 @@ pub fn write_json_mics(mut out: impl Write, mics: impl Iterator<Item = Vec<NodeI
 pub fn write_labelings(
     mut out: impl Write,
     labelings: impl Iterator<Item = (Vec<Prediction>, Vec<RepairOp>)>,
-) -> Result<()> {
+) -> Result<(), std::io::Error> {
     writeln!(out, "\n## Possible labelings under repair")?;
-    for (count, (labels, repairs)) in labelings.enumerate() {
-        writeln!(out, "\n- Labeling {}:", count + 1)?;
+    for (c, (labels, repairs)) in labelings.enumerate() {
+        writeln!(out, "\n{}. Labeling:", c + 1)?;
         write_labels(&mut out, &labels)?;
 
         writeln!(out, "\n  Repair set:")?;
@@ -155,36 +216,43 @@ pub fn write_labelings(
 pub fn write_json_labelings(
     mut out: impl Write,
     labelings: impl Iterator<Item = (Vec<Prediction>, Vec<RepairOp>)>,
-) -> Result<()> {
+) -> Result<(), std::io::Error> {
     writeln!(out, ",\"labels under repair\":[")?;
 
     for (idx, (labels, repairs)) in labelings.enumerate() {
-        if idx > 0 {
-            write!(out, ", ")?;
+        if idx == 0 {
+            write!(out, "  ")?;
+        } else {
+            write!(out, " ,")?;
         }
         let serialized = serde_json::to_string(&labels)?;
-        writeln!(out, "{{\"labels\":{serialized}")?;
+        writeln!(out, "{{\"labels\":{serialized},")?;
         let serialized = serde_json::to_string(&repairs)?;
-        writeln!(out, ",\"repairs\":{serialized}")?;
-        writeln!(out, "}}")?;
+        writeln!(out, "   \"repairs\":{serialized}\n  }}")?;
     }
     writeln!(out, "]")?;
     Ok(())
 }
 
-pub fn write_labels(mut out: impl Write, labels: &[Prediction]) -> Result<()> {
+pub fn write_labels(mut out: impl Write, labels: &[Prediction]) -> Result<(), std::io::Error> {
     for assign in labels {
         writeln!(out, "  - {} = {}", assign.node, assign.behavior)?;
     }
     Ok(())
 }
 
-pub fn write_json_predictions(mut out: impl Write, predictions: &[Prediction]) -> Result<()> {
+pub fn write_json_predictions(
+    mut out: impl Write,
+    predictions: &[Prediction],
+) -> Result<(), std::io::Error> {
     let serialized = serde_json::to_string(&predictions)?;
-    writeln!(&mut out, ",\"Predictions\":{serialized}")?;
+    writeln!(&mut out, ",\"predictions\":{serialized}")?;
     Ok(())
 }
-pub fn write_predictions(mut out: impl Write, predictions: &[Prediction]) -> Result<()> {
+pub fn write_predictions(
+    mut out: impl Write,
+    predictions: &[Prediction],
+) -> Result<(), std::io::Error> {
     let mut plus = 0;
     let mut minus = 0;
     let mut zero = 0;

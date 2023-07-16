@@ -1,6 +1,6 @@
 // preprocessing
 pub const PRG_CONTRADICTORY_OBS: &str = include_str!("encodings/contradictory_obs.lp");
-pub const PRG_GUESS_INPUTS: &str = include_str!("encodings/guess_inputs.lp");
+pub const PRG_AUTO_INPUTS: &str = include_str!("encodings/auto_inputs.lp");
 
 // minimal inconsistent cores
 pub const PRG_MICS: &str = include_str!("encodings/mics.lp");

@@ -1,4 +1,3 @@
-use anyhow::Result;
 use clingo::{
     ast::Location, defaults::Non, AllModels, ClingoError, Control, ExternalError, FactBase,
     FunctionHandler, GenericControl, GenericSolveHandle, OptimalModels, Part, ShowType, SolveMode,
@@ -7,7 +6,6 @@ use clingo::{
 use log::info;
 use serde::Serialize;
 use std::{fmt, io::Write};
-use thiserror::Error;
 
 pub mod cif_parser;
 use cif_parser::EdgeSign;
@@ -28,65 +26,12 @@ type SolveHandleWithFH<FH> = GenericSolveHandle<Non, Non, Non, FH, Non>;
 
 type Labelings = Vec<Prediction>;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Setting {
     pub os: bool,
     pub ep: bool,
     pub fp: bool,
     pub fc: bool,
-}
-impl Setting {
-    pub fn to_json(&self) -> String {
-        format!(
-            "{{
-        \"depmat\":{},
-        \"elempath\":{},
-        \"forward-propagation\":{},
-        \"founded-constraints\":{}\n}}",
-            !self.os, self.ep, self.fp, self.fc
-        )
-    }
-}
-impl fmt::Display for Setting {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "\n## Settings\n")?;
-        if !self.os {
-            writeln!(f, "- Dependency matrix combines multiple states.")?;
-            writeln!(
-                f,
-                "- An elementary path from an input must exist to explain changes."
-            )?;
-        } else {
-            writeln!(
-                f,
-                "- All observed changes must be explained by a predecessor."
-            )?;
-
-            if self.ep {
-                writeln!(
-                    f,
-                    "- An elementary path from an input must exist to explain changes."
-                )?;
-            }
-            if self.fp {
-                writeln!(f, "- 0-change must be explained.")?;
-            }
-            if self.fc {
-                writeln!(f, "- All observed changes must be explained by an input.")?;
-            }
-        }
-        write!(f, "")
-    }
-}
-#[derive(Debug, Error)]
-#[error("IggyError: {msg}")]
-pub struct IggyError {
-    pub msg: &'static str,
-}
-impl IggyError {
-    fn new(msg: &'static str) -> IggyError {
-        IggyError { msg }
-    }
 }
 
 #[derive(Debug, Clone, ToSymbol, Serialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -215,30 +160,7 @@ impl fmt::Display for RepairOp {
     }
 }
 
-pub fn write_auto_inputs_md(mut out: impl Write, inputs: &FactBase) -> Result<()> {
-    let x = inputs
-        .iter()
-        .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
-
-    writeln!(out, "\nComputed input nodes: {}", inputs.len())?;
-    for y in x {
-        writeln!(out, "- {y}")?;
-    }
-    Ok(())
-}
-
-pub fn write_auto_inputs_json(mut out: impl Write, inputs: &FactBase) -> Result<()> {
-    let x = inputs
-        .iter()
-        .map(|y| into_node_id(y.arguments().unwrap()[0]).unwrap());
-
-    let y: Vec<NodeId> = x.collect();
-    let serialized = serde_json::to_string(&y)?;
-    writeln!(out, ",\"Computed input nodes\":{serialized}")?;
-    Ok(())
-}
-
-pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
+pub fn check_observations(profile: &FactBase) -> Result<CheckResult, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![])?;
 
@@ -269,10 +191,10 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
                 let node = atom
                     .arguments()?
                     .get(1)
-                    .ok_or_else(|| IggyError::new("Expected atom with at least two arguments."))?
+                    .expect("Expected atom with at least two arguments.")
                     .arguments()?
                     .get(0)
-                    .ok_or_else(|| IggyError::new("Expected function with at least one argument."))?
+                    .expect("Expected function with at least one argument.")
                     .to_string();
 
                 match atom.name()? {
@@ -323,20 +245,15 @@ pub fn check_observations(profile: &FactBase) -> Result<CheckResult> {
     }
 }
 
-pub fn guess_inputs(graph: &FactBase) -> Result<FactBase> {
-    // create a control object and pass command line arguments
+pub fn get_auto_inputs(graph: &FactBase) -> Result<FactBase, ClingoError> {
     let mut ctl = clingo::control(vec![])?;
-
-    // add a logic program to the base part
-    ctl.add("base", &[], PRG_GUESS_INPUTS)?;
+    ctl.add("base", &[], PRG_AUTO_INPUTS)?;
     ctl.add_facts(graph)?;
 
-    // ground the base part
     let part = Part::new("base", vec![])?;
     let parts = vec![part];
     ctl.ground(&parts)?;
 
-    // solve
     let mut handle = ctl.solve(SolveMode::YIELD, &[])?;
 
     handle.resume()?;
@@ -352,10 +269,17 @@ pub fn guess_inputs(graph: &FactBase) -> Result<FactBase> {
         }
     }
 
-    // close the solve handle
     handle.close()?;
 
     Ok(inputs)
+}
+pub fn get_node_ids_from_inputs(inputs: &FactBase) -> Result<Vec<NodeId>, ClingoError> {
+    let mut node_ids = vec![];
+    for input in inputs.iter() {
+        let x = into_node_id(input.arguments().unwrap()[0])?;
+        node_ids.push(x);
+    }
+    Ok(node_ids)
 }
 
 fn member(elem: Symbol, list: Symbol) -> Symbol {
@@ -405,7 +329,7 @@ impl FunctionHandler for MemberFH {
         }
     }
 }
-fn ground_and_solve(ctl: Control) -> Result<SolveHandleWithFH<MemberFH>> {
+fn ground_and_solve(ctl: Control) -> Result<SolveHandleWithFH<MemberFH>, ClingoError> {
     // declare extern function handler
     let member_fh = MemberFH;
 
@@ -421,7 +345,7 @@ fn ground_and_solve(ctl: Control) -> Result<SolveHandleWithFH<MemberFH>> {
     let x = ctl.solve(SolveMode::YIELD, &[])?;
     Ok(x)
 }
-fn ground(ctl: Control) -> Result<ControlWithFH> {
+fn ground(ctl: Control) -> Result<ControlWithFH, ClingoError> {
     // declare extern function handler
     let member_fh = MemberFH;
 
@@ -436,7 +360,7 @@ fn ground(ctl: Control) -> Result<ControlWithFH> {
 
 fn cautious_consequences_optimal_models(
     handle: &mut SolveHandleWithFH<MemberFH>,
-) -> Result<Vec<Symbol>> {
+) -> Result<Vec<Symbol>, ClingoError> {
     let mut symbols = vec![];
     loop {
         handle.resume()?;
@@ -452,7 +376,9 @@ fn cautious_consequences_optimal_models(
     Ok(symbols)
 }
 
-fn get_optimum<FH: FunctionHandler>(handle: &mut SolveHandleWithFH<FH>) -> Result<Vec<i64>> {
+fn get_optimum<FH: FunctionHandler>(
+    handle: &mut SolveHandleWithFH<FH>,
+) -> Result<Vec<i64>, ClingoError> {
     let mut last = vec![];
     let mut found = false;
     loop {
@@ -460,7 +386,7 @@ fn get_optimum<FH: FunctionHandler>(handle: &mut SolveHandleWithFH<FH>) -> Resul
         match handle.model()? {
             Some(model) => {
                 if model.optimality_proven()? {
-                    return Ok(model.cost()?);
+                    return model.cost();
                 } else {
                     found = true;
                     last = model.cost()?;
@@ -484,7 +410,7 @@ pub fn get_minimal_inconsistent_cores(
     inputs: &FactBase,
     setting: &Setting,
     threads: u8,
-) -> Result<Mics> {
+) -> Result<Mics, ClingoError> {
     info!("Computing minimal inconsistent cores (mic\'s) ...");
     // create a control object and pass command line arguments
     let mut ctl: Control = clingo::control(vec![
@@ -531,7 +457,7 @@ pub fn get_scenfit(
     inputs: &FactBase,
     setting: &Setting,
     threads: u8,
-) -> Result<i64> {
+) -> Result<i64, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "0".to_string(),
@@ -580,7 +506,7 @@ pub fn get_scenfit_labelings(
     max_labelings: u32,
     setting: &Setting,
     threads: u8,
-) -> Result<LabelsRepair> {
+) -> Result<LabelsRepair, ClingoError> {
     info!("Compute scenfit labelings ...");
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
@@ -644,7 +570,7 @@ pub fn get_mcos(
     inputs: &FactBase,
     setting: &Setting,
     threads: u8,
-) -> Result<i64> {
+) -> Result<i64, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "0".to_string(),
@@ -693,7 +619,7 @@ pub fn get_mcos_labelings(
     max_labelings: u32,
     setting: &Setting,
     threads: u8,
-) -> Result<LabelsRepair> {
+) -> Result<LabelsRepair, ClingoError> {
     info!("Compute mcos labelings ...");
 
     // create a control object and pass command line arguments
@@ -740,7 +666,7 @@ pub fn get_predictions_under_mcos(
     profile: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
-) -> Result<Predictions> {
+) -> Result<Predictions, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
@@ -789,7 +715,7 @@ pub fn get_predictions_under_scenfit(
     profile: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
-) -> Result<Predictions> {
+) -> Result<Predictions, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
@@ -833,17 +759,17 @@ pub fn get_predictions_under_scenfit(
     extract_predictions(&model)
 }
 
-fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol> {
+fn extract_addeddy(symbols: &[Symbol]) -> Result<Symbol, ClingoError> {
     for a in symbols {
         if a.name()? == "addeddy" {
             let edge_end = a.arguments()?[0];
-            return Ok(Symbol::create_function("edge_end", &[edge_end], true)?);
+            return Symbol::create_function("edge_end", &[edge_end], true);
         }
     }
-    Err(IggyError::new("Expected addeddy(X) atom in the answer!").into())
+    panic!("Expected addeddy(X) atom in the answer!")
 }
 
-fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase> {
+fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase, ClingoError> {
     let mut ret = FactBase::new();
     for a in symbols {
         if a.name()? == "addedge" {
@@ -853,7 +779,7 @@ fn extract_addedges(symbols: &[Symbol]) -> Result<FactBase> {
     Ok(ret)
 }
 
-pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
+pub fn into_node_id(symbol: Symbol) -> Result<NodeId, ClingoError> {
     match symbol.name()? {
         "or" => {
             let arguments = symbol.arguments()?;
@@ -870,7 +796,7 @@ pub fn into_node_id(symbol: Symbol) -> Result<NodeId> {
         }
     }
 }
-pub fn into_behavior(symbol: Symbol) -> Result<Behavior> {
+pub fn into_behavior(symbol: Symbol) -> Result<Behavior, ClingoError> {
     match symbol.to_string().as_ref() {
         "1" => Ok(Behavior::Plus),
         "-1" => Ok(Behavior::Minus),
@@ -894,7 +820,7 @@ pub enum Direction {
     NotMinusToMinus,
     NotPlusToPlus,
 }
-pub fn into_repair(symbol: &Symbol) -> Result<RepairOp> {
+pub fn into_repair(symbol: &Symbol) -> Result<RepairOp, ClingoError> {
     match symbol.name()? {
         "addedge" => {
             let arguments = symbol.arguments()?;
@@ -1068,7 +994,7 @@ pub fn get_opt_add_remove_edges_greedy(
     profiles: &FactBase,
     inputs: &FactBase,
     threads: u8,
-) -> Result<(i64, i64, std::vec::Vec<FactBase>)> {
+) -> Result<(i64, i64, std::vec::Vec<FactBase>), ClingoError> {
     let mut ctl = clingo::control(vec![
         "--opt-strategy=5".to_string(),
         "--opt-mode=optN".to_string(),
@@ -1254,7 +1180,7 @@ pub fn get_opt_repairs_add_remove_edges_greedy(
     repair_score: i64,
     max_solutions: u32,
     threads: u8,
-) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
@@ -1295,7 +1221,7 @@ pub fn get_opt_add_remove_edges(
     profiles: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
-) -> Result<(i64, i64)> {
+) -> Result<(i64, i64), ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
@@ -1351,7 +1277,7 @@ pub fn get_opt_repairs_add_remove_edges(
     repair_score: i64,
     max_solutions: u32,
     setting: &Setting,
-) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
@@ -1402,7 +1328,7 @@ pub fn get_opt_flip_edges(
     profiles: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
-) -> Result<(i64, i64)> {
+) -> Result<(i64, i64), ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
@@ -1447,7 +1373,7 @@ pub fn get_opt_repairs_flip_edges(
     repair_score: i64,
     max_solutions: u32,
     setting: &Setting,
-) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, ClingoError> {
     let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
@@ -1494,7 +1420,7 @@ pub fn get_opt_remove_edges(
     profiles: &FactBase,
     inputs: &FactBase,
     setting: &Setting,
-) -> Result<(i64, i64)> {
+) -> Result<(i64, i64), ClingoError> {
     // create a control object and pass command line arguments
     let mut ctl = clingo::control(vec!["--opt-strategy=5".to_string()])?;
 
@@ -1538,7 +1464,7 @@ pub fn get_opt_repairs_remove_edges(
     repair_score: i64,
     max_solutions: u32,
     setting: &Setting,
-) -> Result<Vec<std::vec::Vec<clingo::Symbol>>> {
+) -> Result<Vec<std::vec::Vec<clingo::Symbol>>, ClingoError> {
     let mut ctl = clingo::control(vec![
         max_solutions.to_string(),
         "--opt-strategy=5".to_string(),
@@ -1582,7 +1508,7 @@ pub fn get_opt_repairs_remove_edges(
         .collect()
 }
 /// Given a model this function returns a vector of mics
-fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
+fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>, ClingoError> {
     let mut mics = vec![];
     for symbol in symbols {
         match symbol.name()? {
@@ -1598,7 +1524,7 @@ fn extract_mics(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
 
 /// Given a model this function returns a vector of pairs (node,label)
 /// and a vector of repair operations needed to make the labeling consistent
-fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp>)> {
+fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp>), ClingoError> {
     let mut vlabels = vec![];
     let mut err = vec![];
     for symbol in symbols {
@@ -1655,7 +1581,7 @@ fn extract_labels_repairs(symbols: &[Symbol]) -> Result<(Labelings, Vec<RepairOp
 
 /// Given a model this function returns a vector of symbols
 /// denoting repair operations needed to make the labeling consistent
-fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
+fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>, ClingoError> {
     let mut rep = vec![];
     for symbol in symbols {
         match symbol.name()? {
@@ -1678,7 +1604,7 @@ fn extract_repairs(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
 }
 /// Given a model this function returns a vector of symbols
 /// denoting edge flip operations needed to make the labeling consistent
-fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>> {
+fn extract_flips(symbols: &[Symbol]) -> Result<Vec<Symbol>, ClingoError> {
     let mut rep = vec![];
     for symbol in symbols {
         match symbol.name()? {
@@ -1703,7 +1629,7 @@ impl fmt::Display for Prediction {
     }
 }
 /// Given a model this function returns a Vector of Predictions
-fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions> {
+fn extract_predictions(symbols: &[Symbol]) -> Result<Predictions, ClingoError> {
     let mut predictions = Vec::new();
     let mut not_plus = Vec::new();
     let mut not_minus = Vec::new();

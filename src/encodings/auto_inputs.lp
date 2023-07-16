@@ -1,3 +1,5 @@
+% compute input nodes i.e. nodes without predecessor
+
 edge(X,Y) :- obs_e_label(X,Y,S).
 vertex(X) :- edge(X,Y).
 vertex(Y) :- edge(X,Y).

@@ -61,9 +61,16 @@ fn test_iggy_setup() {
     let check_result = check_observations(&profile).unwrap();
     assert_eq!(format!("{:?}", check_result), "Consistent".to_owned());
 
-    let auto_inputs = guess_inputs(&graph).unwrap();
-    // assert_eq!(format!("{:?}",auto_inputs),"".to_owned())
-    //TODO assert auto_inputs
+    let auto_inputs = get_auto_inputs(&graph).unwrap();
+    let mut node_ids = get_node_ids_from_inputs(&auto_inputs).unwrap();
+    node_ids.sort();
+    let mut buf = Vec::new();
+    write_auto_inputs_json(&mut buf, &node_ids).unwrap();
+    assert_eq!(
+        std::str::from_utf8(&buf).unwrap(),
+        ",\"computed input nodes\":[\"cis\",\"depor\",\"mtor_inhibitor\",\"socs1\",\"socs3\"]\n"
+            .to_owned()
+    )
 }
 
 #[test]
@@ -80,7 +87,7 @@ fn test_get_scenfit_labelings() {
     let file = File::open(TEST_OBSERVATIONS).unwrap();
     let pprofile = profile_parser::read(&file, "x1").unwrap();
     let profile = pprofile.to_facts();
-    let auto_inputs = guess_inputs(&graph).unwrap();
+    let auto_inputs = get_auto_inputs(&graph).unwrap();
 
     let scenfit = get_scenfit(&graph, &profile, &auto_inputs, &setting, 1).unwrap();
     assert_eq!(scenfit, 1);
@@ -104,7 +111,7 @@ fn test_get_scenfit_labelings() {
         r"
 ## Possible labelings under repair
 
-- Labeling 1:
+1. Labeling:
   - akt = +
   - akt = -
   - akt = 0
@@ -164,9 +171,9 @@ fn test_get_scenfit_labelings() {
     assert_eq!(
         std::str::from_utf8(&buf).unwrap(),
         ",\"labels under repair\":[
-{\"labels\":[{\"node\":\"akt\",\"behavior\":\"+\"},{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"akt\",\"behavior\":\"0\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"0\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"-\"},{\"node\":\"grb2_sos\",\"behavior\":\"0\"},{\"node\":\"jak2_p\",\"behavior\":\"-\"},{\"node\":\"jak2_p\",\"behavior\":\"0\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"-\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc1\",\"behavior\":\"0\"},{\"node\":\"mtorc2\",\"behavior\":\"+\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"0\"},{\"node\":\"pi3k\",\"behavior\":\"+\"},{\"node\":\"pi3k\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"plcg\",\"behavior\":\"-\"},{\"node\":\"plcg\",\"behavior\":\"0\"},{\"node\":\"ras_gap\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"-\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"-\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"+\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"shp2_ph\",\"behavior\":\"0\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"-\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"}]
-,\"repairs\":[{\"FlipNodeSign\":{\"profile\":\"x1\",\"node\":\"jak2_p\",\"direction\":\"PlusToZero\"}}]
-}
+  {\"labels\":[{\"node\":\"akt\",\"behavior\":\"+\"},{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"akt\",\"behavior\":\"0\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"-\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"0\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"-\"},{\"node\":\"grb2_sos\",\"behavior\":\"0\"},{\"node\":\"jak2_p\",\"behavior\":\"-\"},{\"node\":\"jak2_p\",\"behavior\":\"0\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"-\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc1\",\"behavior\":\"0\"},{\"node\":\"mtorc2\",\"behavior\":\"+\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"0\"},{\"node\":\"pi3k\",\"behavior\":\"+\"},{\"node\":\"pi3k\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"plcg\",\"behavior\":\"-\"},{\"node\":\"plcg\",\"behavior\":\"0\"},{\"node\":\"ras_gap\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"-\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"-\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"+\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"shp2_ph\",\"behavior\":\"0\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"-\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"}],
+   \"repairs\":[{\"FlipNodeSign\":{\"profile\":\"x1\",\"node\":\"jak2_p\",\"direction\":\"PlusToZero\"}}]
+  }
 ]
 "
     );
@@ -185,7 +192,7 @@ fn test_get_scenfit_predictions() {
     let file = File::open(TEST_OBSERVATIONS).unwrap();
     let pprofile = profile_parser::read(&file, "x1").unwrap();
     let profile = pprofile.to_facts();
-    let auto_inputs = guess_inputs(&graph).unwrap();
+    let auto_inputs = get_auto_inputs(&graph).unwrap();
 
     let scenfit = get_scenfit(&graph, &profile, &auto_inputs, &setting, 1).unwrap();
     assert_eq!(scenfit, 1);
@@ -227,7 +234,7 @@ fn test_get_scenfit_predictions() {
     write_json_predictions(&mut buf, &l).unwrap();
     assert_eq!(
         std::str::from_utf8(&buf).unwrap(),
-        ",\"Predictions\":[{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"notPlus\"},{\"node\":\"jak2_p\",\"behavior\":\"notPlus\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"shp2\",\"behavior\":\"notPlus\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"notPlus\"}]\n");
+        ",\"predictions\":[{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"notPlus\"},{\"node\":\"jak2_p\",\"behavior\":\"notPlus\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"shp2\",\"behavior\":\"notPlus\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"notPlus\"}]\n");
 }
 
 #[test]
@@ -244,7 +251,7 @@ fn test_get_mcos_labelings() {
     let file = File::open(TEST_OBSERVATIONS).unwrap();
     let pprofile = profile_parser::read(&file, "x1").unwrap();
     let profile = pprofile.to_facts();
-    let auto_inputs = guess_inputs(&graph).unwrap();
+    let auto_inputs = get_auto_inputs(&graph).unwrap();
 
     let mcos = get_mcos(&graph, &profile, &auto_inputs, &setting, 1).unwrap();
     assert_eq!(mcos, 3);
@@ -268,7 +275,7 @@ fn test_get_mcos_labelings() {
         r"
 ## Possible labelings under repair
 
-- Labeling 1:
+1. Labeling:
   - akt = -
   - cis = 0
   - depor = -
@@ -306,9 +313,9 @@ fn test_get_mcos_labelings() {
     assert_eq!(
         std::str::from_utf8(&buf).unwrap(),
         ",\"labels under repair\":[
-{\"labels\":[{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"-\"},{\"node\":\"grb2_sos\",\"behavior\":\"0\"},{\"node\":\"jak2_p\",\"behavior\":\"+\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"},{\"node\":\"unknownup\",\"behavior\":\"+\"}]
-,\"repairs\":[{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"gab1_bpi3k_py\",\"sign\":\"Minus\"}},{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"jak2_p\",\"sign\":\"Plus\"}},{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"shp2_ph\",\"sign\":\"Minus\"}}]
-}
+  {\"labels\":[{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"-\"},{\"node\":\"grb2_sos\",\"behavior\":\"0\"},{\"node\":\"jak2_p\",\"behavior\":\"+\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"},{\"node\":\"unknownup\",\"behavior\":\"+\"}],
+   \"repairs\":[{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"gab1_bpi3k_py\",\"sign\":\"Minus\"}},{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"jak2_p\",\"sign\":\"Plus\"}},{\"NewInfluence\":{\"profile\":\"x1\",\"target\":\"shp2_ph\",\"sign\":\"Minus\"}}]
+  }
 ]
 "
     );
@@ -327,7 +334,7 @@ fn test_get_mcos_predictions() {
     let file = File::open(TEST_OBSERVATIONS).unwrap();
     let pprofile = profile_parser::read(&file, "x1").unwrap();
     let profile = pprofile.to_facts();
-    let auto_inputs = guess_inputs(&graph).unwrap();
+    let auto_inputs = get_auto_inputs(&graph).unwrap();
 
     let scenfit = get_scenfit(&graph, &profile, &auto_inputs, &setting, 1).unwrap();
     assert_eq!(scenfit, 1);
@@ -381,7 +388,7 @@ fn test_get_mcos_predictions() {
     write_json_predictions(&mut buf, &l).unwrap();
     assert_eq!(
         std::str::from_utf8(&buf).unwrap(),
-        ",\"Predictions\":[{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"notPlus\"},{\"node\":\"jak2_p\",\"behavior\":\"+\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"},{\"node\":\"unknownup\",\"behavior\":\"+\"}]\n");
+        ",\"predictions\":[{\"node\":\"akt\",\"behavior\":\"-\"},{\"node\":\"cis\",\"behavior\":\"0\"},{\"node\":\"depor\",\"behavior\":\"-\"},{\"node\":\"erk\",\"behavior\":\"+\"},{\"node\":\"gab1_bpi3k_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bras_py\",\"behavior\":\"0\"},{\"node\":\"gab1_bshp2_ph_py\",\"behavior\":\"+\"},{\"node\":\"gab1_ps\",\"behavior\":\"+\"},{\"node\":\"grb2_sos\",\"behavior\":\"notPlus\"},{\"node\":\"jak2_p\",\"behavior\":\"+\"},{\"node\":\"mek1\",\"behavior\":\"+\"},{\"node\":\"mtor\",\"behavior\":\"0\"},{\"node\":\"mtor_inhibitor\",\"behavior\":\"+\"},{\"node\":\"mtorc1\",\"behavior\":\"-\"},{\"node\":\"mtorc2\",\"behavior\":\"-\"},{\"node\":\"pi3k\",\"behavior\":\"0\"},{\"node\":\"plcg\",\"behavior\":\"+\"},{\"node\":\"ras_gap\",\"behavior\":\"0\"},{\"node\":\"shp2\",\"behavior\":\"0\"},{\"node\":\"shp2_ph\",\"behavior\":\"-\"},{\"node\":\"socs1\",\"behavior\":\"0\"},{\"node\":\"socs3\",\"behavior\":\"0\"},{\"node\":\"stat5ab_py\",\"behavior\":\"0\"},{\"node\":\"unknownup\",\"behavior\":\"+\"}]\n");
 }
 
 #[test]
@@ -417,7 +424,7 @@ fn test_get_mics() {
         r"
 ## Minimal inconsistent cores
 
-- mic 1:
+1. Mic:
   - cis
   - mtor_inhibitor
   - socs1
@@ -428,6 +435,9 @@ fn test_get_mics() {
     write_json_mics(&mut buf, mics).unwrap();
     assert_eq!(
         std::str::from_utf8(&buf).unwrap(),
-        ",\"mics\":[\n[\"cis\",\"mtor_inhibitor\",\"socs1\",\"socs3\"]\n]\n"
+        ",\"mics\":[\n  [\"cis\",\"mtor_inhibitor\",\"socs1\",\"socs3\"]\n]\n"
     );
 }
+
+#[test]
+fn test_optgraph_setup() {}
