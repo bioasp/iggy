@@ -13,63 +13,58 @@ use iggy::{cif_parser::Graph, misc::*, CheckResult::Inconsistent, *};
 /// predicts the behavior for the unmeasured species. It distinguishes strong predictions (e.g. increase in a
 /// node) and weak predictions (e.g., the value of a node increases or remains unchanged).
 #[derive(Parser, Debug)]
-#[clap(version, author)]
+#[command(version, author)]
 struct Opt {
     /// Influence graph in CIF format
-    #[clap(short = 'n', long = "network", value_name = "FILE", parse(from_os_str))]
+    #[arg(short = 'n', long = "network", value_name = "FILE")]
     network_file: PathBuf,
 
     /// Observations in bioquali format
-    #[clap(
-        short = 'o',
-        long = "observations",
-        value_name = "FILE",
-        parse(from_os_str)
-    )]
+    #[arg(short = 'o', long = "observations", value_name = "FILE")]
     observations_file: Option<PathBuf>,
 
     /// Disable forward propagation constraints
-    #[clap(long, conflicts_with = "depmat")]
+    #[arg(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[clap(long, conflicts_with = "depmat")]
+    #[arg(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[clap(long)]
+    #[arg(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[clap(long)]
+    #[arg(long)]
     depmat: bool,
 
     /// Compute minimal inconsistent cores
-    #[clap(long)]
+    #[arg(long)]
     mics: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[clap(short = 'a', long)]
+    #[arg(short = 'a', long)]
     auto_inputs: bool,
 
     /// Compute scenfit of the data, default is mcos
-    #[clap(long)]
+    #[arg(long)]
     scenfit: bool,
 
     /// Show N labelings, default is OFF, 0=all
-    #[clap(short = 'l', long = "show-labelings", value_name = "N")]
+    #[arg(short = 'l', long = "show-labelings", value_name = "N")]
     max_labelings: Option<u32>,
 
     /// Show predictions
-    #[clap(short = 'p', long)]
+    #[arg(short = 'p', long)]
     show_predictions: bool,
 
     /// Multithreading
-    #[clap(short = 't', long, value_name = "N", default_value_t = 1)]
+    #[arg(short = 't', long, value_name = "N", default_value_t = 1)]
     threads: u8,
 
     /// Print JSON output
-    #[clap(long)]
+    #[arg(long)]
     json: bool,
 }
 

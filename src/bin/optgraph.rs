@@ -13,57 +13,52 @@ use thiserror::Error;
 /// Opt-graph computes networks fitting the observation data by removing (or adding) a minimal
 /// number of edges in the given network.
 #[derive(Parser, Debug)]
-#[clap(name = "optgraph", version, author)]
+#[command(name = "optgraph", version, author)]
 struct Opt {
     /// Influence graph in CIF format
-    #[clap(short = 'n', long = "network", value_name = "FILE", parse(from_os_str))]
+    #[arg(short = 'n', long = "network", value_name = "FILE")]
     network_file: PathBuf,
 
     /// Directory of observations in bioquali format
-    #[clap(
-        short = 'o',
-        long = "observations",
-        value_name = "DIR",
-        parse(from_os_str)
-    )]
+    #[arg(short = 'o', long = "observations", value_name = "DIR")]
     observations_dir: PathBuf,
 
     /// Disable forward propagation constraints
-    #[clap(long, conflicts_with = "depmat")]
+    #[arg(long, conflicts_with = "depmat")]
     fwd_propagation_off: bool,
 
     /// Disable foundedness constraints
-    #[clap(long, conflicts_with = "depmat")]
+    #[arg(long, conflicts_with = "depmat")]
     founded_constraints_off: bool,
 
     /// Every change must be explained by an elementary path from an input
-    #[clap(long)]
+    #[arg(long)]
     elempath: bool,
 
     /// Combine multiple states, a change must be explained by an elementary path from an input
-    #[clap(long)]
+    #[arg(long)]
     depmat: bool,
 
     /// Declare nodes with indegree 0 as inputs
-    #[clap(short = 'a', long)]
+    #[arg(short = 'a', long)]
     auto_inputs: bool,
 
     /// Show N repairs, default is OFF, 0=all
-    #[clap(short = 'r', long = "show-repairs", value_name = "N")]
+    #[arg(short = 'r', long = "show-repairs", value_name = "N")]
     max_repairs: Option<u32>,
 
     /// REPAIR_MODE: remove = remove edges (default),
     ///              optgraph = add + remove edges,
     ///              flip = flip direction of edges
-    #[clap(short = 'm', long)]
+    #[arg(short = 'm', long)]
     repair_mode: Option<RepairMode>,
 
     /// Multithreading
-    #[clap(short = 't', long, value_name = "N", default_value_t = 1)]
+    #[arg(short = 't', long, value_name = "N", default_value_t = 1)]
     threads: u8,
 
     /// Print JSON output
-    #[clap(long)]
+    #[arg(long)]
     json: bool,
 }
 
@@ -98,7 +93,7 @@ impl fmt::Display for InconsistentObs {
         Ok(())
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum RepairMode {
     Remove,
     OptGraph,

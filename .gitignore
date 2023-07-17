@@ -1,2 +1,4 @@
 /target/
 .directory
+python-module/target/
+python-module/iggy/__pycache__/
