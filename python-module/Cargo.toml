@@ -14,4 +14,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 iggy = { path = "../" }
-pyo3 = { version = "0.16.1", features = ["extension-module"] }
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
